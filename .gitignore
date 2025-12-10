@@ -205,3 +205,60 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+###########################
+# FRONTEND / NODE
+###########################
+node_modules/
+dist/
+build/
+.npm/
+.yarn/
+.vite/
+*.tsbuildinfo
+
+###########################
+# BACKEND / FASTAPI
+###########################
+*.db
+*.sqlite3
+*.pid
+uvicorn.log
+
+###########################
+# MACHINE LEARNING / MODELS
+###########################
+runs/
+checkpoints/
+models/
+*.pt
+*.onnx
+*.engine
+*.bin
+*.pkl
+
+###########################
+# ENVIRONMENT VARIABLES
+###########################
+.env
+.env.local
+.env.dev
+.env.prod
+
+###########################
+# INFRA / DOCKER
+###########################
+docker-data/
+docker-cache/
+*.tar
+*.img
+compose.yaml.override
+
+###########################
+# OS / EDITOR FILES
+###########################
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
