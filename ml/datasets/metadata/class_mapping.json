@@ -1,0 +1,36 @@
+{
+  "sirccd_classes": {
+    "bache": 0,
+    "socavon": 1,
+    "grieta": 2,
+    "alcantarilla": 3,
+    "senal": 4,
+    "alumbrado": 5
+  },
+  "dataset_mappings": {
+    "RDD2022": {
+      "D00": "grieta",
+      "D10": "grieta",
+      "D20": "bache",
+      "D40": "bache"
+    },
+    "N-RDD2024": {
+      "crack": "grieta",
+      "pothole": "bache",
+      "patch": "grieta"
+    },
+    "CRACK500": {
+      "crack": "grieta"
+    },
+    "CFD": {
+      "crack": "grieta"
+    },
+    "Pothole-600": {
+      "pothole": "bache"
+    },
+    "SUT-Crack": {
+      "crack": "grieta"
+    }
+  },
+  "description": "Mapeo de clases de datasets originales a clases SIRCCD"
+}

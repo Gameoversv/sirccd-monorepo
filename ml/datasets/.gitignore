@@ -1,0 +1,23 @@
+# Datasets crudos (muy grandes para Git)
+raw/**/*
+!raw/.gitkeep
+!raw/*/.gitkeep
+
+# Datasets procesados (se regeneran automáticamente)
+processed/**/*
+!processed/.gitkeep
+
+# Mantener solo archivos de configuración y scripts
+!*.md
+!*.py
+!*.ps1
+!*.yaml
+!*.yml
+!*.json
+!.gitignore
+
+# Mantener estructura de metadata
+!metadata/
+metadata/**/*
+!metadata/*.json
+!metadata/*.md
