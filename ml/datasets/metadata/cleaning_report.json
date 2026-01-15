@@ -1,0 +1,26 @@
+{
+  "train": {
+    "total": 59500,
+    "valid": 59500,
+    "corrupted": 0,
+    "too_small": 0,
+    "missing_label": 0,
+    "errors": []
+  },
+  "val": {
+    "total": 13140,
+    "valid": 13140,
+    "corrupted": 0,
+    "too_small": 0,
+    "missing_label": 0,
+    "errors": []
+  },
+  "test": {
+    "total": 14431,
+    "valid": 14431,
+    "corrupted": 0,
+    "too_small": 0,
+    "missing_label": 0,
+    "errors": []
+  }
+}

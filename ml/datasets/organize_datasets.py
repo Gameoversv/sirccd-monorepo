@@ -323,18 +323,83 @@ def process_rdd2020():
 
 
 def process_pothole600():
-    """Procesa el dataset Pothole-600 (máscaras PNG, requiere conversión especial)."""
+    """Procesa el dataset Pothole-600 (máscaras PNG → YOLO bboxes)."""
     print("Procesando Pothole-600...")
-    dataset_dir = RAW_DIR / 'Pothole-600'
+    dataset_dir = RAW_DIR / 'Pothole-600' / 'pothole600'
     
     if not dataset_dir.exists():
         print(f"  ⚠️  Directorio {dataset_dir} no encontrado. Saltando...")
         return 0
     
-    print(f"  ⚠️  Pothole-600 usa máscaras PNG - requiere conversión compleja")
-    print(f"  💡 Saltando por ahora - se procesará en fase de data augmentation")
+    from PIL import Image
+    import numpy as np
     
-    return 0
+    processed_count = 0
+    split_mapping = {'training': 'train', 'testing': 'test', 'validation': 'val'}
+    
+    for orig_split, target_split in split_mapping.items():
+        rgb_dir = dataset_dir / orig_split / 'rgb'
+        label_dir = dataset_dir / orig_split / 'label'
+        
+        if not rgb_dir.exists() or not label_dir.exists():
+            continue
+        
+        images_dst = PROCESSED_DIR / 'images' / target_split
+        labels_dst = PROCESSED_DIR / 'labels' / target_split
+        images_dst.mkdir(parents=True, exist_ok=True)
+        labels_dst.mkdir(parents=True, exist_ok=True)
+        
+        for img_file in rgb_dir.glob('*.png'):
+            mask_file = label_dir / img_file.name
+            
+            if not mask_file.exists():
+                continue
+            
+            # Leer imagen y máscara
+            img = Image.open(img_file)
+            mask = Image.open(mask_file).convert('L')
+            
+            img_width, img_height = img.size
+            mask_array = np.array(mask)
+            
+            # Encontrar regiones de potholes (píxeles > 127)
+            binary_mask = (mask_array > 127).astype(np.uint8)
+            
+            # Encontrar contornos usando connected components
+            from skimage import measure
+            labeled_mask = measure.label(binary_mask)
+            regions = measure.regionprops(labeled_mask)
+            
+            # Copiar imagen
+            dst_img = images_dst / f"pothole600_{img_file.name}"
+            shutil.copy2(img_file, dst_img)
+            
+            # Generar anotaciones YOLO
+            dst_label = labels_dst / f"pothole600_{img_file.stem}.txt"
+            with open(dst_label, 'w') as f:
+                for region in regions:
+                    # Obtener bounding box
+                    minr, minc, maxr, maxc = region.bbox
+                    
+                    # Filtrar bboxes muy pequeñas
+                    width = maxc - minc
+                    height = maxr - minr
+                    if width < 10 or height < 10:
+                        continue
+                    
+                    # Convertir a YOLO format (normalized)
+                    x_center = (minc + maxc) / 2 / img_width
+                    y_center = (minr + maxr) / 2 / img_height
+                    width_norm = width / img_width
+                    height_norm = height / img_height
+                    
+                    # Clase 0 = bache
+                    f.write(f"0 {x_center:.6f} {y_center:.6f} {width_norm:.6f} {height_norm:.6f}\n")
+            
+            processed_count += 1
+    
+    print(f"  ✅ Pothole-600: {processed_count} imágenes procesadas")
+    return processed_count
 
 
 def generate_data_yaml():
