@@ -21,3 +21,6 @@ processed/**/*
 metadata/**/*
 !metadata/*.json
 !metadata/*.md
+
+# Excluir reportes muy grandes (se regeneran con scripts)
+metadata/duplicates_report.json
