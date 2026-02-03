@@ -18,9 +18,10 @@ CLASE_BACHE = 0
 CLASE_GRIETA = 2
 
 # Directorios
-LABELS_DIR = Path('processed/split/labels')
-IMAGES_DIR = Path('processed/split/images')
-OUTPUT_DIR = Path('processed/split/labels_severity')
+SCRIPT_DIR = Path(__file__).parent.parent  # ml/datasets/
+LABELS_DIR = SCRIPT_DIR / 'processed' / 'split' / 'labels'
+IMAGES_DIR = SCRIPT_DIR / 'processed' / 'split' / 'images'
+OUTPUT_DIR = SCRIPT_DIR / 'processed' / 'split' / 'labels_severity'
 
 
 def get_image_size(image_path):

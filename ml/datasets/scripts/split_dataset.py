@@ -21,8 +21,9 @@ TRAIN_RATIO = 0.70
 VAL_RATIO = 0.20
 TEST_RATIO = 0.10
 
-COMBINED_DIR = Path('processed/combined')
-OUTPUT_DIR = Path('processed/split')
+SCRIPT_DIR = Path(__file__).parent.parent  # ml/datasets/
+COMBINED_DIR = SCRIPT_DIR / 'processed' / 'combined'
+OUTPUT_DIR = SCRIPT_DIR / 'processed' / 'split'
 
 
 def get_image_class(label_file):
@@ -159,7 +160,7 @@ def copy_split_files(splits):
 
 def save_split_report(stats, seed, ratios):
     """Guarda reporte del particionado."""
-    metadata_dir = Path('metadata')
+    metadata_dir = SCRIPT_DIR / 'metadata'
     metadata_dir.mkdir(exist_ok=True)
     
     report = {

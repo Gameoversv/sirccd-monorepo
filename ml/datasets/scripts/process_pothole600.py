@@ -74,8 +74,9 @@ def extract_bboxes_from_mask(mask_img):
 
 def process_pothole600():
     """Procesa el dataset Pothole-600 completo."""
-    RAW_DIR = Path('raw')
-    PROCESSED_DIR = Path('processed/combined')
+    SCRIPT_DIR = Path(__file__).parent.parent  # ml/datasets/
+    RAW_DIR = SCRIPT_DIR / 'raw'
+    PROCESSED_DIR = SCRIPT_DIR / 'processed' / 'combined'
     dataset_dir = RAW_DIR / 'Pothole-600' / 'pothole600'
     
     if not dataset_dir.exists():

@@ -1,6 +1,9 @@
 import json
+from pathlib import Path
 
-with open('metadata/split_report.json') as f:
+SCRIPT_DIR = Path(__file__).parent.parent  # ml/datasets/
+
+with open(SCRIPT_DIR / 'metadata' / 'split_report.json') as f:
     report = json.load(f)
 
 print('📊 VALIDACIÓN DE PARTICIONES')
