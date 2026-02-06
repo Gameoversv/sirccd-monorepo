@@ -24,3 +24,6 @@ metadata/**/*
 
 # Excluir reportes muy grandes (se regeneran con scripts)
 metadata/duplicates_report.json
+
+# Entorno virtual de OpenCV (Python 3.12 para detección de rostros)
+.venv-cv/

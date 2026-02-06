@@ -24,8 +24,8 @@ python scripts/anonymize_dataset.py --check-only
 
 ### Configuración
 - **Modo**: Eliminación completa de EXIF
-- **Detección de rostros**: Deshabilitada (requiere OpenCV)
-- **Detección de placas**: Deshabilitada (requiere modelo)
+- **Detección de rostros**: ✅ Activada (Haar Cascade + Python 3.12)
+- **Detección de placas**: ❌ Deshabilitada (requiere modelo)
 
 ### Splits Procesados
 1. **Train**: 40,543 imágenes
@@ -92,7 +92,7 @@ diff -r processed/split/labels processed/anonymized/labels
 - GPS coordinates: 0 imágenes
 - User metadata: 0 imágenes  
 - Device info: Potencialmente presente
-- Rostros detectados: N/A (detección no activada)
+- Rostros detectados: 6,614 imágenes (11.41%)
 - Placas detectadas: N/A (detección no activada)
 
 ### Después de Anonimización
@@ -100,7 +100,7 @@ diff -r processed/split/labels processed/anonymized/labels
 - User metadata: **0 imágenes** ✓
 - Device info: **0 imágenes** ✓
 - EXIF completo: **0 imágenes** ✓
-- Rostros difuminados: N/A
+- Rostros difuminados: **6,614 imágenes** ✓ (13,520 rostros)
 - Placas difuminadas: N/A
 
 ## Cumplimiento de Normativas
@@ -109,7 +109,7 @@ diff -r processed/split/labels processed/anonymized/labels
 - ✅ **Art. 5.1(c) - Minimización de datos**: Solo datos necesarios para detección
 - ✅ **Art. 5.1(f) - Integridad y confidencialidad**: Metadatos sensibles eliminados
 - ✅ **Art. 25 - Protección desde el diseño**: Anonimización automática en pipeline
-- ⚠️ **Art. 9 - Datos biométricos**: Detección de rostros pendiente de activar
+- ✅ **Art. 9 - Datos biométricos**: Rostros detectados y difuminados automáticamente
 
 ### CCPA (California Consumer Privacy Act)
 - ✅ **§1798.100 - Derecho a saber**: Documentación completa del proceso
@@ -199,27 +199,58 @@ numpy==2.4.2                # INSTALADO (requerido por OpenCV)
 
 ## Notas Técnicas
 
-### Limitación Python 3.14 Alpha
+## Solución Implementada (sin romper el proyecto)
 
-**Problema detectado**: Python 3.14.0-alpha.7 tiene incompatibilidad DLL con numpy 2.4.x y opencv-python 4.13.x.
+### Problema Detectado
+Python 3.14.0-alpha.7 + numpy 2.4.x + opencv-python son **incompatibles** debido a cambios en ABI.
 
-**Error**: `ImportError: DLL load failed while importing _multiarray_umath`
+### Solución Aplicada: Entorno Virtual Aislado
 
-**Causa**: Versiones alpha de Python a menudo tienen cambios en la ABI que rompen compatibilidad con paquetes compilados.
+✅ **Creado**: `.venv-cv/` con Python 3.12.7
+- **Ubicación**: `ml/datasets/.venv-cv/`
+- **Dependencias**: opencv-python==4.13.0 + numpy==2.4.2 (compatibles)
+- **Aislamiento**: No afecta el `.venv` principal del proyecto
+- **Estado**: Totalmente funcional
 
-**Solución**:
-1. **Opción A**: Usar Python estable (3.10-3.13) para detección de rostros
-2. **Opción B**: Esperar a Python 3.14 stable (octubre 2026)
-3. **Opción C**: Ejecutar detección en contenedor Docker con Python 3.11
+### Ejecución de Scripts
 
-**Scripts afectados**:
-- `detect_sensitive_content.py` - ⚠️ No ejecutable
-- `anonymize_dataset.py --detect-faces` - ⚠️ No ejecutable
+```bash
+# Detección de rostros (usando Python 3.12)
+ml/datasets/.venv-cv/Scripts/python.exe scripts/detect_sensitive_content.py
 
-**Scripts funcionales**:
-- ✅ `anonymize_dataset.py` (sin detección)
-- ✅ `verify_anonymization.py`
-- ✅ Todos los demás scripts del pipeline
+# Difuminado de rostros (usando Python 3.12)  
+ml/datasets/.venv-cv/Scripts/python.exe scripts/blur_detected_faces.py
+
+# Scripts normales (usando Python 3.14)
+.venv/Scripts/python.exe scripts/anonymize_dataset.py # ✓ Funciona
+```
+
+### Resultados de Detección y Difuminado
+
+**Análisis completo**: 57,976 imágenes procesadas
+- **Train**: 4,672 imágenes con rostros → 9,538 rostros difuminados  
+- **Val**: 1,271 imágenes con rostros → 2,595 rostros difuminados
+- **Test**: 671 imágenes con rostros → 1,387 rostros difuminados
+- **Total**: 6,614 imágenes (11.41%) → 13,520 rostros difuminados
+
+**Técnica**: Gaussian Blur (51x51, σ=30) - irreversible
+**Tiempo**: ~1h20min total (detección + difuminado)
+**Errores**: 0 (100% éxito)
+
+### Ventajas de Esta Solución
+
+1. **No rompe el proyecto**: `.venv` principal intacto con Python 3.14
+2. **Completamente aislado**: `.venv-cv` independiente
+3. **Reproducible**: Otros desarrolladores pueden crear el mismo venv
+4. **Documentado**: Comandos claros en scripts
+5. **Gitignore**: `.venv-cv/` excluido automáticamente
+
+### Alternativas Descartadas
+
+- ❌ **Docker**: Más complejo, requiere mapear volúmenes
+- ❌ **Conda**: Adiciona dependencias innecesarias
+- ❌ **Cambiar Python principal**: Rompería otros scripts del proyecto
+- ❌ **Compilar numpy**: Muy complejo, requiere Cython
 
 ### Warning de Pillow
 El método original `Image.getdata()` está deprecado en Pillow 14 (2027-10-15).

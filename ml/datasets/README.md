@@ -37,7 +37,8 @@ ml/datasets/
 ### Almacenamiento y Privacidad
 - **`upload_to_minio.py`** - Ingesta el dataset a MinIO con metadatos y versionado
 - **`anonymize_dataset.py`** - Elimina metadatos EXIF sensibles completamente
-- **`detect_sensitive_content.py`** - Detecta rostros/placas (requiere Python estable)
+- **`detect_sensitive_content.py`** - Detecta rostros/placas (funcional con .venv-cv)
+- **`blur_detected_faces.py`** - Difumina rostros detectados con Gaussian Blur
 - **`verify_anonymization.py`** - Verifica que la anonimización se completó correctamente
 
 ## 📄 Documentación
