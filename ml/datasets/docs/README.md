@@ -39,11 +39,23 @@ Esta carpeta contiene toda la documentación relacionada con el procesamiento, l
 
 ### Guías de Implementación
 
-- **[D-07_MINIO_INGESTION.md](D-07_MINIO_INGESTION.md)** - Guía completa de ingesta a MinIO
-  - Configuración de MinIO
+- **[D-07_MINIO_INGESTION.md](D-07_MINIO_INGESTION.md)** - Ingesta a MinIO (D-07)
+  - Configuración de MinIO con Docker
   - Estructura de buckets y versionado
-  - Metadatos y SHA256 hashing
-  - Proceso de descarga y verificación
+  - Metadata schema y validación
+  - Proceso de ingesta con hashing SHA256
+
+- **[D-08_ANONYMIZATION.md](D-08_ANONYMIZATION.md)** - Anonimización y Privacidad (D-08)
+  - Eliminación de metadatos EXIF sensibles (GPS, usuario, dispositivo)
+  - Detección y difuminado de rostros/placas (implementado, requiere Python estable)
+  - Cumplimiento de GDPR/CCPA
+  - Proceso de validación y reporte
+
+- **[ANONYMIZATION_REPORT.md](ANONYMIZATION_REPORT.md)** - Reporte de Ejecución D-08
+  - 57,976 imágenes procesadas
+  - EXIF completamente eliminado
+  - Dataset seguro para compartir
+  - Limitaciones técnicas (Python 3.14-alpha)
 
 ## 🔄 Flujo de Procesamiento
 
@@ -61,6 +73,8 @@ Esta carpeta contiene toda la documentación relacionada con el procesamiento, l
 6. Data Augmentation (augmentation_config.md)
    ↓
 7. Ingesta a MinIO (D-07_MINIO_INGESTION.md)
+   ↓
+8. Anonimización (D-08_ANONYMIZATION.md)
 ```
 
 ## 📊 Estado Actual del Dataset

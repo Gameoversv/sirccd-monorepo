@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-02-03T01:08:27.996154",
+  "configuration": {
+    "remove_all_exif": true,
+    "face_detection": false,
+    "plate_detection": false
+  },
+  "splits": {
+    "train": {
+      "total": 40543,
+      "processed": 40543,
+      "exif_removed": 40543,
+      "exif_sensitive_found": 0,
+      "faces_found": 0,
+      "plates_found": 0,
+      "blurred": 0,
+      "errors": []
+    },
+    "val": {
+      "total": 11614,
+      "processed": 11614,
+      "exif_removed": 11614,
+      "exif_sensitive_found": 0,
+      "faces_found": 0,
+      "plates_found": 0,
+      "blurred": 0,
+      "errors": []
+    },
+    "test": {
+      "total": 5819,
+      "processed": 5819,
+      "exif_removed": 5819,
+      "exif_sensitive_found": 0,
+      "faces_found": 0,
+      "plates_found": 0,
+      "blurred": 0,
+      "errors": []
+    }
+  },
+  "summary": {
+    "total_images": 57976,
+    "processed": 57976,
+    "exif_removed": 57976,
+    "sensitive_found": 0,
+    "faces_detected": 0,
+    "plates_detected": 0,
+    "images_blurred": 0
+  }
+}

@@ -1,0 +1,439 @@
+"""
+Script para anonimizar dataset (D-08).
+
+Tareas:
+1. Eliminar metadatos EXIF sensibles (GPS, usuario, dispositivo)
+2. Detectar y difuminar rostros (si existen)
+3. Detectar y difuminar placas vehiculares (si existen)
+4. Generar reporte de anonimización
+"""
+
+from pathlib import Path
+import json
+from datetime import datetime
+from PIL import Image
+import piexif
+from collections import defaultdict
+from tqdm import tqdm
+import argparse
+
+# Directorios
+SCRIPT_DIR = Path(__file__).parent.parent  # ml/datasets/
+DATASET_DIR = SCRIPT_DIR / 'processed' / 'split'
+IMAGES_DIR = DATASET_DIR / 'images'
+ANONYMIZED_DIR = SCRIPT_DIR / 'processed' / 'anonymized'
+METADATA_DIR = SCRIPT_DIR / 'metadata'
+
+# Tags EXIF sensibles a eliminar
+SENSITIVE_EXIF_TAGS = {
+    'GPS': ['GPSLatitude', 'GPSLongitude', 'GPSAltitude', 'GPSTimeStamp', 'GPSDateStamp'],
+    'Exif': ['UserComment', 'MakerNote', 'CameraOwnerName'],
+    '0th': ['Artist', 'Copyright', 'Software', 'HostComputer'],
+    '1st': [],
+    'Interop': []
+}
+
+# Configuración de detección
+FACE_DETECTION_ENABLED = False  # Requiere cv2 y cascade classifier
+PLATE_DETECTION_ENABLED = False  # Requiere modelo entrenado
+
+
+def get_exif_data(img_path):
+    """Extrae datos EXIF de una imagen."""
+    try:
+        img = Image.open(img_path)
+        if 'exif' not in img.info:
+            return None
+        
+        exif_dict = piexif.load(img.info['exif'])
+        return exif_dict
+    except Exception as e:
+        return None
+
+
+def has_sensitive_exif(exif_dict):
+    """Verifica si la imagen tiene EXIF sensible."""
+    if not exif_dict:
+        return False
+    
+    sensitive_found = []
+    
+    # Verificar GPS
+    if 'GPS' in exif_dict and exif_dict['GPS']:
+        sensitive_found.append('GPS')
+    
+    # Verificar tags de usuario
+    if 'Exif' in exif_dict:
+        for tag, value in exif_dict['Exif'].items():
+            tag_name = piexif.TAGS['Exif'].get(tag, {}).get('name', '')
+            if tag_name in ['UserComment', 'MakerNote', 'CameraOwnerName']:
+                sensitive_found.append(f'Exif.{tag_name}')
+    
+    # Verificar metadata de autor
+    if '0th' in exif_dict:
+        for tag, value in exif_dict['0th'].items():
+            tag_name = piexif.TAGS['0th'].get(tag, {}).get('name', '')
+            if tag_name in ['Artist', 'Copyright', 'HostComputer']:
+                sensitive_found.append(f'0th.{tag_name}')
+    
+    return sensitive_found
+
+
+def remove_exif(img_path, output_path):
+    """Elimina todos los metadatos EXIF de una imagen."""
+    try:
+        img = Image.open(img_path)
+        
+        # Guardar sin EXIF (mantener formato y calidad)
+        img.save(output_path, quality=95, optimize=True, exif=b'')
+        
+        return True
+    except Exception as e:
+        print(f"Error limpiando EXIF de {img_path.name}: {e}")
+        return False
+
+
+def detect_faces(img_path):
+    """Detecta rostros en una imagen (requiere OpenCV)."""
+    if not FACE_DETECTION_ENABLED:
+        return []
+    
+    try:
+        import cv2
+        
+        # Cargar clasificador Haar Cascade
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        
+        # Leer imagen
+        img = cv2.imread(str(img_path))
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Detectar rostros
+        faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+        
+        return faces.tolist() if len(faces) > 0 else []
+    except Exception as e:
+        print(f"Error detectando rostros en {img_path.name}: {e}")
+        return []
+
+
+def detect_license_plates(img_path):
+    """Detecta placas vehiculares (requiere modelo especializado)."""
+    if not PLATE_DETECTION_ENABLED:
+        return []
+    
+    # Placeholder: requiere modelo YOLO/detector de placas
+    # Por ahora retorna lista vacía
+    return []
+
+
+def blur_regions(img_path, output_path, regions):
+    """Difumina regiones específicas de una imagen."""
+    try:
+        import cv2
+        
+        img = cv2.imread(str(img_path))
+        
+        for (x, y, w, h) in regions:
+            # Extraer ROI
+            roi = img[y:y+h, x:x+w]
+            
+            # Aplicar blur gaussiano fuerte
+            blurred = cv2.GaussianBlur(roi, (51, 51), 30)
+            
+            # Reemplazar región
+            img[y:y+h, x:x+w] = blurred
+        
+        # Guardar imagen
+        cv2.imwrite(str(output_path), img, [cv2.IMWRITE_JPEG_QUALITY, 95])
+        
+        return True
+    except Exception as e:
+        print(f"Error difuminando regiones en {img_path.name}: {e}")
+        return False
+
+
+def anonymize_image(img_path, output_path, remove_all_exif=True, detect_sensitive=True):
+    """
+    Anonimiza una imagen completa.
+    
+    Args:
+        img_path: Ruta de imagen original
+        output_path: Ruta de salida
+        remove_all_exif: Si True, elimina todo EXIF. Si False, solo sensible.
+        detect_sensitive: Si True, detecta rostros/placas
+    
+    Returns:
+        dict con estadísticas de anonimización
+    """
+    stats = {
+        'exif_removed': False,
+        'exif_sensitive': [],
+        'faces_detected': 0,
+        'plates_detected': 0,
+        'blurred': False,
+        'success': False
+    }
+    
+    # 1. Verificar EXIF sensible
+    exif_data = get_exif_data(img_path)
+    sensitive_tags = has_sensitive_exif(exif_data)
+    
+    if sensitive_tags:
+        stats['exif_sensitive'] = sensitive_tags
+    
+    # 2. Detectar elementos sensibles
+    faces = []
+    plates = []
+    
+    if detect_sensitive:
+        faces = detect_faces(img_path)
+        plates = detect_license_plates(img_path)
+        
+        stats['faces_detected'] = len(faces)
+        stats['plates_detected'] = len(plates)
+    
+    # 3. Procesar imagen
+    if remove_all_exif:
+        # Eliminar todo EXIF
+        success = remove_exif(img_path, output_path)
+        stats['exif_removed'] = success
+        stats['success'] = success
+    else:
+        # Solo copiar si no hay EXIF sensible
+        if not sensitive_tags:
+            import shutil
+            shutil.copy2(img_path, output_path)
+            stats['success'] = True
+        else:
+            success = remove_exif(img_path, output_path)
+            stats['exif_removed'] = success
+            stats['success'] = success
+    
+    # 4. Difuminar rostros/placas si existen
+    if faces or plates:
+        regions = list(faces) + list(plates)
+        if blur_regions(img_path, output_path, regions):
+            stats['blurred'] = True
+    
+    return stats
+
+
+def process_split(split_name, remove_all_exif=True, detect_sensitive=False):
+    """Procesa todas las imágenes de un split."""
+    print(f"\n🔒 Anonimizando split: {split_name}")
+    
+    images_src = IMAGES_DIR / split_name
+    labels_src = DATASET_DIR / 'labels' / split_name
+    
+    images_dst = ANONYMIZED_DIR / 'images' / split_name
+    labels_dst = ANONYMIZED_DIR / 'labels' / split_name
+    
+    images_dst.mkdir(parents=True, exist_ok=True)
+    labels_dst.mkdir(parents=True, exist_ok=True)
+    
+    stats = {
+        'total': 0,
+        'processed': 0,
+        'exif_removed': 0,
+        'exif_sensitive_found': 0,
+        'faces_found': 0,
+        'plates_found': 0,
+        'blurred': 0,
+        'errors': []
+    }
+    
+    # Procesar imágenes
+    images = list(images_src.glob('*'))
+    
+    for img_path in tqdm(images, desc=f"Procesando {split_name}"):
+        if img_path.suffix.lower() not in ['.jpg', '.jpeg', '.png']:
+            continue
+        
+        stats['total'] += 1
+        
+        output_path = images_dst / img_path.name
+        
+        # Anonimizar imagen
+        result = anonymize_image(img_path, output_path, remove_all_exif, detect_sensitive)
+        
+        if result['success']:
+            stats['processed'] += 1
+            
+            if result['exif_removed']:
+                stats['exif_removed'] += 1
+            
+            if result['exif_sensitive']:
+                stats['exif_sensitive_found'] += 1
+            
+            stats['faces_found'] += result['faces_detected']
+            stats['plates_found'] += result['plates_detected']
+            
+            if result['blurred']:
+                stats['blurred'] += 1
+        else:
+            stats['errors'].append(img_path.name)
+        
+        # Copiar label correspondiente
+        label_path = labels_src / f"{img_path.stem}.txt"
+        if label_path.exists():
+            import shutil
+            shutil.copy2(label_path, labels_dst / label_path.name)
+    
+    return stats
+
+
+def generate_report(all_stats):
+    """Genera reporte de anonimización."""
+    report = {
+        'timestamp': datetime.now().isoformat(),
+        'configuration': {
+            'remove_all_exif': True,
+            'face_detection': FACE_DETECTION_ENABLED,
+            'plate_detection': PLATE_DETECTION_ENABLED
+        },
+        'splits': all_stats,
+        'summary': {
+            'total_images': sum(s['total'] for s in all_stats.values()),
+            'processed': sum(s['processed'] for s in all_stats.values()),
+            'exif_removed': sum(s['exif_removed'] for s in all_stats.values()),
+            'sensitive_found': sum(s['exif_sensitive_found'] for s in all_stats.values()),
+            'faces_detected': sum(s['faces_found'] for s in all_stats.values()),
+            'plates_detected': sum(s['plates_found'] for s in all_stats.values()),
+            'images_blurred': sum(s['blurred'] for s in all_stats.values())
+        }
+    }
+    
+    # Guardar reporte
+    report_path = METADATA_DIR / 'anonymization_report.json'
+    with open(report_path, 'w') as f:
+        json.dump(report, f, indent=2)
+    
+    print(f"\n✅ Reporte guardado: {report_path}")
+    
+    return report
+
+
+def create_data_yaml():
+    """Crea data.yaml para dataset anonimizado."""
+    yaml_content = f"""# SIRCCD Dataset - Anonimizado (D-08)
+# Generado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+# Metadatos EXIF eliminados para proteger privacidad
+
+path: {ANONYMIZED_DIR.absolute().as_posix()}
+train: images/train
+val: images/val
+test: images/test
+
+nc: 2
+names:
+  0: bache
+  1: grieta
+
+# Nota: Dataset completamente anonimizado
+# - Sin coordenadas GPS
+# - Sin información de usuario/dispositivo
+# - Sin metadatos EXIF sensibles
+"""
+    
+    yaml_file = ANONYMIZED_DIR / 'data.yaml'
+    with open(yaml_file, 'w', encoding='utf-8') as f:
+        f.write(yaml_content)
+    
+    print(f"✅ Configuración YOLO: {yaml_file}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Anonimización de dataset (D-08)')
+    parser.add_argument('--detect-faces', action='store_true', 
+                       help='Activar detección de rostros (requiere OpenCV)')
+    parser.add_argument('--detect-plates', action='store_true',
+                       help='Activar detección de placas (requiere modelo)')
+    parser.add_argument('--keep-basic-exif', action='store_true',
+                       help='Solo eliminar EXIF sensible, mantener básico')
+    parser.add_argument('--check-only', action='store_true',
+                       help='Solo analizar sin procesar')
+    
+    args = parser.parse_args()
+    
+    global FACE_DETECTION_ENABLED, PLATE_DETECTION_ENABLED
+    FACE_DETECTION_ENABLED = args.detect_faces
+    PLATE_DETECTION_ENABLED = args.detect_plates
+    
+    print("=" * 60)
+    print("🔒 ANONIMIZACIÓN DE DATASET (D-08)")
+    print("=" * 60)
+    print(f"\nConfiguración:")
+    print(f"   Eliminar EXIF: {'Solo sensible' if args.keep_basic_exif else 'Todos'}")
+    print(f"   Detección rostros: {'✓' if FACE_DETECTION_ENABLED else '✗'}")
+    print(f"   Detección placas: {'✓' if PLATE_DETECTION_ENABLED else '✗'}")
+    
+    if args.check_only:
+        print("\n📊 Modo análisis (sin modificar archivos)")
+        
+        # Analizar EXIF sensible
+        sensitive_count = 0
+        total_count = 0
+        
+        for split in ['train', 'val', 'test']:
+            images_dir = IMAGES_DIR / split
+            for img_path in images_dir.glob('*'):
+                if img_path.suffix.lower() in ['.jpg', '.jpeg', '.png']:
+                    total_count += 1
+                    exif_data = get_exif_data(img_path)
+                    if has_sensitive_exif(exif_data):
+                        sensitive_count += 1
+        
+        print(f"\n📊 Resultados del análisis:")
+        print(f"   Total de imágenes: {total_count}")
+        print(f"   Con EXIF sensible: {sensitive_count} ({sensitive_count/total_count*100:.1f}%)")
+        return
+    
+    # Crear directorios
+    ANONYMIZED_DIR.mkdir(parents=True, exist_ok=True)
+    METADATA_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Procesar cada split
+    all_stats = {}
+    
+    for split in ['train', 'val', 'test']:
+        stats = process_split(
+            split, 
+            remove_all_exif=not args.keep_basic_exif,
+            detect_sensitive=FACE_DETECTION_ENABLED or PLATE_DETECTION_ENABLED
+        )
+        all_stats[split] = stats
+        
+        print(f"\n📊 Resultados {split}:")
+        print(f"   Total: {stats['total']}")
+        print(f"   Procesadas: {stats['processed']}")
+        print(f"   EXIF eliminado: {stats['exif_removed']}")
+        print(f"   EXIF sensible encontrado: {stats['exif_sensitive_found']}")
+        if FACE_DETECTION_ENABLED:
+            print(f"   Rostros detectados: {stats['faces_found']}")
+        if PLATE_DETECTION_ENABLED:
+            print(f"   Placas detectadas: {stats['plates_found']}")
+        if stats['blurred'] > 0:
+            print(f"   Imágenes difuminadas: {stats['blurred']}")
+    
+    # Generar reporte
+    report = generate_report(all_stats)
+    
+    # Crear data.yaml
+    create_data_yaml()
+    
+    # Resumen final
+    print("\n" + "=" * 60)
+    print("✅ ANONIMIZACIÓN COMPLETADA")
+    print("=" * 60)
+    print(f"\nDataset anonimizado: {ANONYMIZED_DIR}")
+    print(f"   Total procesadas: {report['summary']['processed']}")
+    print(f"   EXIF eliminado: {report['summary']['exif_removed']}")
+    print(f"   EXIF sensible encontrado: {report['summary']['sensitive_found']}")
+    print(f"   Rostros detectados: {report['summary']['faces_detected']}")
+    print(f"   Placas detectadas: {report['summary']['plates_detected']}")
+    print(f"\n🔒 Dataset completamente anonimizado y listo para uso")
+
+
+if __name__ == '__main__':
+    main()

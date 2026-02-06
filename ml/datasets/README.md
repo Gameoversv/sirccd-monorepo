@@ -34,8 +34,11 @@ ml/datasets/
 - **`google_places_pois.py`** - Descarga POIs desde Google Places API
 - **`generate_theoretical_risk_zones.py`** - Genera zonas de riesgo teóricas
 
-### Almacenamiento
+### Almacenamiento y Privacidad
 - **`upload_to_minio.py`** - Ingesta el dataset a MinIO con metadatos y versionado
+- **`anonymize_dataset.py`** - Elimina metadatos EXIF sensibles completamente
+- **`detect_sensitive_content.py`** - Detecta rostros/placas (requiere Python estable)
+- **`verify_anonymization.py`** - Verifica que la anonimización se completó correctamente
 
 ## 📄 Documentación
 
@@ -45,6 +48,7 @@ ml/datasets/
 - **`SPLIT_REPORT.md`** - Reporte de división del dataset
 - **`SEVERITY_REPORT.md`** - Reporte de etiquetado de severidad
 - **`D-07_MINIO_INGESTION.md`** - Guía de ingesta a MinIO
+- **`D-08_ANONYMIZATION.md`** - Guía de anonimización y protección de privacidad
 
 ### Configuración y Criterios
 - **`augmentation_config.md`** - Configuración de data augmentation
@@ -101,7 +105,16 @@ python scripts/label_severity.py
 python scripts/google_places_pois.py
 ```
 
-### 3. Subir a MinIO
+### 3. Anonimizar Dataset
+```bash
+# Análisis de EXIF sensible
+python scripts/anonymize_dataset.py --check-only
+
+# Anonimización completa
+python scripts/anonymize_dataset.py
+```
+
+### 4. Subir a MinIO
 ```bash
 # Desde el directorio raíz del monorepo
 
