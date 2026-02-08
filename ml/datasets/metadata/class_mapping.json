@@ -1,11 +1,20 @@
 {
   "sirccd_classes": {
     "bache": 0,
+    "grieta": 1
+  },
+  "sirccd_classes_original": {
+    "bache": 0,
     "socavon": 1,
     "grieta": 2,
     "alcantarilla": 3,
     "senal": 4,
     "alumbrado": 5
+  },
+  "remap_applied": {
+    "0_bache": "0_bache",
+    "2_grieta": "1_grieta",
+    "4_senal": "REMOVED"
   },
   "dataset_mappings": {
     "RDD2022": {

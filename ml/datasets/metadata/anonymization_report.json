@@ -2,8 +2,7 @@
   "timestamp": "2026-02-03T01:08:27.996154",
   "configuration": {
     "remove_all_exif": true,
-    "face_detection": false,
-    "plate_detection": false
+    "note": "Face/plate detection removed due to false positives in dash cam dataset"
   },
   "splits": {
     "train": {
@@ -11,9 +10,6 @@
       "processed": 40543,
       "exif_removed": 40543,
       "exif_sensitive_found": 0,
-      "faces_found": 0,
-      "plates_found": 0,
-      "blurred": 0,
       "errors": []
     },
     "val": {
@@ -21,9 +17,6 @@
       "processed": 11614,
       "exif_removed": 11614,
       "exif_sensitive_found": 0,
-      "faces_found": 0,
-      "plates_found": 0,
-      "blurred": 0,
       "errors": []
     },
     "test": {
@@ -31,9 +24,6 @@
       "processed": 5819,
       "exif_removed": 5819,
       "exif_sensitive_found": 0,
-      "faces_found": 0,
-      "plates_found": 0,
-      "blurred": 0,
       "errors": []
     }
   },
@@ -41,31 +31,6 @@
     "total_images": 57976,
     "processed": 57976,
     "exif_removed": 57976,
-    "sensitive_found": 0,
-    "faces_detected": 13520,
-    "plates_detected": 0,
-    "images_blurred": 6614
-  },
-  "face_blur": {
-    "timestamp": "2026-02-06T12:22:09.658268",
-    "classifier": "haarcascade_frontalface_default",
-    "kernel_size": 51,
-    "sigma": 30,
-    "total_images_blurred": 6614,
-    "total_faces_blurred": 13520,
-    "splits": {
-      "train": {
-        "images_blurred": 4672,
-        "faces_blurred": 9538
-      },
-      "val": {
-        "images_blurred": 1271,
-        "faces_blurred": 2595
-      },
-      "test": {
-        "images_blurred": 671,
-        "faces_blurred": 1387
-      }
-    }
+    "sensitive_found": 0
   }
 }
