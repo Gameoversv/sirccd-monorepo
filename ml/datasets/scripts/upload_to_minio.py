@@ -1,12 +1,18 @@
 """
 Script para ingestar dataset a MinIO con metadatos organizados.
 D-07: Sube imágenes y anotaciones del dataset YOLO a bucket MinIO.
+
+Uso:
+    python upload_to_minio.py                # Ingesta completa
+    python upload_to_minio.py --labels-only  # Solo re-sube labels y labels_severity
 """
 from pathlib import Path
+import argparse
 import json
 from datetime import datetime
 from minio import Minio
 from minio.error import S3Error
+from tqdm import tqdm
 import hashlib
 
 # Configuración MinIO
@@ -20,6 +26,7 @@ SCRIPT_DIR = Path(__file__).parent.parent  # ml/datasets/
 DATASET_DIR = SCRIPT_DIR / "processed" / "split"
 IMAGES_DIR = DATASET_DIR / "images"
 LABELS_DIR = DATASET_DIR / "labels"
+LABELS_SEV_DIR = DATASET_DIR / "labels_severity"
 
 # Metadatos del dataset
 DATASET_VERSION = "v1.0.0"
@@ -27,11 +34,12 @@ DATASET_INFO = {
     "name": "SIRCCD Road Damage Dataset",
     "version": DATASET_VERSION,
     "created_at": datetime.now().isoformat(),
-    "classes": ["bache", "grieta"],
+    "classes": {0: "bache", 1: "grieta"},
+    "num_classes": 2,
     "splits": ["train", "val", "test"],
     "source_datasets": ["RDD2022", "RDD2020", "N-RDD2024", "Pothole-600"],
     "seed": 42,
-    "total_images": 58209,
+    "total_images": 57976,
 }
 
 
@@ -83,41 +91,42 @@ def upload_file_with_metadata(client, local_path, object_name, metadata):
         return False
 
 
-def upload_dataset_split(client, split_name):
+def upload_dataset_split(client, split_name, labels_only=False):
     """Sube imágenes y labels de un split."""
     images_split = IMAGES_DIR / split_name
     labels_split = LABELS_DIR / split_name
+    labels_sev_split = LABELS_SEV_DIR / split_name
     
-    if not images_split.exists():
+    if not labels_split.exists():
         print(f"⚠️  Split '{split_name}' no existe")
-        return 0, 0
+        return 0, 0, 0
     
     uploaded_images = 0
     uploaded_labels = 0
+    uploaded_labels_sev = 0
     
     print(f"\n📤 Subiendo split: {split_name}")
     
-    # Subir imágenes
-    for img_file in images_split.glob("*.*"):
-        if img_file.suffix.lower() not in ['.jpg', '.jpeg', '.png']:
-            continue
-        
-        object_name = f"{DATASET_VERSION}/{split_name}/images/{img_file.name}"
-        metadata = {
-            "dataset-version": DATASET_VERSION,
-            "split": split_name,
-            "type": "image",
-            "file-hash": get_file_hash(img_file),
-            "uploaded-at": datetime.now().isoformat()
-        }
-        
-        if upload_file_with_metadata(client, str(img_file), object_name, metadata):
-            uploaded_images += 1
-            if uploaded_images % 1000 == 0:
-                print(f"  Imágenes: {uploaded_images}")
+    # Subir imágenes (si no es labels_only)
+    if not labels_only:
+        img_files = list(images_split.glob("*.*"))
+        img_files = [f for f in img_files if f.suffix.lower() in ['.jpg', '.jpeg', '.png']]
+        for img_file in tqdm(img_files, desc=f"  {split_name}/images"):
+            object_name = f"{DATASET_VERSION}/{split_name}/images/{img_file.name}"
+            metadata = {
+                "dataset-version": DATASET_VERSION,
+                "split": split_name,
+                "type": "image",
+                "file-hash": get_file_hash(img_file),
+                "uploaded-at": datetime.now().isoformat()
+            }
+            
+            if upload_file_with_metadata(client, str(img_file), object_name, metadata):
+                uploaded_images += 1
     
     # Subir labels
-    for label_file in labels_split.glob("*.txt"):
+    label_files = list(labels_split.glob("*.txt"))
+    for label_file in tqdm(label_files, desc=f"  {split_name}/labels"):
         object_name = f"{DATASET_VERSION}/{split_name}/labels/{label_file.name}"
         metadata = {
             "dataset-version": DATASET_VERSION,
@@ -130,8 +139,24 @@ def upload_dataset_split(client, split_name):
         if upload_file_with_metadata(client, str(label_file), object_name, metadata):
             uploaded_labels += 1
     
-    print(f"  ✅ {split_name}: {uploaded_images} imágenes, {uploaded_labels} labels")
-    return uploaded_images, uploaded_labels
+    # Subir labels_severity
+    if labels_sev_split.exists():
+        sev_files = list(labels_sev_split.glob("*.txt"))
+        for sev_file in tqdm(sev_files, desc=f"  {split_name}/labels_severity"):
+            object_name = f"{DATASET_VERSION}/{split_name}/labels_severity/{sev_file.name}"
+            metadata = {
+                "dataset-version": DATASET_VERSION,
+                "split": split_name,
+                "type": "label_severity",
+                "file-hash": get_file_hash(sev_file),
+                "uploaded-at": datetime.now().isoformat()
+            }
+            
+            if upload_file_with_metadata(client, str(sev_file), object_name, metadata):
+                uploaded_labels_sev += 1
+    
+    print(f"  ✅ {split_name}: {uploaded_images} imágenes, {uploaded_labels} labels, {uploaded_labels_sev} labels_severity")
+    return uploaded_images, uploaded_labels, uploaded_labels_sev
 
 
 def upload_dataset_metadata(client):
@@ -154,8 +179,14 @@ def upload_dataset_metadata(client):
 
 def main():
     """Ejecuta el proceso completo de ingesta."""
+    parser = argparse.ArgumentParser(description="Ingesta de dataset a MinIO")
+    parser.add_argument("--labels-only", action="store_true",
+                        help="Solo re-sube labels y labels_severity (no imágenes)")
+    args = parser.parse_args()
+
+    mode = "LABELS ONLY" if args.labels_only else "COMPLETA"
     print("=" * 60)
-    print("📦 INGESTA DE DATASET A MinIO (D-07)")
+    print(f"📦 INGESTA {mode} DE DATASET A MinIO (D-07)")
     print("=" * 60)
     
     # Crear cliente MinIO
@@ -172,11 +203,15 @@ def main():
     # Subir splits
     total_images = 0
     total_labels = 0
+    total_labels_sev = 0
     
     for split in ["train", "val", "test"]:
-        img_count, lbl_count = upload_dataset_split(client, split)
+        img_count, lbl_count, sev_count = upload_dataset_split(
+            client, split, labels_only=args.labels_only
+        )
         total_images += img_count
         total_labels += lbl_count
+        total_labels_sev += sev_count
     
     # Resumen
     print("\n" + "=" * 60)
@@ -184,8 +219,11 @@ def main():
     print("=" * 60)
     print(f"Bucket: {BUCKET_NAME}")
     print(f"Versión: {DATASET_VERSION}")
-    print(f"Total imágenes: {total_images}")
+    print(f"Modo: {mode}")
+    if not args.labels_only:
+        print(f"Total imágenes: {total_images}")
     print(f"Total labels: {total_labels}")
+    print(f"Total labels_severity: {total_labels_sev}")
     print(f"\n🌐 Consola MinIO: http://localhost:9001")
     print(f"Usuario: {MINIO_ACCESS_KEY}")
     print(f"Contraseña: {MINIO_SECRET_KEY}")
