@@ -1,0 +1,76 @@
+# Entorno virtual (si está dentro de ml/)
+venv/
+.venv/
+ENV/
+env/
+
+# Variables de entorno sensibles
+.env
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Model checkpoints y weights
+models/**/*.pt
+models/**/*.pth
+models/**/*.onnx
+models/**/*.tflite
+*.pt
+*.pth
+*.weights
+*.onnx
+
+# TensorBoard logs
+runs/
+logs/
+*.log
+
+# Weights & Biases
+wandb/
+.wandb/
+
+# PyTorch cache
+.cache/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Data caches
+*.pkl
+*.pickle  
+*.h5
+*.hdf5
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Large datasets (si están localmente)
+# Descomentar si datasets no deben estar en git
+# datasets/raw/
+# datasets/processed/
+
+# Experiment outputs
+outputs/
+predictions/
+results/
+*.csv
+*.json
+!configs/*.json
+!metadata/*.json

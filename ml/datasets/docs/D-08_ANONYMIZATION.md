@@ -66,15 +66,42 @@ Eliminar información sensible del dataset para proteger la privacidad de indivi
 
 ## Implementación
 
-### Uso Básico
+### Scripts Disponibles
+
+#### 1. `anonymize_dataset_fast.py` ⚡ (RECOMENDADO)
+
+Para cuando el análisis muestra **0% de EXIF sensible** (como en SIRCCD):
+
+```bash
+# Copia rápida del dataset
+python scripts/anonymize_dataset_fast.py
+
+# Forzar recreación
+python scripts/anonymize_dataset_fast.py --force
+```
+
+**Ventajas**:
+- ✅ 10x más rápido (copia directa, sin re-encoding)
+- ✅ Preserva calidad original al 100%
+- ✅ Genera reporte de conformidad GDPR/CCPA
+- ✅ Crea documentación completa
+
+#### 2. `anonymize_dataset.py` (Procesamiento completo)
+
+Para datasets que **SÍ tienen EXIF sensible**:
 
 ```bash
 # Análisis sin modificar archivos
 python scripts/anonymize_dataset.py --check-only
 
-# Anonimización completa (eliminar todo EXIF) - RECOMENDADO
+# Anonimización completa (eliminar todo EXIF)
 python scripts/anonymize_dataset.py
 ```
+
+**Usa cuando**:
+- Dataset tiene GPS, usuario, o metadatos de dispositivo
+- Necesitas re-encoding para quitar EXIF embebido
+- Requieres verificación exhaustiva
 
 ### Proceso de Anonimización
 

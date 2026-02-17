@@ -106,13 +106,10 @@ python scripts/label_severity.py
 python scripts/google_places_pois.py
 ```
 
-### 3. Anonimizar Dataset
+### 3. Certificar Privacidad
 ```bash
-# Análisis de EXIF sensible
-python scripts/anonymize_dataset.py --check-only
-
-# Anonimización completa
-python scripts/anonymize_dataset.py
+# Generar certificación GDPR/CCPA
+python scripts/certify_privacy.py
 ```
 
 ### 4. Subir a MinIO

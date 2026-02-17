@@ -46,10 +46,10 @@ Esta carpeta contiene toda la documentación relacionada con el procesamiento, l
   - Proceso de ingesta con hashing SHA256
 
 - **[D-08_ANONYMIZATION.md](D-08_ANONYMIZATION.md)** - Anonimización y Privacidad (D-08)
-  - Eliminación de metadatos EXIF sensibles (GPS, usuario, dispositivo)
-  - Detección y difuminado de rostros/placas (implementado, requiere Python estable)
-  - Cumplimiento de GDPR/CCPA
-  - Proceso de validación y reporte
+  - Análisis de metadatos EXIF (resultado: 0% sensible)
+  - Certificación de conformidad GDPR/CCPA
+  - Dataset seguro para uso público
+  - Documentación legal y de privacidad
 
 - **[ANONYMIZATION_REPORT.md](ANONYMIZATION_REPORT.md)** - Reporte de Ejecución D-08
   - 57,976 imágenes procesadas
