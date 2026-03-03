@@ -74,6 +74,11 @@ class Settings(BaseSettings):
     GEO_DISTANCE_THRESHOLD: float = 50.0  # meters
     DEDUP_TIME_WINDOW_DAYS: int = 30  # days
     
+    # Priority Service (B-08)
+    PRIORITY_POI_RADIUS_METERS: int = 500  # Radio para buscar POIs cercanos
+    PRIORITY_DUPLICATE_RADIUS_METERS: int = 100  # Radio para buscar duplicados
+    PRIORITY_DUPLICATE_TIME_WINDOW_DAYS: int = 30  # Ventana temporal para duplicados
+    
     # JWT
     SECRET_KEY: str = "zK8vN3mQ1pR5tY9wX2cF6bH0jL4nM7sA1dE5gI9kO3pT6uW8zC2"  # CAMBIAR en producción!
     ALGORITHM: str = "HS256"
