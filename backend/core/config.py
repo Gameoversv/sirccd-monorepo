@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     IOU_THRESHOLD: float = 0.4
     
     # JWT
-    SECRET_KEY: str = "your-secret-key-change-in-production"
+    SECRET_KEY: str = "zK8vN3mQ1pR5tY9wX2cF6bH0jL4nM7sA1dE5gI9kO3pT6uW8zC2"  # CAMBIAR en producción!
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
