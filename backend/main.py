@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import health, auth, reports, deduplication, incidents, export
 from core.config import settings
+from core.metrics import PrometheusMiddleware
 
 # Crear instancia de FastAPI
 app = FastAPI(
@@ -27,6 +28,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Configurar middleware de métricas Prometheus (B-10)
+app.add_middleware(PrometheusMiddleware)
 
 # Registrar rutas
 app.include_router(health.router, prefix=settings.API_V1_STR, tags=["Health"])
