@@ -19,7 +19,7 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 from redis import Redis
-from rq import Worker, Queue, Connection
+from rq import Worker, Queue
 from core.config import settings
 
 # Configurar logging
@@ -58,18 +58,17 @@ def main():
     logger.info(f"🎧 Escuchando colas: {[q.name for q in queues]}")
     
     # Crear y ejecutar worker
-    with Connection(redis_conn):
-        worker = Worker(
-            queues,
-            name=f"sirccd-worker-{os.getpid()}",
-            connection=redis_conn
-        )
-        
-        logger.info(f"🚀 Worker iniciado: {worker.name}")
-        logger.info("⏳ Esperando tareas...")
-        
-        # Ejecutar worker (loop infinito)
-        worker.work(with_scheduler=True)
+    worker = Worker(
+        queues,
+        name=f"sirccd-worker-{os.getpid()}",
+        connection=redis_conn
+    )
+    
+    logger.info(f"🚀 Worker iniciado: {worker.name}")
+    logger.info("⏳ Esperando tareas...")
+    
+    # Ejecutar worker (loop infinito)
+    worker.work(with_scheduler=True)
 
 
 if __name__ == '__main__':
