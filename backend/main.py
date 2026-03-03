@@ -6,7 +6,7 @@ Sistema Inteligente de Reporte Ciudadano de Calles Dañadas
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import health, auth, reports
+from api.routes import health, auth, reports, deduplication
 from core.config import settings
 
 # Crear instancia de FastAPI
@@ -32,6 +32,7 @@ app.add_middleware(
 app.include_router(health.router, prefix=settings.API_V1_STR, tags=["Health"])
 app.include_router(auth.router, prefix=settings.API_V1_STR, tags=["Autenticación"])
 app.include_router(reports.router, prefix=settings.API_V1_STR, tags=["Reportes"])
+app.include_router(deduplication.router, prefix=settings.API_V1_STR, tags=["Deduplicación"])
 
 
 @app.on_event("startup")

@@ -67,6 +67,13 @@ class Settings(BaseSettings):
     CONFIDENCE_THRESHOLD: float = 0.5
     IOU_THRESHOLD: float = 0.4
     
+    # Deduplication Service (B-07)
+    FAISS_INDEX_PATH: str = "storage/faiss_index.bin"
+    DEDUPLICATION_VISUAL_MODEL: str = "resnet50"  # resnet50, resnet101, mobilenet_v2
+    VISUAL_SIMILARITY_THRESHOLD: float = 0.15  # L2 distance
+    GEO_DISTANCE_THRESHOLD: float = 50.0  # meters
+    DEDUP_TIME_WINDOW_DAYS: int = 30  # days
+    
     # JWT
     SECRET_KEY: str = "zK8vN3mQ1pR5tY9wX2cF6bH0jL4nM7sA1dE5gI9kO3pT6uW8zC2"  # CAMBIAR en producción!
     ALGORITHM: str = "HS256"
