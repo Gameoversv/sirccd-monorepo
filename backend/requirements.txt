@@ -10,9 +10,10 @@ psycopg2-binary==2.9.10
 alembic==1.14.0
 geoalchemy2==0.16.0
 
-# Redis (caché)
+# Redis (caché y cola de tareas)
 redis==5.2.0
 hiredis==3.0.0
+rq==2.0.0
 
 # MinIO (almacenamiento)
 minio==7.2.11

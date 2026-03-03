@@ -172,7 +172,7 @@ class CreateReportResponse(BaseModel):
     id: int = Field(..., description="ID único del reporte creado")
     status: ReportStatusEnum = Field(..., description="Estado inicial del reporte")
     
-    # Resultado de detección
+    # Resultado de detección (puede estar pendiente si status=processing)
     damage_type: DamageTypeEnum = Field(..., description="Tipo de daño detectado")
     severity: SeverityLevelEnum = Field(..., description="Severidad detectada")
     confidence: float = Field(..., description="Confianza de la detección (0-1)")
@@ -187,6 +187,9 @@ class CreateReportResponse(BaseModel):
     
     created_at: datetime = Field(..., description="Fecha de creación")
     
+    # B-06: Job ID para seguimiento de procesamiento asíncrono
+    job_id: Optional[str] = Field(None, description="ID del job RQ para seguimiento")
+    
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
@@ -194,13 +197,14 @@ class CreateReportResponse(BaseModel):
                 "id": 123,
                 "status": "processing",
                 "damage_type": "bache",
-                "severity": "alta",
-                "confidence": 0.87,
+                "severity": "media",
+                "confidence": 0.5,
                 "image_url": "http://localhost:9000/sirccd-images/reports/2026/03/02/abc123_image.jpg",
                 "latitude": -34.603722,
                 "longitude": -58.381592,
                 "description": "Bache profundo en la vía principal",
-                "created_at": "2026-03-02T18:30:00"
+                "created_at": "2026-03-02T18:30:00",
+                "job_id": "abc123-def456-ghi789"
             }
         }
     )

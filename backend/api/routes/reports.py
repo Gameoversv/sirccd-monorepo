@@ -13,6 +13,7 @@ from api.deps import get_current_active_user, ActiveUser
 from models.report import Report, ReportStatus, DamageType, SeverityLevel
 from schemas.report import CreateReportResponse, ReportResponse
 from services.storage import storage_service
+from services.queue_service import queue_service
 
 
 router = APIRouter(prefix="/reportes", tags=["Reportes"])
@@ -137,24 +138,19 @@ async def create_report(
             detail=f"Error al procesar la imagen: {str(e)}"
         )
     
-    # 2. Ejecutar detección ML
-    # TODO: Reemplazar mock con servicio ML real
+    # 2. Crear reporte en base de datos con valores placeholder
+    # Los valores reales serán actualizados por el worker ML
     try:
-        damage_type, severity, confidence = _mock_ml_detection(image_url)
-    except Exception as e:
-        # Si falla ML, usar valores por defecto conservadores
+        # Valores placeholder mientras se procesa
         damage_type = DamageType.BACHE
         severity = SeverityLevel.MEDIA
-        confidence = 0.5
-        print(f"⚠️  Error en detección ML: {e}. Usando valores por defecto.")
-    
-    # 3. Crear geometría PostGIS (POINT)
-    # Formato WKT: POINT(longitude latitude) - nota el orden!
-    location_wkt = f"POINT({longitude} {latitude})"
-    location = WKTElement(location_wkt, srid=4326)
-    
-    # 4. Crear reporte en base de datos
-    try:
+        confidence = 0.0
+        
+        # Crear geometría PostGIS (POINT)
+        # Formato WKT: POINT(longitude latitude) - nota el orden!
+        location_wkt = f"POINT({longitude} {latitude})"
+        location = WKTElement(location_wkt, srid=4326)
+        
         new_report = Report(
             user_id=current_user.id,
             location=location,
@@ -168,8 +164,8 @@ async def create_report(
             image_width=image_width,
             image_height=image_height,
             description=description,
-            status=ReportStatus.PROCESSING,  # Inicial: en procesamiento
-            detections_json=None,  # TODO: Guardar bounding boxes del modelo
+            status=ReportStatus.PROCESSING,  # Inicialmente en procesamiento
+            detections_json=None,  # Se llenará por el worker
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
@@ -177,6 +173,38 @@ async def create_report(
         db.add(new_report)
         db.commit()
         db.refresh(new_report)
+        
+        # 3. Encolar tarea de detección ML (B-06: procesamiento asíncrono)
+        job_id = None
+        try:
+            # Construir ruta local a la imagen
+            # Formato de image_url: "/storage/images/reports/2026/03/03/abc123_file.jpg"
+            from pathlib import Path
+            
+            if image_url.startswith("/storage/images/"):
+                # Extraer ruta relativa
+                relative_path = image_url.replace("/storage/images/", "")
+                
+                # Construir ruta absoluta (backend/storage/images/...)
+                backend_dir = Path(__file__).resolve().parent.parent.parent
+                image_local_path = str(backend_dir / "storage" / "images" / relative_path)
+                
+                # Encolar job para procesamiento ML
+                job = queue_service.enqueue_ml_detection(
+                    report_id=new_report.id,
+                    image_local_path=image_local_path
+                )
+                
+                if job:
+                    job_id = job.id
+                    print(f"✅ Job ML encolado: {job_id} para reporte {new_report.id}")
+                else:
+                    print(f"⚠️ No se pudo encolar job ML para reporte {new_report.id}")
+            
+        except Exception as e:
+            # Si falla el encolado, no bloquear la creación del reporte
+            print(f"⚠️ Error al encolar job ML: {e}")
+            # El reporte queda en PROCESSING, puede reprocesarse manualmente
         
     except Exception as e:
         db.rollback()
@@ -191,18 +219,19 @@ async def create_report(
             detail=f"Error al guardar el reporte: {str(e)}"
         )
     
-    # 5. Preparar respuesta
+    # 4. Preparar respuesta
     return CreateReportResponse(
         id=new_report.id,
         status=ReportStatus.PROCESSING,
-        damage_type=damage_type,
-        severity=severity,
-        confidence=confidence,
+        damage_type=damage_type,  # Placeholder
+        severity=severity,  # Placeholder
+        confidence=confidence,  # 0.0 hasta que se procese
         image_url=image_url,
         latitude=latitude,
         longitude=longitude,
         description=description,
-        created_at=new_report.created_at
+        created_at=new_report.created_at,
+        job_id=job_id  # B-06: ID del job RQ para seguimiento
     )
 
 
@@ -257,3 +286,50 @@ async def get_report(
         updated_at=report.updated_at,
         reviewed_at=report.reviewed_at
     )
+
+
+@router.get(
+    "/jobs/{job_id}/status",
+    summary="Obtener estado de job ML",
+    description="Consulta el estado de procesamiento ML de un job RQ (B-06)"
+)
+async def get_job_status(
+    job_id: str,
+    current_user: ActiveUser = None
+) -> dict:
+    """
+    Obtiene el estado de un job de procesamiento ML
+    
+    Útil para hacer polling y saber cuándo terminó el procesamiento.
+    """
+    try:
+        status_info = queue_service.get_job_status(job_id)
+        return status_info
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Job no encontrado: {str(e)}"
+        )
+
+
+@router.get(
+    "/queue/stats",
+    summary="Estadísticas de la cola ML",
+    description="Obtiene estadísticas de la cola de procesamiento ML (B-06)"
+)
+async def get_queue_stats(
+    current_user: ActiveUser = None
+) -> dict:
+    """
+    Obtiene estadísticas de la cola RQ
+    
+    Muestra trabajos encolados, en proceso, completados y fallidos.
+    """
+    try:
+        stats = queue_service.get_queue_stats()
+        return stats
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error obteniendo estadísticas: {str(e)}"
+        )
