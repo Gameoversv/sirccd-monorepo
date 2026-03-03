@@ -135,17 +135,22 @@ class StorageService:
     async def upload_image(
         self,
         file: UploadFile,
-        folder: str = "reports"
-    ) -> Tuple[str, int, int]:
+        folder: str = "reports",
+        anonymize: bool = True
+    ) -> Tuple[str, int, int, dict]:
         """
         Sube una imagen a MinIO o almacenamiento local
+        
+        IMPORTANTE: Anonimiza la imagen por defecto (B-05)
+        Aplica blur a rostros y placas antes de persistir
         
         Args:
             file: Archivo subido por el usuario
             folder: Carpeta dentro del bucket (ej: 'reports', 'avatars')
+            anonymize: Si True, anonimiza la imagen antes de guardar (default: True)
         
         Returns:
-            Tuple[str, int, int]: (URL de la imagen, ancho, alto)
+            Tuple[str, int, int, dict]: (URL, ancho, alto, stats de anonimización)
         
         Raises:
             HTTPException: Si hay errores de validación o carga
@@ -160,7 +165,44 @@ class StorageService:
         # Leer contenido del archivo
         content = await file.read()
         
-        # Obtener dimensiones de la imagen
+        # B-05: Anonimizar imagen ANTES de guardar (blur rostros/placas)
+        anonymization_stats = {
+            'faces_detected': 0,
+            'plates_detected': 0,
+            'regions_blurred': 0,
+            'anonymized': False,
+            'error': None
+        }
+        
+        if anonymize:
+            try:
+                from .anonymizer import image_anonymizer
+                
+                # Anonimizar (detectar y difuminar rostros/placas)
+                content, anonymization_stats = image_anonymizer.anonymize(
+                    content,
+                    detect_faces=True,
+                    detect_plates=True
+                )
+                
+                if anonymization_stats.get('error'):
+                    print(f"⚠️  Error en anonimización: {anonymization_stats['error']}")
+                elif anonymization_stats.get('anonymized'):
+                    print(f"✅ Imagen anonimizada: {anonymization_stats['regions_blurred']} regiones difuminadas "
+                          f"({anonymization_stats['faces_detected']} rostros, {anonymization_stats['plates_detected']} placas)")
+                else:
+                    print("ℹ️  No se detectaron regiones sensibles en la imagen")
+            
+            except Exception as e:
+                print(f"❌ Error crítico en anonimización: {e}")
+                # POLÍTICA: En caso de error, NO guardar la imagen
+                # Esto asegura que nunca se almacenen imágenes sin anonimizar
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error en proceso de anonimización: {str(e)}. Imagen no guardada por seguridad."
+                )
+        
+        # Obtener dimensiones de la imagen (ya anonimizada)
         try:
             from PIL import Image
             import io
@@ -177,7 +219,7 @@ class StorageService:
         else:
             url = await self._upload_to_local(object_name, content)
         
-        return url, width, height
+        return url, width, height, anonymization_stats
     
     async def _upload_to_minio(
         self,

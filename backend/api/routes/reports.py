@@ -116,12 +116,19 @@ async def create_report(
     Crea un nuevo reporte con imagen, GPS y descripción
     """
     
-    # 1. Validar y subir imagen
+    # 1. Validar y subir imagen (con anonimización automática B-05)
     try:
-        image_url, image_width, image_height = await storage_service.upload_image(
+        image_url, image_width, image_height, anonymization_stats = await storage_service.upload_image(
             file=image,
-            folder="reports"
+            folder="reports",
+            anonymize=True  # B-05: SIEMPRE anonimizar antes de guardar
         )
+        
+        # Log de anonimización
+        if anonymization_stats.get('anonymized'):
+            print(f"🔒 Imagen anonimizada: {anonymization_stats['regions_blurred']} regiones "
+                  f"({anonymization_stats['faces_detected']} rostros, {anonymization_stats['plates_detected']} placas)")
+    
     except HTTPException:
         raise
     except Exception as e:
