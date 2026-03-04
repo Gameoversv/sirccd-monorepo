@@ -30,7 +30,8 @@ app.add_middleware(
 )
 
 # Configurar middleware de métricas Prometheus (B-10)
-app.add_middleware(PrometheusMiddleware)
+# TEMPORARILY DISABLED FOR DEBUGGING
+# app.add_middleware(PrometheusMiddleware)
 
 # Registrar rutas
 app.include_router(health.router, prefix=settings.API_V1_STR, tags=["Health"])
