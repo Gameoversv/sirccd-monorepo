@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 import math
 
 from db.session import get_db
-from core.security import get_current_active_user
+from api.deps import get_current_active_user
 from models.user import User
 from models.incident import Incident, IncidentStatus, PriorityLevel
 from models.brigade import Brigade

@@ -59,8 +59,8 @@ async def check_duplicate(
         description="Umbral de distancia geográfica en metros (default: 50.0)",
         ge=0.0
     ),
-    db: Session = Depends(get_db),
-    current_user: ActiveUser = Depends(get_current_active_user)
+    current_user: ActiveUser = None,
+    db: Session = Depends(get_db)
 ):
     """
     Verifica si un reporte es duplicado
@@ -130,8 +130,8 @@ async def find_similar_reports(
     longitude: float = Form(..., description="Longitud WGS84"),
     damage_type: str = Form(..., description="Tipo de daño (bache, grieta)"),
     top_k: int = Form(10, description="Número de resultados", ge=1, le=50),
-    db: Session = Depends(get_db),
-    current_user: ActiveUser = Depends(get_current_active_user)
+    current_user: ActiveUser = None,
+    db: Session = Depends(get_db)
 ):
     """
     Busca reportes similares
@@ -209,8 +209,8 @@ async def find_similar_reports(
 )
 async def rebuild_index(
     batch_size: int = Form(100, description="Tamaño de batch", ge=10, le=1000),
-    db: Session = Depends(get_db),
-    current_user: ActiveUser = Depends(get_current_active_user)
+    current_user: ActiveUser = None,
+    db: Session = Depends(get_db)
 ):
     """
     Reconstruye el índice FAISS
@@ -260,8 +260,8 @@ async def rebuild_index(
     """
 )
 async def get_stats(
-    db: Session = Depends(get_db),
-    current_user: ActiveUser = Depends(get_current_active_user)
+    current_user: ActiveUser = None,
+    db: Session = Depends(get_db)
 ):
     """
     Obtiene estadísticas del servicio
@@ -297,8 +297,8 @@ async def get_stats(
     """
 )
 async def save_index(
-    db: Session = Depends(get_db),
-    current_user: ActiveUser = Depends(get_current_active_user)
+    current_user: ActiveUser = None,
+    db: Session = Depends(get_db)
 ):
     """
     Guarda el índice FAISS en disco

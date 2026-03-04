@@ -9,14 +9,11 @@ Endpoints para exportar:
 
 from datetime import datetime
 from typing import Optional, List
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query, HTTPException, status as http_status
 from fastapi.responses import StreamingResponse, JSONResponse
-from sqlalchemy.orm import Session
 import io
 
-from db.session import get_db
-from api.deps import get_current_active_user
-from models.user import User
+from api.deps import ActiveUser, CurrentUser
 from services.export_service import ExportService, get_export_service
 from schemas.export import (
     ExportStatusResponse,
@@ -34,6 +31,7 @@ router = APIRouter()
 
 @router.get(
     "/incidents/geojson",
+    response_model=None,
     summary="Exportar incidentes en formato GeoJSON",
     description="""
     Exporta incidentes con ubicación geográfica en formato GeoJSON FeatureCollection.
@@ -75,30 +73,30 @@ router = APIRouter()
     - Máximo 10,000 incidentes por exportación
     - Sin paginación (usar filtros para reducir resultados)
     """,
-    response_class=JSONResponse,
     tags=["Exportaciones"]
 )
 async def export_incidents_geojson(
     # Filtros de clasificación
-    status: Optional[List[str]] = Query(
+    filter_status: Optional[List[str]] = Query(
         None,
+        alias="status",
         description="Estados a incluir (puede especificar múltiples)",
-        example=["open", "assigned"]
+        examples=["open", "assigned"]
     ),
     priority: Optional[List[str]] = Query(
         None,
         description="Prioridades a incluir",
-        example=["alta", "critica"]
+        examples=["alta", "critica"]
     ),
     damage_type: Optional[str] = Query(
         None,
         description="Tipo de daño",
-        example="bache"
+        examples=["bache"]
     ),
     severity: Optional[str] = Query(
         None,
         description="Nivel de severidad",
-        example="alta"
+        examples=["alta"]
     ),
     
     # Filtros geográficos
@@ -106,13 +104,13 @@ async def export_incidents_geojson(
         None,
         max_length=100,
         description="Ciudad (búsqueda parcial)",
-        example="Santo Domingo"
+        examples=["Santo Domingo"]
     ),
     province: Optional[str] = Query(
         None,
         max_length=100,
         description="Provincia",
-        example="Distrito Nacional"
+        examples=["Distrito Nacional"]
     ),
     
     # Filtro de brigada
@@ -126,12 +124,12 @@ async def export_incidents_geojson(
     date_from: Optional[datetime] = Query(
         None,
         description="Fecha inicio (ISO 8601)",
-        example="2024-01-01T00:00:00"
+        examples=["2024-01-01T00:00:00"]
     ),
     date_to: Optional[datetime] = Query(
         None,
         description="Fecha fin (ISO 8601)",
-        example="2024-12-31T23:59:59"
+        examples=["2024-12-31T23:59:59"]
     ),
     
     # Opciones
@@ -141,8 +139,7 @@ async def export_incidents_geojson(
     ),
     
     # Dependencias
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: ActiveUser = None,
     export_service: ExportService = Depends(get_export_service)
 ):
     """
@@ -152,13 +149,13 @@ async def export_incidents_geojson(
         # Validar rango de fechas
         if date_from and date_to and date_to < date_from:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail="date_to debe ser posterior a date_from"
             )
         
         # Generar GeoJSON
         geojson = export_service.export_incidents_geojson(
-            status=status,
+            status=filter_status,
             priority=priority,
             damage_type=damage_type,
             severity=severity,
@@ -173,7 +170,7 @@ async def export_incidents_geojson(
         # Validar límite de registros
         if len(geojson["features"]) > 10000:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Demasiados registros ({len(geojson['features'])}). Máximo 10,000. Use filtros más específicos."
             )
         
@@ -189,7 +186,7 @@ async def export_incidents_geojson(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al generar exportación GeoJSON: {str(e)}"
         )
 
@@ -200,6 +197,7 @@ async def export_incidents_geojson(
 
 @router.get(
     "/incidents/csv",
+    response_model=None,
     summary="Exportar listado detallado de incidentes en CSV",
     description="""
     Exporta listado detallado de incidentes en formato CSV (tabla).
@@ -223,12 +221,11 @@ async def export_incidents_geojson(
     
     **Límites:** Máximo 10,000 registros
     """,
-    response_class=StreamingResponse,
     tags=["Exportaciones"]
 )
 async def export_incidents_csv(
     # Filtros (mismos que GeoJSON)
-    status: Optional[List[str]] = Query(None),
+    filter_status: Optional[List[str]] = Query(None, alias="status"),
     priority: Optional[List[str]] = Query(None),
     damage_type: Optional[str] = Query(None),
     severity: Optional[str] = Query(None),
@@ -240,8 +237,7 @@ async def export_incidents_csv(
     include_closed: bool = Query(False),
     
     # Dependencias
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: ActiveUser = None,
     export_service: ExportService = Depends(get_export_service)
 ):
     """
@@ -251,13 +247,13 @@ async def export_incidents_csv(
         # Validar rango de fechas
         if date_from and date_to and date_to < date_from:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail="date_to debe ser posterior a date_from"
             )
         
         # Generar CSV
         csv_content = export_service.export_incidents_detailed_csv(
-            status=status,
+            status=filter_status,
             priority=priority,
             damage_type=damage_type,
             severity=severity,
@@ -273,7 +269,7 @@ async def export_incidents_csv(
         line_count = len(csv_content.split('\n')) - 1
         if line_count > 10000:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Demasiados registros ({line_count}). Máximo 10,000. Use filtros más específicos."
             )
         
@@ -293,7 +289,7 @@ async def export_incidents_csv(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al generar exportación CSV: {str(e)}"
         )
 
@@ -304,6 +300,7 @@ async def export_incidents_csv(
 
 @router.get(
     "/kpis/csv",
+    response_model=None,
     summary="Exportar métricas agregadas (KPIs) en CSV",
     description="""
     Exporta métricas agregadas por período temporal en formato CSV.
@@ -337,7 +334,6 @@ async def export_incidents_csv(
     
     **Incluye fila de totales al final**
     """,
-    response_class=StreamingResponse,
     tags=["Exportaciones"]
 )
 async def export_kpis_csv(
@@ -345,12 +341,12 @@ async def export_kpis_csv(
     date_from: datetime = Query(
         ...,
         description="Fecha inicio (ISO 8601)",
-        example="2024-01-01T00:00:00"
+        examples=["2024-01-01T00:00:00"]
     ),
     date_to: datetime = Query(
         ...,
         description="Fecha fin (ISO 8601)",
-        example="2024-12-31T23:59:59"
+        examples=["2024-12-31T23:59:59"]
     ),
     
     # Agrupación
@@ -364,18 +360,17 @@ async def export_kpis_csv(
         None,
         max_length=100,
         description="Ciudad",
-        example="Santo Domingo"
+        examples=["Santo Domingo"]
     ),
     province: Optional[str] = Query(
         None,
         max_length=100,
         description="Provincia",
-        example="Distrito Nacional"
+        examples=["Distrito Nacional"]
     ),
     
     # Dependencias
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    current_user: ActiveUser = None,
     export_service: ExportService = Depends(get_export_service)
 ):
     """
@@ -385,7 +380,7 @@ async def export_kpis_csv(
         # Validar rango de fechas
         if date_to < date_from:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail="date_to debe ser posterior a date_from"
             )
         
@@ -393,7 +388,7 @@ async def export_kpis_csv(
         delta = date_to - date_from
         if delta.days > 730:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail="El rango de fechas no puede ser mayor a 2 años (730 días)"
             )
         
@@ -428,7 +423,7 @@ async def export_kpis_csv(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al generar exportación de KPIs: {str(e)}"
         )
 
@@ -445,7 +440,7 @@ async def export_kpis_csv(
     tags=["Exportaciones"]
 )
 async def get_export_status(
-    current_user: User = Depends(get_current_active_user)
+    current_user: CurrentUser
 ):
     """
     Obtener estado del servicio de exportación

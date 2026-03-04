@@ -1,0 +1,75 @@
+[run]
+# Medir coverage para estos directorios/archivos
+source = .
+
+# Omitir estos archivos/directorios
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */venv/*
+    */.venv/*
+    */env/*
+    */migrations/*
+    */alembic/*
+    setup.py
+    */quick_check.py
+    */verify_*.py
+    */TESTING_*.py
+    */worker*.py
+
+# Branch coverage (mide if/else branches)
+branch = True
+
+# ==========================================
+[report]
+# Precision de porcentajes
+precision = 2
+
+# Mostrar líneas faltantes
+show_missing = True
+
+# Ordenar por porcentaje de coverage
+sort = Cover
+
+# Excluir líneas con estos patrones
+exclude_lines =
+    # Excluir declaraciones "no cover"
+    pragma: no cover
+    
+    # Excluir funciones abstractas
+    @abstract
+    @abc.abstractmethod
+    
+    # Excluir bloques de debug
+    def __repr__
+    def __str__
+    
+    # Excluir if __name__ == "__main__"
+    if __name__ == .__main__.:
+    
+    # Excluir asserts
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Excluir pass statements
+    pass
+    
+    # Excluir ellipsis
+    \.\.\.
+    
+    # Excluir TYPE_CHECKING blocks
+    if TYPE_CHECKING:
+    
+    # Excluir logging debug
+    logger\.debug
+
+# ==========================================
+[html]
+# Directorio para reporte HTML
+directory = htmlcov
+
+# ==========================================
+[xml]
+# Archivo para reporte XML (usado por CI/CD)
+output = coverage.xml

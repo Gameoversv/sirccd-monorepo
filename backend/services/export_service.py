@@ -19,10 +19,12 @@ import csv
 import io
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
+from fastapi import Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 from geoalchemy2.functions import ST_X, ST_Y, ST_AsGeoJSON
 
+from db.session import get_db
 from models.incident import Incident, IncidentStatus, PriorityLevel
 from models.report import DamageType, SeverityLevel
 from models.user import User
@@ -657,7 +659,7 @@ class ExportService:
         return stats
 
 
-def get_export_service(db: Session) -> ExportService:
+def get_export_service(db: Session = Depends(get_db)) -> ExportService:
     """
     Dependencia para obtener instancia del servicio de exportación
     """
