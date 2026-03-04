@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { PlusCircle } from 'lucide-react';
 import { useAuthStore } from '@/store';
 
 export default function DashboardPage() {
@@ -7,12 +9,21 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900">
-        Dashboard
-      </h1>
-      <p className="mt-2 text-gray-600">
-        Bienvenido, {user?.full_name || user?.username}
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="mt-1 text-gray-600">
+            Bienvenido, {user?.full_name || user?.username}
+          </p>
+        </div>
+        <Link
+          href="/dashboard/reports/new"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          <PlusCircle className="w-4 h-4" />
+          Crear Reporte
+        </Link>
+      </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* Placeholder cards */}

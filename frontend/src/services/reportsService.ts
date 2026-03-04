@@ -23,24 +23,18 @@ export const reportsService = {
     });
 
     const response = await apiClient.get<PaginatedResponse<Report>>(
-      `/reports?${params.toString()}`
+      `/reportes?${params.toString()}`
     );
     return response.data;
   },
 
-  /**
-   * Get report by ID
-   */
   async getReport(id: number): Promise<Report> {
-    const response = await apiClient.get<Report>(`/reports/${id}`);
+    const response = await apiClient.get<Report>(`/reportes/${id}`);
     return response.data;
   },
 
-  /**
-   * Create new report
-   */
   async createReport(formData: FormData): Promise<Report> {
-    const response = await apiClient.post<Report>('/reports', formData, {
+    const response = await apiClient.post<Report>('/reportes', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -48,11 +42,8 @@ export const reportsService = {
     return response.data;
   },
 
-  /**
-   * Update report
-   */
   async updateReport(id: number, data: Partial<Report>): Promise<Report> {
-    const response = await apiClient.patch<Report>(`/reports/${id}`, data);
+    const response = await apiClient.patch<Report>(`/reportes/${id}`, data);
     return response.data;
   },
 
