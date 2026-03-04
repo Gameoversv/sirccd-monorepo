@@ -167,6 +167,15 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
+// Incident list response (matches backend schema)
+export interface IncidentListResponse {
+  total: number;
+  incidents: any[]; // Using any temporarily, could be typed as IncidentBrief[]
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
 export interface ReportFilters {
   status?: ReportStatus;
   damage_class?: DamageClass;
