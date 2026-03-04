@@ -40,7 +40,7 @@ class StorageService:
                 # Verificar/crear bucket de imágenes
                 self._ensure_bucket(settings.MINIO_BUCKET_IMAGES)
             except Exception as e:
-                print(f"⚠️  MinIO no disponible, usando almacenamiento local: {e}")
+                print(f"  MinIO no disponible, usando almacenamiento local: {e}")
                 self.use_minio = False
         
         # Configurar almacenamiento local como fallback
@@ -67,9 +67,9 @@ class StorageService:
         try:
             if not self.client.bucket_exists(bucket_name):
                 self.client.make_bucket(bucket_name)
-                print(f"✅ Bucket '{bucket_name}' creado")
+                print(f" Bucket '{bucket_name}' creado")
         except S3Error as e:
-            print(f"⚠️  Error al verificar/crear bucket: {e}")
+            print(f"  Error al verificar/crear bucket: {e}")
     
     def _generate_unique_filename(self, original_filename: str) -> str:
         """
@@ -186,15 +186,15 @@ class StorageService:
                 )
                 
                 if anonymization_stats.get('error'):
-                    print(f"⚠️  Error en anonimización: {anonymization_stats['error']}")
+                    print(f"  Error en anonimización: {anonymization_stats['error']}")
                 elif anonymization_stats.get('anonymized'):
-                    print(f"✅ Imagen anonimizada: {anonymization_stats['regions_blurred']} regiones difuminadas "
+                    print(f" Imagen anonimizada: {anonymization_stats['regions_blurred']} regiones difuminadas "
                           f"({anonymization_stats['faces_detected']} rostros, {anonymization_stats['plates_detected']} placas)")
                 else:
-                    print("ℹ️  No se detectaron regiones sensibles en la imagen")
+                    print("ℹ  No se detectaron regiones sensibles en la imagen")
             
             except Exception as e:
-                print(f"❌ Error crítico en anonimización: {e}")
+                print(f" Error crítico en anonimización: {e}")
                 # POLÍTICA: En caso de error, NO guardar la imagen
                 # Esto asegura que nunca se almacenen imágenes sin anonimizar
                 raise HTTPException(
@@ -210,7 +210,7 @@ class StorageService:
             img = Image.open(io.BytesIO(content))
             width, height = img.size
         except Exception as e:
-            print(f"⚠️  No se pudieron obtener dimensiones de la imagen: {e}")
+            print(f"  No se pudieron obtener dimensiones de la imagen: {e}")
             width, height = 0, 0
         
         # Subir según el modo configurado

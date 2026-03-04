@@ -46,11 +46,11 @@ class QueueService:
                 default_timeout=300  # 5 minutos timeout por job
             )
             
-            logger.info(f"✅ Conectado a Redis: {settings.REDIS_HOST}:{settings.REDIS_PORT}")
-            logger.info(f"✅ Cola 'ml_inference' creada")
+            logger.info(f" Conectado a Redis: {settings.REDIS_HOST}:{settings.REDIS_PORT}")
+            logger.info(f" Cola 'ml_inference' creada")
             
         except Exception as e:
-            logger.error(f"❌ Error conectando a Redis: {e}")
+            logger.error(f" Error conectando a Redis: {e}")
             self.redis_conn = None
             self.queue = None
             raise
@@ -71,7 +71,7 @@ class QueueService:
             Job de RQ o None si hay error
         """
         if not self.queue:
-            logger.error("❌ Cola no disponible, reconectando...")
+            logger.error(" Cola no disponible, reconectando...")
             try:
                 self._connect()
             except Exception:
@@ -90,13 +90,13 @@ class QueueService:
             )
             
             logger.info(
-                f"✅ Job encolado: {job.id} para reporte {report_id}"
+                f" Job encolado: {job.id} para reporte {report_id}"
             )
             
             return job
             
         except Exception as e:
-            logger.error(f"❌ Error encolando job: {e}", exc_info=True)
+            logger.error(f" Error encolando job: {e}", exc_info=True)
             return None
     
     def get_job_status(self, job_id: str) -> dict:
@@ -166,7 +166,7 @@ class QueueService:
         """Limpia la cola (útil para testing)"""
         if self.queue:
             self.queue.empty()
-            logger.info("🗑️ Cola limpiada")
+            logger.info(" Cola limpiada")
 
 
 # Instancia global del servicio de cola

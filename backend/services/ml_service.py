@@ -132,24 +132,24 @@ class MLInferenceService:
             
             if not os.path.exists(self.model_path):
                 logger.warning(
-                    f"⚠️ Modelo YOLO no encontrado en {self.model_path}. "
+                    f" Modelo YOLO no encontrado en {self.model_path}. "
                     f"Usando detección mock."
                 )
                 self.use_mock = True
                 return
             
-            logger.info(f"📦 Cargando modelo YOLO desde {self.model_path}...")
+            logger.info(f" Cargando modelo YOLO desde {self.model_path}...")
             self.model = YOLO(self.model_path)
             self.model_loaded = True
-            logger.info("✅ Modelo YOLO cargado exitosamente")
+            logger.info(" Modelo YOLO cargado exitosamente")
             
         except ImportError:
             logger.warning(
-                "⚠️ Ultralytics no disponible. Usando detección mock."
+                " Ultralytics no disponible. Usando detección mock."
             )
             self.use_mock = True
         except Exception as e:
-            logger.error(f"❌ Error cargando modelo YOLO: {e}")
+            logger.error(f" Error cargando modelo YOLO: {e}")
             self.use_mock = True
     
     def _mock_detection(
@@ -345,7 +345,7 @@ class MLInferenceService:
         Returns:
             DetectionResult con detecciones y clasificación
         """
-        logger.info(f"🔍 Ejecutando detección ML en: {image_path}")
+        logger.info(f" Ejecutando detección ML en: {image_path}")
         
         # Verificar que la imagen existe
         if not os.path.exists(image_path):
@@ -357,14 +357,14 @@ class MLInferenceService:
         
         # Ejecutar detección (mock o real)
         if self.use_mock:
-            logger.info("📊 Usando detección MOCK")
+            logger.info(" Usando detección MOCK")
             result = self._mock_detection(image_width, image_height)
         else:
-            logger.info("🤖 Usando modelo YOLO")
+            logger.info(" Usando modelo YOLO")
             result = self._yolo_detection(image_path)
         
         logger.info(
-            f"✅ Detección completada: {result.damage_type.value} "
+            f" Detección completada: {result.damage_type.value} "
             f"({result.severity.value}) - {len(result.bounding_boxes)} detecciones"
         )
         

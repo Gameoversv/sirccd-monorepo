@@ -127,7 +127,7 @@ async def create_report(
         
         # Log de anonimización
         if anonymization_stats.get('anonymized'):
-            print(f"🔒 Imagen anonimizada: {anonymization_stats['regions_blurred']} regiones "
+            print(f" Imagen anonimizada: {anonymization_stats['regions_blurred']} regiones "
                   f"({anonymization_stats['faces_detected']} rostros, {anonymization_stats['plates_detected']} placas)")
     
     except HTTPException:
@@ -197,13 +197,13 @@ async def create_report(
                 
                 if job:
                     job_id = job.id
-                    print(f"✅ Job ML encolado: {job_id} para reporte {new_report.id}")
+                    print(f" Job ML encolado: {job_id} para reporte {new_report.id}")
                 else:
-                    print(f"⚠️ No se pudo encolar job ML para reporte {new_report.id}")
+                    print(f" No se pudo encolar job ML para reporte {new_report.id}")
             
         except Exception as e:
             # Si falla el encolado, no bloquear la creación del reporte
-            print(f"⚠️ Error al encolar job ML: {e}")
+            print(f" Error al encolar job ML: {e}")
             # El reporte queda en PROCESSING, puede reprocesarse manualmente
         
     except Exception as e:
@@ -333,3 +333,112 @@ async def get_queue_stats(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error obteniendo estadísticas: {str(e)}"
         )
+
+
+@router.post(
+    "/verify-image",
+    summary="Verificar privacidad de imagen",
+    description="""
+    Analiza una imagen en busca de elementos sensibles (rostros, placas).
+
+    **Uso:** Llamar antes de subir un reporte para advertir al usuario si la imagen
+    contiene información que será anonimizada automáticamente por el servidor.
+
+    **Nota:** Este endpoint NO modifica la imagen. La anonimización real ocurre al
+    crear el reporte (POST /reportes).
+    """
+)
+async def verify_image_privacy(
+    image: UploadFile = File(..., description="Imagen a verificar (JPG, PNG, WEBP)"),
+    current_user: ActiveUser = None,
+):
+    """
+    Detecta rostros y placas en la imagen sin modificarla.
+    Retorna advertencias si encuentra elementos sensibles.
+    """
+    import io
+    import cv2
+    import numpy as np
+    from services.anonymizer import ImageAnonymizer
+
+    # Validar tipo
+    allowed = {"image/jpeg", "image/png", "image/webp"}
+    if image.content_type not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Formato no soportado: {image.content_type}",
+        )
+
+    # Leer bytes
+    content = await image.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="La imagen supera el límite de 10MB",
+        )
+
+    try:
+        # Decodificar imagen para OpenCV
+        arr = np.frombuffer(content, np.uint8)
+        img_cv = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+
+        if img_cv is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="No se pudo decodificar la imagen",
+            )
+
+        # Detectar elementos sensibles
+        anonymizer = ImageAnonymizer()
+        faces = anonymizer.detect_faces(img_cv)
+        plates = (
+            anonymizer.detect_plates_cascade(img_cv)
+            if anonymizer.plate_cascade
+            else anonymizer.detect_plates_basic(img_cv)
+        )
+
+        faces_count = len(faces)
+        plates_count = len(plates)
+        is_clean = faces_count == 0 and plates_count == 0
+
+        regions = [
+            {"type": r.type, "x": r.x, "y": r.y, "w": r.w, "h": r.h}
+            for r in faces + plates
+        ]
+
+        warnings = []
+        if faces_count:
+            warnings.append(
+                f"Se detectaron {faces_count} rostro(s). Serán difuminados automáticamente al enviar."
+            )
+        if plates_count:
+            warnings.append(
+                f"Se detectaron {plates_count} placa(s) vehicular(es). Serán difuminadas automáticamente al enviar."
+            )
+
+        return {
+            "is_clean": is_clean,
+            "faces_detected": faces_count,
+            "plates_detected": plates_count,
+            "regions": regions,
+            "warnings": warnings,
+            "message": (
+                "La imagen no contiene elementos sensibles detectados."
+                if is_clean
+                else "La imagen contiene elementos sensibles que serán anonimizados automáticamente."
+            ),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Si falla la detección (ej. OpenCV no disponible), devolver resultado limpio con aviso
+        return {
+            "is_clean": True,
+            "faces_detected": 0,
+            "plates_detected": 0,
+            "regions": [],
+            "warnings": [],
+            "message": "Verificación no disponible; la anonimización se aplicará en el servidor.",
+            "error": str(e),
+        }

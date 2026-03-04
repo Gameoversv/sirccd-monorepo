@@ -50,12 +50,12 @@ class ImageAnonymizer:
             self.face_cascade = cv2.CascadeClassifier(cascade_path)
             
             if self.face_cascade.empty():
-                print("⚠️  No se pudo cargar el detector de rostros Haar Cascade")
+                print("  No se pudo cargar el detector de rostros Haar Cascade")
                 self.face_cascade = None
             else:
-                print("✅ Detector de rostros cargado correctamente")
+                print(" Detector de rostros cargado correctamente")
         except Exception as e:
-            print(f"⚠️  Error cargando detector de rostros: {e}")
+            print(f"  Error cargando detector de rostros: {e}")
             self.face_cascade = None
     
     def _load_plate_detector(self):
@@ -72,12 +72,12 @@ class ImageAnonymizer:
             self.plate_cascade = cv2.CascadeClassifier(cascade_path)
             
             if self.plate_cascade.empty():
-                print("ℹ️  Detector de placas Haar no disponible (usar método alternativo)")
+                print("ℹ  Detector de placas Haar no disponible (usar método alternativo)")
                 self.plate_cascade = None
             else:
-                print("✅ Detector de placas cargado correctamente")
+                print(" Detector de placas cargado correctamente")
         except Exception as e:
-            print(f"ℹ️  Detector de placas no disponible: {e}")
+            print(f"ℹ  Detector de placas no disponible: {e}")
             self.plate_cascade = None
     
     def detect_faces(self, image: np.ndarray) -> List[BlurRegion]:
@@ -129,7 +129,7 @@ class ImageAnonymizer:
                 ))
         
         except Exception as e:
-            print(f"⚠️  Error detectando rostros: {e}")
+            print(f"  Error detectando rostros: {e}")
         
         return regions
     
@@ -210,7 +210,7 @@ class ImageAnonymizer:
                     ))
         
         except Exception as e:
-            print(f"⚠️  Error detectando placas: {e}")
+            print(f"  Error detectando placas: {e}")
         
         return regions
     
@@ -257,7 +257,7 @@ class ImageAnonymizer:
                 ))
         
         except Exception as e:
-            print(f"⚠️  Error detectando placas con cascade: {e}")
+            print(f"  Error detectando placas con cascade: {e}")
         
         return regions
     
@@ -305,7 +305,7 @@ class ImageAnonymizer:
                 blur_count += 1
             
             except Exception as e:
-                print(f"⚠️  Error aplicando blur a región {region.type}: {e}")
+                print(f"  Error aplicando blur a región {region.type}: {e}")
         
         return blurred_image, blur_count
     
@@ -385,7 +385,7 @@ class ImageAnonymizer:
         
         except Exception as e:
             stats['error'] = str(e)
-            print(f"❌ Error anonimizando imagen: {e}")
+            print(f" Error anonimizando imagen: {e}")
             # En caso de error, retornar imagen original (política conservadora)
             # NOTA: En producción estricta, podría bloquear el guardado
             return image_bytes, stats

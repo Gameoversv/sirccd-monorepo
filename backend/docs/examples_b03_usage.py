@@ -29,7 +29,7 @@ try:
     )
     from models.user import User, UserRole
 except ImportError:
-    print("⚠️  Imports no disponibles - este archivo contiene ejemplos de referencia")
+    print("  Imports no disponibles - este archivo contiene ejemplos de referencia")
     print("    Copiar y pegar los ejemplos en tus propios archivos de rutas")
     sys.exit(0)
 
@@ -494,8 +494,8 @@ if __name__ == "__main__":
         print(f"   Descripción: {func.__doc__.strip()}")
     
     print("\n" + "=" * 80)
-    print("✅ 10 ejemplos de uso disponibles")
+    print(" 10 ejemplos de uso disponibles")
     print("=" * 80)
     
-    print("\n📝 Ver código fuente de cada ejemplo para detalles de implementación")
-    print("📚 Documentación completa en: backend/docs/B-03_AUTHENTICATION.md")
+    print("\n Ver código fuente de cada ejemplo para detalles de implementación")
+    print(" Documentación completa en: backend/docs/B-03_AUTHENTICATION.md")

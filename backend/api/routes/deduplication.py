@@ -200,7 +200,7 @@ async def find_similar_reports(
     - Recuperación de corrupción del índice
     - Después de importar muchos reportes históricos
     
-    ⚠️ **ADVERTENCIA:** Esta operación puede tardar varios minutos dependiendo 
+     **ADVERTENCIA:** Esta operación puede tardar varios minutos dependiendo 
     del número de reportes. El servicio seguirá funcionando durante la reconstrucción
     pero puede tener rendimiento degradado.
     

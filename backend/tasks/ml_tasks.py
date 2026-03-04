@@ -44,7 +44,7 @@ def process_report_ml_detection(report_id: int, image_local_path: str) -> dict:
             "error": Optional[str]
         }
     """
-    logger.info(f"🚀 [Task] Procesando reporte ID={report_id}")
+    logger.info(f" [Task] Procesando reporte ID={report_id}")
     
     db: Optional[Session] = None
     
@@ -57,7 +57,7 @@ def process_report_ml_detection(report_id: int, image_local_path: str) -> dict:
         
         if not report:
             error_msg = f"Reporte {report_id} no encontrado"
-            logger.error(f"❌ {error_msg}")
+            logger.error(f" {error_msg}")
             return {
                 "report_id": report_id,
                 "success": False,
@@ -67,12 +67,12 @@ def process_report_ml_detection(report_id: int, image_local_path: str) -> dict:
         # Actualizar estado a PROCESSING
         report.status = ReportStatus.PROCESSING
         db.commit()
-        logger.info(f"📝 Reporte {report_id} marcado como PROCESSING")
+        logger.info(f" Reporte {report_id} marcado como PROCESSING")
         
         # Verificar que la imagen existe
         if not os.path.exists(image_local_path):
             error_msg = f"Imagen no encontrada: {image_local_path}"
-            logger.error(f"❌ {error_msg}")
+            logger.error(f" {error_msg}")
             
             # Marcar como error
             report.status = ReportStatus.PENDING
@@ -85,7 +85,7 @@ def process_report_ml_detection(report_id: int, image_local_path: str) -> dict:
             }
         
         # Ejecutar detección ML
-        logger.info(f"🤖 Ejecutando inferencia ML...")
+        logger.info(f" Ejecutando inferencia ML...")
         detection_result = ml_service.detect(image_local_path)
         
         # Actualizar reporte con resultados
@@ -98,7 +98,7 @@ def process_report_ml_detection(report_id: int, image_local_path: str) -> dict:
         db.commit()
         
         logger.info(
-            f"✅ [Task] Reporte {report_id} procesado exitosamente: "
+            f" [Task] Reporte {report_id} procesado exitosamente: "
             f"{detection_result.damage_type.value} ({detection_result.severity.value}) "
             f"- {len(detection_result.bounding_boxes)} detecciones"
         )
@@ -114,7 +114,7 @@ def process_report_ml_detection(report_id: int, image_local_path: str) -> dict:
         }
         
     except Exception as e:
-        logger.error(f"❌ [Task] Error procesando reporte {report_id}: {e}", exc_info=True)
+        logger.error(f" [Task] Error procesando reporte {report_id}: {e}", exc_info=True)
         
         # Intentar actualizar estado del reporte
         if db:
@@ -147,7 +147,7 @@ def test_task(message: str) -> dict:
     Returns:
         dict con el resultado
     """
-    logger.info(f"🧪 [Test Task] Mensaje recibido: {message}")
+    logger.info(f" [Test Task] Mensaje recibido: {message}")
     
     return {
         "success": True,
