@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useTranslation } from 'react-i18next';
 import {
   FileText,
   ChevronLeft,
@@ -96,6 +97,7 @@ function ReportDetailModal({
   const [rejectionReason, setRejectionReason] = useState('');
   const [showReject, setShowReject] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const handleApprove = async () => {
     setReviewing(true);
@@ -106,7 +108,7 @@ function ReportDetailModal({
       });
       onReviewed();
     } catch (err: any) {
-      setError(err?.detail ?? 'Error al aprobar');
+      setError(err?.detail ?? t('reports.detail.approveError'));
     } finally {
       setReviewing(false);
     }
@@ -122,7 +124,7 @@ function ReportDetailModal({
       });
       onReviewed();
     } catch (err: any) {
-      setError(err?.detail ?? 'Error al rechazar');
+      setError(err?.detail ?? t('reports.detail.rejectError'));
     } finally {
       setReviewing(false);
     }
@@ -141,7 +143,7 @@ function ReportDetailModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white z-10">
           <h2 className="text-lg font-semibold text-gray-900">
-            Reporte #{report.id}
+            {t('reports.detail.title', { id: report.id })}
           </h2>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-gray-100">
             <X className="w-4 h-4 text-gray-500" />
@@ -165,43 +167,43 @@ function ReportDetailModal({
           {/* Info grid */}
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <span className="text-gray-500">Estado</span>
+              <span className="text-gray-500">{t('reports.detail.status')}</span>
               <div className="mt-0.5">
                 <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${STATUS_COLORS[report.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                  {STATUS_LABELS[report.status] ?? report.status}
+                  {t(`reports.status.${report.status}`) || report.status}
                 </span>
               </div>
             </div>
             <div>
-              <span className="text-gray-500">Severidad</span>
+              <span className="text-gray-500">{t('reports.detail.severity')}</span>
               <div className="mt-0.5">
                 <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${SEVERITY_COLORS[report.severity] ?? 'bg-gray-100'}`}>
-                  {SEVERITY_LABELS[report.severity] ?? report.severity}
+                  {t(`reports.severity.${report.severity}`) || report.severity}
                 </span>
               </div>
             </div>
             <div>
-              <span className="text-gray-500">Tipo de daño</span>
+              <span className="text-gray-500">{t('reports.detail.damageType')}</span>
               <p className="font-medium text-gray-900 capitalize">{report.damage_type}</p>
             </div>
             <div>
-              <span className="text-gray-500">Confianza ML</span>
+              <span className="text-gray-500">{t('reports.detail.mlConfidence')}</span>
               <p className="font-medium text-gray-900">{(report.confidence * 100).toFixed(0)}%</p>
             </div>
             <div className="col-span-2">
-              <span className="text-gray-500">Dirección</span>
+              <span className="text-gray-500">{t('reports.detail.address')}</span>
               <p className="font-medium text-gray-900">
                 {[report.address, report.city, report.province].filter(Boolean).join(', ') || '—'}
               </p>
             </div>
             <div>
-              <span className="text-gray-500">Creado</span>
+              <span className="text-gray-500">{t('reports.detail.created')}</span>
               <p className="font-medium text-gray-900">
                 {new Date(report.created_at).toLocaleString('es-DO')}
               </p>
             </div>
             <div>
-              <span className="text-gray-500">Usuario ID</span>
+              <span className="text-gray-500">{t('reports.detail.userId')}</span>
               <p className="font-medium text-gray-900">{report.user_id}</p>
             </div>
           </div>
@@ -209,7 +211,7 @@ function ReportDetailModal({
           {/* Description */}
           {report.description && (
             <div>
-              <span className="text-sm text-gray-500">Descripción</span>
+              <span className="text-sm text-gray-500">{t('reports.detail.description')}</span>
               <p className="text-sm text-gray-800 mt-0.5">{report.description}</p>
             </div>
           )}
@@ -228,12 +230,12 @@ function ReportDetailModal({
           {/* Review actions */}
           {canReview && (report.status === 'processing' || report.status === 'pending') && (
             <div className="border-t pt-4 space-y-3">
-              <p className="text-sm font-medium text-gray-700">Revisar reporte</p>
+              <p className="text-sm font-medium text-gray-700">{t('reports.detail.review')}</p>
               {showReject ? (
                 <div className="space-y-2">
                   <textarea
                     rows={2}
-                    placeholder="Razón del rechazo (opcional)"
+                    placeholder={t('reports.detail.rejectionReason')}
                     value={rejectionReason}
                     onChange={(e) => setRejectionReason(e.target.value)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
@@ -245,7 +247,7 @@ function ReportDetailModal({
                       className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
                     >
                       {reviewing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                      Confirmar rechazo
+                    {t('reports.detail.confirmReject')}
                     </button>
                     <button
                       onClick={() => setShowReject(false)}
@@ -264,7 +266,7 @@ function ReportDetailModal({
                   >
                     {reviewing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <CheckCircle className="w-4 h-4" />
-                    Aprobar
+                    {t('reports.detail.approve')}
                   </button>
                   <button
                     onClick={() => setShowReject(true)}
@@ -272,7 +274,7 @@ function ReportDetailModal({
                     className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
                   >
                     <XCircle className="w-4 h-4" />
-                    Rechazar
+                    {t('reports.detail.reject')}
                   </button>
                 </div>
               )}
@@ -290,6 +292,7 @@ export default function ReportsPage() {
   const { user } = useAuthStore();
   const canReview =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERVISOR;
+  const { t } = useTranslation();
 
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -331,11 +334,11 @@ export default function ReportsPage() {
       setTotal(data.total);
       setTotalPages(data.total_pages);
     } catch {
-      setError('No se pudieron cargar los reportes');
+      setError(t('incidents.fetchError'));
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter, severityFilter]);
+  }, [page, search, statusFilter, severityFilter, t]);
 
   useEffect(() => {
     fetchReports();
@@ -388,7 +391,7 @@ export default function ReportsPage() {
           href="/dashboard/reports/new"
           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
         >
-          Nuevo reporte
+          {t('reports.newReport')}
         </Link>
       </div>
 
@@ -397,7 +400,7 @@ export default function ReportsPage() {
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
-            placeholder="Buscar por descripción, dirección, ciudad..."
+            placeholder={t('reports.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -408,21 +411,21 @@ export default function ReportsPage() {
           onChange={(e) => setStatusFilter(e.target.value)}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">Todos los estados</option>
-          <option value="processing">Procesando</option>
-          <option value="pending">Pendiente</option>
-          <option value="approved">Aprobado</option>
-          <option value="rejected">Rechazado</option>
+          <option value="">{t('reports.allStatuses')}</option>
+          <option value="processing">{t('reports.status.processing')}</option>
+          <option value="pending">{t('reports.status.pending')}</option>
+          <option value="approved">{t('reports.status.approved')}</option>
+          <option value="rejected">{t('reports.status.rejected')}</option>
         </select>
         <select
           value={severityFilter}
           onChange={(e) => setSeverityFilter(e.target.value)}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">Toda severidad</option>
-          <option value="baja">Baja</option>
-          <option value="media">Media</option>
-          <option value="alta">Alta</option>
+          <option value="">{t('reports.allSeverities')}</option>
+          <option value="baja">{t('reports.severity.baja')}</option>
+          <option value="media">{t('reports.severity.media')}</option>
+          <option value="alta">{t('reports.severity.alta')}</option>
         </select>
       </div>
 
@@ -439,7 +442,7 @@ export default function ReportsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                {['ID', 'Imagen', 'Tipo', 'Severidad', 'Estado', 'Ciudad', 'Creado', ''].map(
+                {['ID', t('reports.columns.image'), t('reports.columns.type'), t('reports.columns.severity'), t('reports.columns.status'), t('reports.columns.city'), t('reports.columns.created'), ''].map(
                   (h) => (
                     <th
                       key={h}
@@ -456,13 +459,13 @@ export default function ReportsPage() {
                 <tr>
                   <td colSpan={8} className="py-16 text-center text-gray-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-                    Cargando...
+                    {t('common.loading')}
                   </td>
                 </tr>
               ) : reports.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-16 text-center text-gray-400">
-                    No se encontraron reportes
+                    {t('reports.noReports')}
                   </td>
                 </tr>
               ) : (
@@ -495,7 +498,7 @@ export default function ReportsPage() {
                             SEVERITY_COLORS[r.severity] ?? 'bg-gray-100'
                           }`}
                         >
-                          {SEVERITY_LABELS[r.severity] ?? r.severity}
+                          {t(`reports.severity.${r.severity}`) || r.severity}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -504,7 +507,7 @@ export default function ReportsPage() {
                             STATUS_COLORS[r.status] ?? 'bg-gray-100 text-gray-700'
                           }`}
                         >
-                          {STATUS_LABELS[r.status] ?? r.status}
+                          {t(`reports.status.${r.status}`) || r.status}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-gray-600">
@@ -515,7 +518,7 @@ export default function ReportsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          title="Ver detalle"
+                          title={t('reports.columns.viewDetail')}
                           className="p-1.5 rounded hover:bg-blue-50 text-blue-600 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -537,23 +540,24 @@ export default function ReportsPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
             <p className="text-xs text-gray-500">
-              Mostrando {(page - 1) * PER_PAGE + 1}–
-              {Math.min(page * PER_PAGE, total)} de {total}
+              {t('common.showingRange', { from: (page - 1) * PER_PAGE + 1, to: Math.min(page * PER_PAGE, total), total })}
             </p>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
+                aria-label={t('common.prevPage')}
                 className="p-1.5 rounded hover:bg-gray-200 disabled:opacity-40"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <span className="text-xs text-gray-600 px-2">
-                {page} / {totalPages}
+                {t('common.page', { current: page, total: totalPages })}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
+                aria-label={t('common.nextPage')}
                 className="p-1.5 rounded hover:bg-gray-200 disabled:opacity-40"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -571,7 +575,7 @@ export default function ReportsPage() {
           canReview={canReview}
           onReviewed={() => {
             setSelected(null);
-            showToast('Reporte actualizado');
+            showToast(t('reports.updated'));
             fetchReports();
           }}
         />

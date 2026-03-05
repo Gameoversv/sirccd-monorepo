@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import {
   ChevronLeft,
   MapPin,
@@ -60,6 +61,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 function PriorityBar({ score }: { score: number | null }) {
+  const { t } = useTranslation();
   const pct = Math.min(100, Math.max(0, score ?? 0));
   const color =
     pct >= 80 ? 'bg-red-500' : pct >= 60 ? 'bg-orange-400' : pct >= 40 ? 'bg-amber-400' : 'bg-blue-400';
@@ -67,7 +69,7 @@ function PriorityBar({ score }: { score: number | null }) {
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>Score de prioridad</span>
+        <span>{t('incidents.detail.priorityScore')}</span>
         <span className="font-mono font-semibold text-gray-900">{pct.toFixed(1)} / 100</span>
       </div>
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -84,6 +86,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
   const { user } = useAuthStore();
   const toast = useToast();
   const incidentId = Number(params.id);
+  const { t } = useTranslation();
 
   const [incident, setIncident] = useState<IncidentDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -106,11 +109,11 @@ export default function IncidentDetailPage({ params }: PageProps) {
       const data = await incidentsService.getIncident(incidentId);
       setIncident(data);
     } catch (err: any) {
-      setError(err?.detail || 'No se pudo cargar el incidente');
+      setError(err?.detail || t('incidents.detail.loadError'));
     } finally {
       setIsLoading(false);
     }
-  }, [incidentId]);
+  }, [incidentId, t]);
 
   useEffect(() => {
     fetchIncident();
@@ -129,10 +132,10 @@ export default function IncidentDetailPage({ params }: PageProps) {
     setIsRecalculating(true);
     try {
       await incidentsService.recalculatePriority(incidentId);
-      toast.success('Prioridad recalculada');
+      toast.success(`${t('incidents.detail.priorityRecalculated')}`);
       fetchIncident();
     } catch {
-      toast.error('Error al recalcular prioridad');
+      toast.error(t('incidents.detail.priorityError'));
     } finally {
       setIsRecalculating(false);
     }
@@ -151,12 +154,12 @@ export default function IncidentDetailPage({ params }: PageProps) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <AlertTriangle className="h-10 w-10 text-red-400" />
-        <p className="text-gray-600">{error || 'Incidente no encontrado'}</p>
+        <p className="text-gray-600">{error || t('incidents.detail.notFound')}</p>
         <Link
           href="/dashboard/incidents"
           className="text-sm text-primary-600 hover:underline"
         >
-          Volver al listado
+          {t('incidents.detail.backToList')}
         </Link>
       </div>
     );
@@ -176,10 +179,10 @@ export default function IncidentDetailPage({ params }: PageProps) {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Incidente #{incident.id}
+              {t('incidents.detail.title', { id: incident.id })}
             </h1>
             <p className="text-sm text-gray-500">
-              Reporte #{incident.report_id} · {formatDate(incident.created_at)}
+              {t('incidents.detail.reportRef', { id: incident.report_id })} · {formatDate(incident.created_at)}
             </p>
           </div>
         </div>
@@ -192,7 +195,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors"
             >
               <Edit2 className="h-4 w-4" />
-              Actualizar Estado
+              {t('incidents.detail.updateStatus')}
             </button>
           )}
         </div>
@@ -206,18 +209,18 @@ export default function IncidentDetailPage({ params }: PageProps) {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
               <ImageIcon className="h-4 w-4 text-gray-500" />
-              <h2 className="text-sm font-semibold text-gray-800">Fotografía</h2>
+              <h2 className="text-sm font-semibold text-gray-800">{t('incidents.detail.photo')}</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 divide-x divide-gray-100">
               {/* Before */}
               <div className="p-4 space-y-2">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Antes</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('incidents.detail.before')}</p>
                 {incident.before_image_url ? (
                   <div className="relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={incident.before_image_url}
-                      alt="Foto del daño"
+                      alt={t('incidents.detail.before')}
                       className="w-full h-52 object-cover rounded-lg"
                     />
                     <a
@@ -233,7 +236,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
                   <div className="h-52 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center">
                     <div className="text-center text-gray-400">
                       <ImageIcon className="h-8 w-8 mx-auto" />
-                      <p className="text-xs mt-1">Sin imagen</p>
+                      <p className="text-xs mt-1">{t('incidents.detail.noImage')}</p>
                     </div>
                   </div>
                 )}
@@ -241,13 +244,13 @@ export default function IncidentDetailPage({ params }: PageProps) {
 
               {/* After */}
               <div className="p-4 space-y-2">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Después</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('incidents.detail.after')}</p>
                 {incident.after_image_url ? (
                   <div className="relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={incident.after_image_url}
-                      alt="Foto de la reparación"
+                      alt={t('incidents.detail.after')}
                       className="w-full h-52 object-cover rounded-lg"
                     />
                     <a
@@ -263,7 +266,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
                   <div className="h-52 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center">
                     <div className="text-center text-gray-400">
                       <ImageIcon className="h-8 w-8 mx-auto" />
-                      <p className="text-xs mt-1">No disponible aún</p>
+                      <p className="text-xs mt-1">{t('incidents.detail.notAvailable')}</p>
                     </div>
                   </div>
                 )}
@@ -275,11 +278,11 @@ export default function IncidentDetailPage({ params }: PageProps) {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <h2 className="text-sm font-semibold text-gray-800">Análisis IA & Detalles</h2>
+              <h2 className="text-sm font-semibold text-gray-800">{t('incidents.detail.analysis')}</h2>
             </div>
             <div className="px-5 py-2">
               <InfoRow
-                label="Tipo de daño"
+                label={t('incidents.detail.damageType')}
                 value={
                   <span className="font-medium">
                     {getDamageClassLabel(incident.damage_type)}
@@ -287,7 +290,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
                 }
               />
               <InfoRow
-                label="Severidad"
+                label={t('incidents.detail.severity')}
                 value={
                   <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getSeverityColor(incident.severity)}`}>
                     {getSeverityLabel(incident.severity)}
@@ -295,7 +298,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
                 }
               />
               <InfoRow
-                label="Estado"
+                label={t('incidents.detail.status')}
                 value={
                   <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(incident.status)}`}>
                     {getStatusLabel(incident.status)}
@@ -303,24 +306,24 @@ export default function IncidentDetailPage({ params }: PageProps) {
                 }
               />
               <InfoRow
-                label="Brigada asignada"
+                label={t('incidents.detail.assignedBrigade')}
                 value={
                   incident.assigned_brigade_id ? (
                     <span className="flex items-center gap-1">
                       <UserCheck className="h-3.5 w-3.5 text-blue-500" />
-                      Brigada #{incident.assigned_brigade_id}
+                      {t('incidents.detail.brigadeRef', { id: incident.assigned_brigade_id })}
                     </span>
                   ) : (
-                    <span className="text-gray-400 italic">Sin asignar</span>
+                    <span className="text-gray-400 italic">{t('incidents.detail.notAssigned')}</span>
                   )
                 }
               />
               <InfoRow
-                label="Tiempo estimado"
+                label={t('incidents.detail.estimatedTime')}
                 value={
                   incident.estimated_repair_hours
                     ? `${incident.estimated_repair_hours}h`
-                    : <span className="text-gray-400 italic">No estimado</span>
+                    : <span className="text-gray-400 italic">{t('incidents.detail.notEstimated')}</span>
                 }
               />
             </div>
@@ -330,7 +333,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
               <MapPin className="h-4 w-4 text-red-500" />
-              <h2 className="text-sm font-semibold text-gray-800">Ubicación</h2>
+              <h2 className="text-sm font-semibold text-gray-800">{t('incidents.detail.location')}</h2>
             </div>
             <div className="px-5 py-3 space-y-1">
               {incident.address && (
@@ -362,7 +365,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Gauge className="h-4 w-4 text-primary-500" />
-                <h2 className="text-sm font-semibold text-gray-800">Prioridad</h2>
+                <h2 className="text-sm font-semibold text-gray-800">{t('incidents.detail.priority')}</h2>
               </div>
               {(user?.role === UserRole.SUPERVISOR || user?.role === UserRole.ADMIN) && (
                 <button
@@ -370,7 +373,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
                   onClick={handleRecalculate}
                   disabled={isRecalculating}
                   className="p-1.5 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50"
-                  title="Recalcular prioridad"
+                  title={t('incidents.detail.recalculate')}
                 >
                   <RefreshCw className={`h-3.5 w-3.5 text-gray-500 ${isRecalculating ? 'animate-spin' : ''}`} />
                 </button>
@@ -394,14 +397,14 @@ export default function IncidentDetailPage({ params }: PageProps) {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-400" />
-              <h2 className="text-sm font-semibold text-gray-800">Fechas clave</h2>
+              <h2 className="text-sm font-semibold text-gray-800">{t('incidents.detail.keyDates')}</h2>
             </div>
             <div className="px-5 py-2">
-              <InfoRow label="Reportado" value={formatDate(incident.created_at)} />
-              <InfoRow label="Asignado" value={formatDate(incident.assigned_at)} />
-              <InfoRow label="Iniciado" value={formatDate(incident.started_at)} />
-              <InfoRow label="Completado" value={formatDate(incident.completed_at)} />
-              <InfoRow label="Verificado" value={formatDate(incident.verified_at)} />
+              <InfoRow label={t('incidents.detail.reported')} value={formatDate(incident.created_at)} />
+              <InfoRow label={t('incidents.detail.assigned')} value={formatDate(incident.assigned_at)} />
+              <InfoRow label={t('incidents.detail.started')} value={formatDate(incident.started_at)} />
+              <InfoRow label={t('incidents.detail.completed')} value={formatDate(incident.completed_at)} />
+              <InfoRow label={t('incidents.detail.verified')} value={formatDate(incident.verified_at)} />
             </div>
           </div>
 
@@ -410,7 +413,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                 <Clock className="h-4 w-4 text-gray-400" />
-                <h2 className="text-sm font-semibold text-gray-800">Notas internas</h2>
+              <h2 className="text-sm font-semibold text-gray-800">{t('incidents.detail.internalNotes')}</h2>
               </div>
               <div className="px-5 py-3">
                 <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
@@ -424,7 +427,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary-400" />
-              <h2 className="text-sm font-semibold text-gray-800">Historial de cambios</h2>
+              <h2 className="text-sm font-semibold text-gray-800">{t('incidents.detail.changeHistory')}</h2>
             </div>
             <div className="px-5 py-4">
               <StatusTimeline incident={incident} />

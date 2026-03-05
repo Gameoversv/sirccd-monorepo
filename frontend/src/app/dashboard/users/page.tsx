@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/store';
 import { usersService } from '@/services/usersService';
 import { UserRole } from '@/types';
+import { useTranslation } from 'react-i18next';
 import type { UserDetail, CreateUserData, UpdateUserData } from '@/types';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -70,6 +71,7 @@ function UserFormModal({
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (state.open) {
@@ -122,7 +124,7 @@ function UserFormModal({
       }
       onSaved();
     } catch (err: any) {
-      setError(err?.response?.data?.detail ?? err.message ?? 'Error al guardar');
+      setError(err?.response?.data?.detail ?? err.message ?? t('users.modal.saveError'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +141,7 @@ function UserFormModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <h2 className="text-lg font-semibold text-gray-900">
-            {isEdit ? 'Editar usuario' : 'Nuevo usuario'}
+            {isEdit ? t('users.modal.editTitle') : t('users.modal.createTitle')}
           </h2>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-gray-100">
             <X className="w-4 h-4 text-gray-500" />
@@ -157,7 +159,7 @@ function UserFormModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-gray-600 block mb-1">
-                Username <span className="text-red-500">*</span>
+                {t('users.modal.username')} <span className="text-red-500">*</span>
               </label>
               <input
                 required
@@ -169,7 +171,7 @@ function UserFormModal({
             </div>
             <div>
               <label className="text-xs font-medium text-gray-600 block mb-1">
-                Nombre completo
+                {t('users.modal.fullName')}
               </label>
               <input
                 value={form.full_name}
@@ -182,7 +184,7 @@ function UserFormModal({
 
           <div>
             <label className="text-xs font-medium text-gray-600 block mb-1">
-              Email <span className="text-red-500">*</span>
+              {t('users.modal.email')} <span className="text-red-500">*</span>
             </label>
             <input
               required
@@ -196,7 +198,7 @@ function UserFormModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">Teléfono</label>
+              <label className="text-xs font-medium text-gray-600 block mb-1">{t('users.modal.phone')}</label>
               <input
                 value={form.phone}
                 onChange={(e) => set('phone', e.target.value)}
@@ -206,7 +208,7 @@ function UserFormModal({
             </div>
             <div>
               <label className="text-xs font-medium text-gray-600 block mb-1">
-                Rol <span className="text-red-500">*</span>
+                {t('users.modal.role')} <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.role}
@@ -215,7 +217,7 @@ function UserFormModal({
               >
                 {ALL_ROLES.map((r) => (
                   <option key={r} value={r}>
-                    {ROLE_LABELS[r]}
+                    {t(`users.roles.${r}`)}
                   </option>
                 ))}
               </select>
@@ -224,9 +226,9 @@ function UserFormModal({
 
           <div>
             <label className="text-xs font-medium text-gray-600 block mb-1">
-              Contraseña {!isEdit && <span className="text-red-500">*</span>}
+              {t('users.modal.password')} {!isEdit && <span className="text-red-500">*</span>}
               {isEdit && (
-                <span className="text-gray-400 font-normal"> (dejar en blanco para no cambiar)</span>
+                <span className="text-gray-400 font-normal"> {t('users.modal.passwordKeep')}</span>
               )}
             </label>
             <input
@@ -236,7 +238,7 @@ function UserFormModal({
               onChange={(e) => set('password', e.target.value)}
               minLength={8}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Mínimo 8 caracteres"
+              placeholder={t('users.modal.passwordMin')}
             />
           </div>
 
@@ -248,7 +250,7 @@ function UserFormModal({
                 onChange={(e) => set('is_active', e.target.checked)}
                 className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Usuario activo</span>
+              <span className="text-sm text-gray-700">{t('users.modal.userActive')}</span>
             </label>
           )}
 
@@ -259,7 +261,7 @@ function UserFormModal({
               onClick={onClose}
               className="px-4 py-2 text-sm text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -267,7 +269,7 @@ function UserFormModal({
               className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {loading && <Loader2 className="w-3 h-3 animate-spin" />}
-              {isEdit ? 'Guardar cambios' : 'Crear usuario'}
+              {isEdit ? t('users.modal.saveEdit') : t('users.modal.saveCreate')}
             </button>
           </div>
         </form>
@@ -295,6 +297,7 @@ export default function UsersPage() {
   }, []);
 
   const isAdmin = me?.role === UserRole.ADMIN;
+  const { t } = useTranslation();
 
   // Data state
   const [users, setUsers] = useState<UserDetail[]>([]);
@@ -339,11 +342,11 @@ export default function UsersPage() {
       setTotal(result.total);
       setTotalPages(result.total_pages);
     } catch {
-      setError('No se pudieron cargar los usuarios');
+      setError(t('users.fetchError'));
     } finally {
       setLoading(false);
     }
-  }, [page, search, roleFilter, activeFilter]);
+  }, [page, search, roleFilter, activeFilter, t]);
 
   useEffect(() => {
     fetchUsers();
@@ -359,28 +362,28 @@ export default function UsersPage() {
     try {
       if (u.is_active) {
         await usersService.deactivateUser(u.id);
-        showToast(`${u.username} desactivado`);
+        showToast(t('users.deactivated', { name: u.username }));
       } else {
         await usersService.updateUser(u.id, { is_active: true });
-        showToast(`${u.username} activado`);
+        showToast(t('users.activated', { name: u.username }));
       }
       fetchUsers();
     } catch (err: any) {
-      showToast(err?.response?.data?.detail ?? err?.detail ?? 'Error al actualizar estado', false);
+      showToast(err?.response?.data?.detail ?? err?.detail ?? t('users.toggleError'), false);
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDelete = async (u: UserDetail) => {
-    if (!confirm(`¿Estás seguro de eliminar permanentemente a "${u.username}"? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(t('users.deleteConfirm', { name: u.username }))) return;
     setActionLoading(u.id);
     try {
       await usersService.deleteUser(u.id);
-      showToast(`${u.username} eliminado permanentemente`);
+      showToast(t('users.deleted', { name: u.username }));
       fetchUsers();
     } catch (err: any) {
-      showToast(err?.response?.data?.detail ?? err?.detail ?? 'Error al eliminar usuario', false);
+      showToast(err?.response?.data?.detail ?? err?.detail ?? t('users.deleteError'), false);
     } finally {
       setActionLoading(null);
     }
@@ -388,7 +391,7 @@ export default function UsersPage() {
 
   const handleModalSaved = () => {
     setModal({ open: false, mode: 'create', target: null });
-    showToast(modal.mode === 'create' ? 'Usuario creado' : 'Usuario actualizado');
+    showToast(modal.mode === 'create' ? t('users.created') : t('users.updated'));
     fetchUsers();
   };
 
@@ -420,9 +423,9 @@ export default function UsersPage() {
             <Users className="w-5 h-5 text-violet-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('users.title')}</h1>
             <p className="text-sm text-gray-500">
-              {total} usuario{total !== 1 ? 's' : ''} en el sistema
+              {t('users.count', { count: total })}
             </p>
           </div>
         </div>
@@ -432,7 +435,7 @@ export default function UsersPage() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Nuevo usuario
+            {t('users.newUser')}
           </button>
         )}
       </div>
@@ -441,7 +444,7 @@ export default function UsersPage() {
       {!isAdmin && (
         <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg px-4 py-2 text-sm">
           <ShieldAlert className="w-4 h-4 flex-shrink-0" />
-          Vista de solo lectura. Solo los administradores pueden crear o editar usuarios.
+          {t('users.readOnlyNotice')}
         </div>
       )}
 
@@ -452,7 +455,7 @@ export default function UsersPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre, email o username…"
+            placeholder={t('users.searchPlaceholder')}
             className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -462,10 +465,10 @@ export default function UsersPage() {
           onChange={(e) => setRoleFilter(e.target.value)}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">Todos los roles</option>
+          <option value="">{t('users.allRoles')}</option>
           {ALL_ROLES.map((r) => (
             <option key={r} value={r}>
-              {ROLE_LABELS[r]}
+              {t(`users.roles.${r}`)}
             </option>
           ))}
         </select>
@@ -475,9 +478,9 @@ export default function UsersPage() {
           onChange={(e) => setActiveFilter(e.target.value)}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">Activos e inactivos</option>
-          <option value="true">Solo activos</option>
-          <option value="false">Solo inactivos</option>
+          <option value="">{t('users.allActiveStates')}</option>
+          <option value="true">{t('users.onlyActive')}</option>
+          <option value="false">{t('users.onlyInactive')}</option>
         </select>
       </div>
 
@@ -494,7 +497,7 @@ export default function UsersPage() {
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                {['ID', 'Usuario', 'Email', 'Rol', 'Estado', 'Verificado', 'Creado', 'Último acceso', 'Acciones'].map(
+                {['ID', t('users.columns.name'), 'Email', t('users.columns.role'), t('users.columns.status'), t('users.columns.verified'), t('users.columns.created'), t('users.columns.lastLogin'), t('users.columns.actions')].map(
                   (h) => (
                     <th
                       key={h}
@@ -511,13 +514,13 @@ export default function UsersPage() {
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-gray-400">
                     <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                    Cargando usuarios…
+                    {t('common.loading')}
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-gray-400">
-                    No se encontraron usuarios con los filtros aplicados.
+                    {t('users.noUsers')}
                   </td>
                 </tr>
               ) : (
@@ -538,7 +541,7 @@ export default function UsersPage() {
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[u.role]}`}
                       >
-                        {ROLE_LABELS[u.role]}
+                        {t(`users.roles.${u.role}`)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -549,7 +552,7 @@ export default function UsersPage() {
                             : 'bg-gray-100 text-gray-500'
                         }`}
                       >
-                        {u.is_active ? 'Activo' : 'Inactivo'}
+                        {u.is_active ? t('users.active') : t('users.inactive')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -569,14 +572,14 @@ export default function UsersPage() {
                       {isAdmin && (
                         <div className="flex items-center gap-1">
                           <button
-                            title="Editar"
+                            title={t('common.edit')}
                             onClick={() => setModal({ open: true, mode: 'edit', target: u })}
                             className="p-1.5 rounded hover:bg-blue-50 text-blue-600 transition-colors"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            title={u.is_active ? 'Desactivar' : 'Activar'}
+                            title={u.is_active ? t('users.deactivate') : t('users.activate')}
                             disabled={actionLoading === u.id || u.id === me?.id}
                             onClick={() => handleToggleActive(u)}
                             className={`p-1.5 rounded transition-colors disabled:opacity-40 ${
@@ -594,7 +597,7 @@ export default function UsersPage() {
                             )}
                           </button>
                           <button
-                            title="Eliminar permanentemente"
+                            title={t('users.deletePermanent')}
                             disabled={actionLoading === u.id || u.id === me?.id}
                             onClick={() => handleDelete(u)}
                             className="p-1.5 rounded hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors disabled:opacity-40"
@@ -615,22 +618,24 @@ export default function UsersPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
             <p className="text-xs text-gray-500">
-              Mostrando {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, total)} de {total}
+              {t('common.showingRange', { from: (page - 1) * PER_PAGE + 1, to: Math.min(page * PER_PAGE, total), total })}
             </p>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
+                aria-label={t('common.prevPage')}
                 className="p-1.5 rounded hover:bg-white border border-gray-200 disabled:opacity-40 transition-colors"
               >
                 <ChevronLeft className="w-3.5 h-3.5 text-gray-600" />
               </button>
               <span className="px-3 py-1 text-xs text-gray-600 font-medium">
-                {page} / {totalPages}
+                {t('common.page', { current: page, total: totalPages })}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
+                aria-label={t('common.nextPage')}
                 className="p-1.5 rounded hover:bg-white border border-gray-200 disabled:opacity-40 transition-colors"
               >
                 <ChevronRight className="w-3.5 h-3.5 text-gray-600" />

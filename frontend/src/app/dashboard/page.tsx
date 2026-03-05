@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import {
   PlusCircle,
   List,
@@ -38,15 +39,6 @@ import { UserRole } from '@/types';
 type Stats = Awaited<ReturnType<typeof incidentsService.getStats>>;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-const STATUS_LABELS: Record<string, string> = {
-  open: 'Abierto',
-  assigned: 'Asignado',
-  in_progress: 'En proceso',
-  resolved: 'Resuelto',
-  verified: 'Verificado',
-  closed: 'Cerrado',
-};
-
 const STATUS_COLORS: Record<string, string> = {
   open: '#ef4444',
   assigned: '#f97316',
@@ -61,13 +53,6 @@ const PRIORITY_COLORS: Record<string, string> = {
   media: '#f59e0b',
   alta: '#ef4444',
   critica: '#7c3aed',
-};
-
-const PRIORITY_LABELS: Record<string, string> = {
-  baja: 'Baja',
-  media: 'Media',
-  alta: 'Alta',
-  critica: 'Crítica',
 };
 
 function fmt(value: number | null | undefined, digits = 1): string {
@@ -134,6 +119,7 @@ function SLABar({ pct, loading }: { pct: number | null; loading: boolean }) {
 export default function DashboardPage() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
+  const { t } = useTranslation();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -145,7 +131,7 @@ export default function DashboardPage() {
       const data = await incidentsService.getStats();
       setStats(data);
     } catch {
-      setError('No se pudieron cargar las estadísticas');
+      setError(t('dashboard.statsError'));
     } finally {
       setLoading(false);
     }
@@ -158,7 +144,7 @@ export default function DashboardPage() {
   // Chart data derived from stats
   const statusChartData = stats
     ? Object.entries(stats.by_status).map(([key, count]) => ({
-        name: STATUS_LABELS[key] ?? key,
+        name: t(`dashboard.statuses.${key}`) || key,
         value: count,
         fill: STATUS_COLORS[key] ?? '#6b7280',
       }))
@@ -166,7 +152,7 @@ export default function DashboardPage() {
 
   const priorityChartData = stats
     ? Object.entries(stats.by_priority).map(([key, count]) => ({
-        name: PRIORITY_LABELS[key] ?? key,
+        name: t(`dashboard.priorities.${key}`) || key,
         value: count,
         fill: PRIORITY_COLORS[key] ?? '#6b7280',
       }))
@@ -174,8 +160,8 @@ export default function DashboardPage() {
 
   const activeResolvedData = stats
     ? [
-        { name: 'Activos', value: stats.active_count, fill: '#3b82f6' },
-        { name: 'Resueltos', value: stats.resolved_count, fill: '#22c55e' },
+        { name: t('dashboard.active'), value: stats.active_count, fill: '#3b82f6' },
+        { name: t('dashboard.resolvedLabel'), value: stats.resolved_count, fill: '#22c55e' },
       ]
     : [];
 
@@ -184,9 +170,9 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard Municipal</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.title')}</h1>
           <p className="mt-1 text-gray-500 text-sm">
-            Bienvenido, {user?.full_name || user?.username}
+            {t('dashboard.welcome', { name: user?.full_name || user?.username })}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -196,21 +182,21 @@ export default function DashboardPage() {
             className="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm rounded-lg transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Actualizar
+            {t('nav.refresh')}
           </button>
           <Link
             href="/dashboard/incidents"
             className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
           >
             <List className="w-4 h-4" />
-            Ver Incidentes
+            {t('nav.viewIncidents')}
           </Link>
           <Link
             href="/dashboard/reports"
             className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
           >
             <FileText className="w-4 h-4" />
-            Ver Reportes
+            {t('nav.viewReports')}
           </Link>
           {(user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERVISOR) && (
             <Link
@@ -218,7 +204,7 @@ export default function DashboardPage() {
               className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
             >
               <Users className="w-4 h-4" />
-              Usuarios
+              {t('nav.users')}
             </Link>
           )}
           <Link
@@ -226,14 +212,15 @@ export default function DashboardPage() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <PlusCircle className="w-4 h-4" />
-            Crear Reporte
+            {t('nav.createReport')}
           </Link>
           <button
             onClick={() => { logout(); router.push('/auth/login'); }}
+            aria-label={t('nav.logout')}
             className="inline-flex items-center gap-2 px-3 py-2 border border-red-200 hover:bg-red-50 text-red-600 text-sm rounded-lg transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            Salir
+            {t('nav.logout')}
           </button>
         </div>
       </div>
@@ -247,48 +234,48 @@ export default function DashboardPage() {
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
         <KPICard
-          title="Total incidentes"
+          title={t('dashboard.kpi.total')}
           value={stats ? String(stats.total_incidents) : '—'}
           icon={BarChart3}
           color="bg-blue-500"
           loading={loading}
         />
         <KPICard
-          title="Activos"
+          title={t('dashboard.kpi.active')}
           value={stats ? String(stats.active_count) : '—'}
-          subtitle="open + asignado + proceso"
+          subtitle={t('dashboard.kpi.activeSubtitle')}
           icon={Activity}
           color="bg-orange-500"
           loading={loading}
         />
         <KPICard
-          title="Resueltos"
+          title={t('dashboard.kpi.resolved')}
           value={stats ? String(stats.resolved_count) : '—'}
-          subtitle="resuelto + verificado + cerrado"
+          subtitle={t('dashboard.kpi.resolvedSubtitle')}
           icon={CheckCircle2}
           color="bg-green-500"
           loading={loading}
         />
         <KPICard
-          title="Sin asignar"
+          title={t('dashboard.kpi.unassigned')}
           value={stats ? String(stats.pending_assignment) : '—'}
-          subtitle="requieren atención"
+          subtitle={t('dashboard.kpi.unassignedSubtitle')}
           icon={AlertTriangle}
           color="bg-red-500"
           loading={loading}
         />
         <KPICard
-          title="TTR promedio"
+          title={t('dashboard.kpi.ttr')}
           value={stats ? `${fmt(stats.avg_ttr_hours)}h` : '—'}
-          subtitle="tiempo hasta asignación"
+          subtitle={t('dashboard.kpi.ttrSubtitle')}
           icon={Clock}
           color="bg-violet-500"
           loading={loading}
         />
         <KPICard
-          title="Score promedio"
+          title={t('dashboard.kpi.avgScore')}
           value={stats ? fmt(stats.avg_priority_score) : '—'}
-          subtitle="prioridad media"
+          subtitle={t('dashboard.kpi.avgScoreSubtitle')}
           icon={Target}
           color="bg-indigo-500"
           loading={loading}
@@ -299,13 +286,13 @@ export default function DashboardPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-gray-600" />
-          <h2 className="text-base font-semibold text-gray-900">Niveles de servicio</h2>
+          <h2 className="text-base font-semibold text-gray-900">{t('dashboard.sla.title')}</h2>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <SLABar pct={stats?.sla_compliance_pct ?? null} loading={loading} />
+          <SLABar pct={stats?.sla_compliance_pct ?? null} loading={loading} t={t} />
           <div>
             <div className="flex justify-between text-xs text-gray-500 mb-1">
-              <span>Resolución promedio</span>
+              <span>{t('dashboard.sla.avgResolution')}</span>
               <span className="font-semibold">
                 {loading || !stats?.avg_resolution_hours
                   ? '—'
@@ -330,7 +317,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Incidents by status */}
         <div className="col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Incidentes por estado</h2>
+          <h2 className="text-base font-semibold text-gray-900 mb-4">{t('dashboard.charts.byStatus')}</h2>
           {loading ? (
             <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
           ) : (
@@ -339,10 +326,7 @@ export default function DashboardPage() {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                 <Tooltip
-                  formatter={(v: number) => [v, 'Incidentes']}
-                  contentStyle={{ fontSize: 12 }}
-                />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  formatter={(v: number) => [v, t('dashboard.charts.incidents')]}
                   {statusChartData.map((entry, i) => (
                     <Cell key={i} fill={entry.fill} />
                   ))}
@@ -354,7 +338,7 @@ export default function DashboardPage() {
 
         {/* Active vs Resolved donut */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Activos vs Resueltos</h2>
+          <h2 className="text-base font-semibold text-gray-900 mb-4">{t('dashboard.charts.activeVsResolved')}</h2>
           {loading ? (
             <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
           ) : (
@@ -375,7 +359,7 @@ export default function DashboardPage() {
                   ))}
                 </Pie>
                 <Legend iconSize={10} wrapperStyle={{ fontSize: 12 }} />
-                <Tooltip formatter={(v: number) => [v, 'Incidentes']} contentStyle={{ fontSize: 12 }} />
+                <Tooltip formatter={(v: number) => [v, t('dashboard.charts.incidents')]} contentStyle={{ fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -384,7 +368,7 @@ export default function DashboardPage() {
 
       {/* Priority breakdown */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Distribución por prioridad</h2>
+        <h2 className="text-base font-semibold text-gray-900 mb-4">{t('dashboard.charts.byPriority')}</h2>
         {loading ? (
           <div className="h-44 bg-gray-50 animate-pulse rounded-lg" />
         ) : (
@@ -393,7 +377,7 @@ export default function DashboardPage() {
               <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11 }} />
               <Tooltip
-                formatter={(v: number) => [v, 'Incidentes']}
+                formatter={(v: number) => [v, t('dashboard.charts.incidents')]}
                 contentStyle={{ fontSize: 12 }}
               />
               <Bar dataKey="value" radius={[0, 4, 4, 0]}>

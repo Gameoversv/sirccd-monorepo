@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import {
   List,
   Map as MapIcon,
@@ -37,6 +38,7 @@ export default function IncidentsPage() {
   const { filters, setFilters, clearFilters, pagination, setPage } =
     useIncidentsStore();
   const [view, setView] = useState<ViewMode>('split');
+  const { t } = useTranslation();
   const [incidents, setIncidents] = useState<IncidentRow[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -159,9 +161,9 @@ export default function IncidentsPage() {
             <ChevronLeft className="h-5 w-5 text-gray-500" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Incidentes</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('incidents.title')}</h1>
             <p className="text-sm text-gray-500">
-              {total} incidentes registrados
+              {t('incidents.count', { count: total })}
             </p>
           </div>
         </div>
@@ -178,15 +180,15 @@ export default function IncidentsPage() {
             }`}
           >
             <SlidersHorizontal className="h-4 w-4" />
-            Filtros
+            {t('incidents.filters')}
           </button>
 
           {/* View mode toggles */}
           <div className="flex rounded-lg border border-gray-300 overflow-hidden">
             {[
-              { mode: 'split' as ViewMode, icon: <SlidersHorizontal className="h-4 w-4" />, label: 'Split' },
-              { mode: 'table' as ViewMode, icon: <List className="h-4 w-4" />, label: 'Tabla' },
-              { mode: 'map' as ViewMode, icon: <MapIcon className="h-4 w-4" />, label: 'Mapa' },
+              { mode: 'split' as ViewMode, icon: <SlidersHorizontal className="h-4 w-4" />, label: t('incidents.split') },
+              { mode: 'table' as ViewMode, icon: <List className="h-4 w-4" />, label: t('incidents.table') },
+              { mode: 'map' as ViewMode, icon: <MapIcon className="h-4 w-4" />, label: t('incidents.map') },
             ].map(({ mode, icon, label }) => (
               <button
                 key={mode}
@@ -212,7 +214,7 @@ export default function IncidentsPage() {
             className="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Exportar</span>
+            <span className="hidden sm:inline">{t('incidents.export')}</span>
           </button>
         </div>
       </div>
@@ -235,7 +237,7 @@ export default function IncidentsPage() {
           {(view === 'split' || view === 'map') && (
             <div className="bg-white rounded-lg shadow border border-gray-200 p-4">
               <h2 className="text-sm font-semibold text-gray-700 mb-2">
-                Mapa de incidentes
+                {t('incidents.mapTitle')}
               </h2>
               <MapView
                 height={view === 'map' ? '600px' : '350px'}

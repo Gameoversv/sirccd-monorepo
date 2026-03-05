@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { ChevronLeft, Send } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const MiniMap = dynamic(() => import('@/components/MiniMap'), { ssr: false });
 import { ImageUpload } from '@/components/ImageUpload';
@@ -36,6 +37,7 @@ export default function NewReportPage() {
   const [province, setProvince] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  const { t } = useTranslation();
 
   if (!isAuthenticated) {
     router.replace('/auth/login');
@@ -46,35 +48,35 @@ export default function NewReportPage() {
     const newErrors: FormErrors = {};
 
     if (!image) {
-      newErrors.image = 'Debes seleccionar una imagen.';
+      newErrors.image = t('reports.new.errors.imageRequired');
     }
 
     if (coords.latitude === null || coords.latitude === undefined || isNaN(coords.latitude)) {
-      newErrors.latitude = 'La latitud es requerida.';
+      newErrors.latitude = t('reports.new.errors.latRequired');
     } else if (coords.latitude < -90 || coords.latitude > 90) {
-      newErrors.latitude = 'La latitud debe estar entre -90 y 90.';
+      newErrors.latitude = t('reports.new.errors.latInvalid');
     }
 
     if (coords.longitude === null || coords.longitude === undefined || isNaN(coords.longitude)) {
-      newErrors.longitude = 'La longitud es requerida.';
+      newErrors.longitude = t('reports.new.errors.lngRequired');
     } else if (coords.longitude < -180 || coords.longitude > 180) {
-      newErrors.longitude = 'La longitud debe estar entre -180 y 180.';
+      newErrors.longitude = t('reports.new.errors.lngInvalid');
     }
 
     if (description.length > 2000) {
-      newErrors.description = 'La descripción no puede superar 2000 caracteres.';
+      newErrors.description = t('reports.new.errors.descriptionMax');
     }
 
     if (address.length > 500) {
-      newErrors.address = 'La dirección no puede superar 500 caracteres.';
+      newErrors.address = t('reports.new.errors.addressMax');
     }
 
     if (city.length > 100) {
-      newErrors.city = 'La ciudad no puede superar 100 caracteres.';
+      newErrors.city = t('reports.new.errors.cityMax');
     }
 
     if (province.length > 100) {
-      newErrors.province = 'La provincia no puede superar 100 caracteres.';
+      newErrors.province = t('reports.new.errors.provinceMax');
     }
 
     setErrors(newErrors);
@@ -91,7 +93,7 @@ export default function NewReportPage() {
     e.preventDefault();
 
     if (!validate()) {
-      toast.error('Por favor corrija los errores antes de enviar.');
+      toast.error(t('reports.new.formError'));
       return;
     }
 
@@ -107,10 +109,10 @@ export default function NewReportPage() {
       if (province) formData.append('province', province);
 
       await reportsService.createReport(formData);
-      toast.success('Reporte creado exitosamente.');
+      toast.success(t('reports.new.success'));
       router.push('/dashboard');
     } catch (err: any) {
-      const message = err?.detail ?? err?.message ?? 'Error al crear el reporte.';
+      const message = err?.detail ?? err?.message ?? t('reports.detail.approveError');
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -125,27 +127,27 @@ export default function NewReportPage() {
         className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6"
       >
         <ChevronLeft className="w-4 h-4" />
-        Volver al dashboard
+        {t('nav.backToDashboard')}
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Crear Reporte</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('reports.new.title')}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Image */}
         <section className="bg-white rounded-lg shadow p-6 space-y-2">
           <h2 className="text-base font-semibold text-gray-800">
-            Imagen <span className="text-red-500">*</span>
+            {t('reports.new.imageSection')} <span className="text-red-500">*</span>
           </h2>
-          <p className="text-sm text-gray-500">Captura o sube una foto del bache / daño vial.</p>
+          <p className="text-sm text-gray-500">{t('reports.new.imageHint')}</p>
           <ImageUpload value={image} onChange={setImage} error={errors.image} />
         </section>
 
         {/* Location */}
         <section className="bg-white rounded-lg shadow p-6 space-y-2">
           <h2 className="text-base font-semibold text-gray-800">
-            Ubicación <span className="text-red-500">*</span>
+            {t('reports.new.locationSection')} <span className="text-red-500">*</span>
           </h2>
-          <p className="text-sm text-gray-500">Obtén tu ubicación automáticamente o ingrésala manualmente.</p>
+          <p className="text-sm text-gray-500">{t('reports.new.locationHint')}</p>
           <LocationPicker
             value={coords}
             onChange={setCoords}
@@ -169,18 +171,16 @@ export default function NewReportPage() {
         {/* Address details */}
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-800">Detalles de dirección</h2>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Se rellenan automáticamente al usar <span className="font-medium">Usar mi ubicación</span>. Puedes editarlos.
-            </p>
+            <h2 className="text-base font-semibold text-gray-800">{t('reports.new.addressSection')}</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{t('reports.new.addressHint')}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('reports.new.addressLabel')}</label>
             <input
               type="text"
               maxLength={500}
-              placeholder="Calle, número, referencia…"
+              placeholder={t('reports.new.addressPlaceholder')}
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -194,7 +194,7 @@ export default function NewReportPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('reports.new.cityLabel')}</label>
               <input
                 type="text"
                 maxLength={100}
@@ -211,7 +211,7 @@ export default function NewReportPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('reports.new.provinceLabel')}</label>
               <input
                 type="text"
                 maxLength={100}
@@ -231,12 +231,12 @@ export default function NewReportPage() {
 
         {/* Description */}
         <section className="bg-white rounded-lg shadow p-6 space-y-2">
-          <h2 className="text-base font-semibold text-gray-800">Descripción</h2>
+          <h2 className="text-base font-semibold text-gray-800">{t('reports.new.descriptionSection')}</h2>
           <div className="relative">
             <textarea
               rows={4}
               maxLength={2000}
-              placeholder="Describe el problema vial: tamaño, profundidad, riesgos…"
+              placeholder={t('reports.new.descriptionPlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
@@ -262,7 +262,7 @@ export default function NewReportPage() {
             href="/dashboard"
             className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            Cancelar
+            {t('common.cancel')}
           </Link>
           <button
             type="submit"
@@ -272,12 +272,12 @@ export default function NewReportPage() {
             {submitting ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Enviando…
+                {t('reports.new.submitting')}
               </>
             ) : (
               <>
                 <Send className="w-4 h-4" />
-                Crear reporte
+                {t('reports.new.submit')}
               </>
             )}
           </button>
