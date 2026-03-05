@@ -133,7 +133,7 @@ function UserFormModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="w-full max-w-lg bg-white rounded-xl shadow-xl">
         {/* Header */}

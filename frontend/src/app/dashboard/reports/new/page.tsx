@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { ChevronLeft, Send } from 'lucide-react';
+
+const MiniMap = dynamic(() => import('@/components/MiniMap'), { ssr: false });
 import { ImageUpload } from '@/components/ImageUpload';
 import { LocationPicker, type Coordinates, type ResolvedAddress } from '@/components/LocationPicker';
 import { reportsService } from '@/services/reportsService';
@@ -150,6 +153,17 @@ export default function NewReportPage() {
             latError={errors.latitude}
             lngError={errors.longitude}
           />
+          {coords.latitude != null && coords.longitude != null && (
+            <div className="mt-3 rounded-lg overflow-hidden border border-gray-200">
+              <MiniMap
+                lat={coords.latitude}
+                lng={coords.longitude}
+                label={address || 'Ubicación seleccionada'}
+                height="200px"
+                zoom={16}
+              />
+            </div>
+          )}
         </section>
 
         {/* Address details */}

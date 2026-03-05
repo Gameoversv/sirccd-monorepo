@@ -73,4 +73,25 @@ export const reportsService = {
     );
     return response.data;
   },
+
+  /**
+   * Verify image privacy before uploading (W-03)
+   * Detects faces/plates that will be blurred server-side on create.
+   */
+  async verifyImage(file: File): Promise<{
+    is_clean: boolean;
+    faces_detected: number;
+    plates_detected: number;
+    regions: { type: string; x: number; y: number; w: number; h: number }[];
+    warnings: string[];
+    message: string;
+    error?: string;
+  }> {
+    const form = new FormData();
+    form.append('image', file);
+    const response = await apiClient.post('/reportes/verify-image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
 };

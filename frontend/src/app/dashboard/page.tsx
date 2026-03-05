@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Users,
   LogOut,
+  FileText,
 } from 'lucide-react';
 import {
   BarChart,
@@ -203,6 +204,13 @@ export default function DashboardPage() {
           >
             <List className="w-4 h-4" />
             Ver Incidentes
+          </Link>
+          <Link
+            href="/dashboard/reports"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+          >
+            <FileText className="w-4 h-4" />
+            Ver Reportes
           </Link>
           {(user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERVISOR) && (
             <Link

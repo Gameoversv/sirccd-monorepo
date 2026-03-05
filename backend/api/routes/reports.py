@@ -2,21 +2,161 @@
 Rutas de Reportes - Gestión de reportes ciudadanos
 """
 
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy import desc, asc
 from geoalchemy2.elements import WKTElement
+from geoalchemy2.shape import to_shape
 
 from db.session import get_db
-from api.deps import get_current_active_user, ActiveUser
+from api.deps import get_current_active_user, ActiveUser, require_supervisor
+from models.user import User
 from models.report import Report, ReportStatus, DamageType, SeverityLevel
-from schemas.report import CreateReportResponse, ReportResponse
+from models.incident import Incident, IncidentStatus, PriorityLevel
+from schemas.report import CreateReportResponse, ReportResponse, UpdateReportStatusRequest
 from services.storage import storage_service
 from services.queue_service import queue_service
+from services.priority_service import get_priority_service
 
 
 router = APIRouter(prefix="/reportes", tags=["Reportes"])
+
+
+# ── List reports ──────────────────────────────────────────────────────────────
+
+@router.get("", summary="Listar reportes con filtros y paginación")
+def list_reports(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    status_filter: Optional[str] = Query(None, alias="status"),
+    damage_type: Optional[str] = Query(None),
+    severity: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    sort_by: str = Query("created_at"),
+    sort_order: str = Query("desc"),
+    db: Session = Depends(get_db),
+    current_user: ActiveUser = None,
+):
+    query = db.query(Report)
+
+    if status_filter:
+        query = query.filter(Report.status == ReportStatus(status_filter))
+    if damage_type:
+        query = query.filter(Report.damage_type == DamageType(damage_type))
+    if severity:
+        query = query.filter(Report.severity == SeverityLevel(severity))
+    if search:
+        query = query.filter(
+            Report.description.ilike(f"%{search}%")
+            | Report.address.ilike(f"%{search}%")
+            | Report.city.ilike(f"%{search}%")
+        )
+
+    total = query.count()
+
+    order = desc if sort_order == "desc" else asc
+    col = getattr(Report, sort_by, Report.created_at)
+    query = query.order_by(order(col))
+
+    reports = query.offset((page - 1) * per_page).limit(per_page).all()
+
+    items = []
+    for r in reports:
+        point = to_shape(r.location)
+        items.append({
+            "id": r.id,
+            "user_id": r.user_id,
+            "latitude": point.y,
+            "longitude": point.x,
+            "address": r.address,
+            "city": r.city,
+            "province": r.province,
+            "damage_type": r.damage_type.value,
+            "severity": r.severity.value,
+            "confidence": r.confidence,
+            "image_url": r.image_url,
+            "status": r.status.value,
+            "description": r.description,
+            "created_at": r.created_at.isoformat(),
+            "updated_at": r.updated_at.isoformat(),
+        })
+
+    return {
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": max(1, -(-total // per_page)),
+        "items": items,
+    }
+
+
+# ── Review (approve / reject) ────────────────────────────────────────────────
+
+@router.patch(
+    "/{report_id}/review",
+    summary="Aprobar o rechazar un reporte (SUPERVISOR+)",
+)
+def review_report(
+    report_id: int,
+    body: UpdateReportStatusRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_supervisor),
+):
+    report = db.query(Report).filter(Report.id == report_id).first()
+    if not report:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Reporte no encontrado")
+
+    if body.status not in ("approved", "rejected"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Solo se puede aprobar o rechazar")
+
+    report.status = ReportStatus(body.status)
+    report.reviewed_at = datetime.utcnow()
+    if body.rejection_reason:
+        report.rejection_reason = body.rejection_reason
+
+    # If approved → auto-create incident
+    incident_id = None
+    if body.status == "approved":
+        point = to_shape(report.location)
+        priority_service = get_priority_service(db)
+
+        new_incident = Incident(
+            report_id=report.id,
+            reported_by=report.user_id,
+            location=report.location,
+            address=report.address,
+            city=report.city,
+            province=report.province,
+            damage_type=report.damage_type,
+            severity=report.severity,
+            priority=PriorityLevel.MEDIA,
+            priority_score=0.0,
+            status=IncidentStatus.OPEN,
+            before_image_url=report.image_url,
+            notes=report.description,
+        )
+        db.add(new_incident)
+        db.flush()
+
+        try:
+            priority_level, score = priority_service.calculate_priority(new_incident)
+            new_incident.priority = priority_level
+            new_incident.priority_score = score
+        except Exception:
+            pass
+
+        incident_id = new_incident.id
+
+    db.commit()
+
+    return {
+        "id": report.id,
+        "status": report.status.value,
+        "reviewed_at": report.reviewed_at.isoformat() if report.reviewed_at else None,
+        "incident_id": incident_id,
+    }
 
 
 def _mock_ml_detection(image_url: str) -> tuple[DamageType, SeverityLevel, float]:
@@ -258,7 +398,6 @@ async def get_report(
     
     # Extraer coordenadas del campo Geography
     # report.location es un WKBElement, necesitamos convertirlo
-    from geoalchemy2.shape import to_shape
     point = to_shape(report.location)
     latitude = point.y
     longitude = point.x
