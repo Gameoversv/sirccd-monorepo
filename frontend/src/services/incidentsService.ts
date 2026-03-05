@@ -1,6 +1,7 @@
 import apiClient from './api';
 import type { 
   Incident, 
+  IncidentDetail,
   IncidentFilters, 
   PaginatedResponse,
   IncidentStatus,
@@ -31,28 +32,20 @@ export const incidentsService = {
   },
 
   /**
-   * Get incident by ID
+   * Get incident by ID (full detail)
    */
-  async getIncident(id: number): Promise<Incident> {
-    const response = await apiClient.get<Incident>(`/incidents/${id}`);
-    return response.data;
-  },
-
-  /**
-   * Update incident
-   */
-  async updateIncident(id: number, data: Partial<Incident>): Promise<Incident> {
-    const response = await apiClient.patch<Incident>(`/incidents/${id}`, data);
+  async getIncident(id: number): Promise<IncidentDetail> {
+    const response = await apiClient.get<IncidentDetail>(`/incidents/${id}`);
     return response.data;
   },
 
   /**
    * Update incident status
    */
-  async updateStatus(id: number, status: IncidentStatus): Promise<Incident> {
-    const response = await apiClient.patch<Incident>(
+  async updateStatus(id: number, status: string, notes?: string): Promise<IncidentDetail> {
+    const response = await apiClient.patch<IncidentDetail>(
       `/incidents/${id}/status`,
-      { status }
+      { status, notes }
     );
     return response.data;
   },
@@ -102,6 +95,14 @@ export const incidentsService = {
         responseType: 'blob',
       }
     );
+    return response.data;
+  },
+
+  /**
+   * Recalculate priority score for an incident
+   */
+  async recalculatePriority(id: number): Promise<{ incident_id: number; new_priority: string; new_score: number }> {
+    const response = await apiClient.post(`/incidents/${id}/recalculate-priority`);
     return response.data;
   },
 

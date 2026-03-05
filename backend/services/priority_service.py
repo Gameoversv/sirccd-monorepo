@@ -177,7 +177,9 @@ class PriorityService:
         incident.updated_at = datetime.utcnow()
         
         # Actualizar timestamps según el estado
-        if new_status == IncidentStatus.IN_PROGRESS and not incident.started_at:
+        if new_status == IncidentStatus.ASSIGNED and not incident.assigned_at:
+            incident.assigned_at = datetime.utcnow()
+        elif new_status == IncidentStatus.IN_PROGRESS and not incident.started_at:
             incident.started_at = datetime.utcnow()
         elif new_status == IncidentStatus.RESOLVED and not incident.completed_at:
             incident.completed_at = datetime.utcnow()
@@ -187,12 +189,14 @@ class PriorityService:
             if user_id:
                 incident.verified_by = user_id
         
-        # Agregar notas si se proporcionaron
+        # Siempre registrar el cambio de estado en el historial (notes)
+        history_entry = f"[{datetime.utcnow().isoformat()}] {old_status.value} -> {new_status.value}"
         if notes:
-            if incident.notes:
-                incident.notes += f"\n\n[{datetime.utcnow().isoformat()}] {old_status} -> {new_status}: {notes}"
-            else:
-                incident.notes = f"[{datetime.utcnow().isoformat()}] {old_status} -> {new_status}: {notes}"
+            history_entry += f": {notes}"
+        if incident.notes:
+            incident.notes += f"\n\n{history_entry}"
+        else:
+            incident.notes = history_entry
         
         self.db.commit()
         self.db.refresh(incident)

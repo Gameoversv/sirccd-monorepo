@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Icon, LatLngExpression } from 'leaflet';
 import { incidentsService } from '@/services';
+import type { IncidentFilters } from '@/types';
 import { Loader2, MapPin, AlertTriangle, Clock } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
@@ -35,6 +36,8 @@ interface MapViewProps {
   height?: string;
   center?: LatLngExpression;
   zoom?: number;
+  filters?: IncidentFilters;
+  onIncidentsLoaded?: (incidents: IncidentMarker[]) => void;
 }
 
 // Component to recenter map when center prop changes
@@ -100,23 +103,54 @@ function formatDate(dateString: string): string {
 export function MapView({ 
   height = '500px', 
   center = [18.4861, -69.9312], // Santo Domingo, RD default
-  zoom = 13 
+  zoom = 13,
+  filters = {},
+  onIncidentsLoaded,
 }: MapViewProps) {
-  const [incidents, setIncidents] = useState<IncidentMarker[]>([]);
+  const [allIncidents, setAllIncidents] = useState<IncidentMarker[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Build API-level filters (severity, status, dates)
+  const apiFilters: IncidentFilters = useMemo(() => {
+    const f: IncidentFilters = {};
+    if (filters.severity) f.severity = filters.severity;
+    if (filters.status) f.status = filters.status;
+    if (filters.date_from) f.date_from = filters.date_from;
+    if (filters.date_to) f.date_to = filters.date_to;
+    if (filters.damage_class) f.damage_class = filters.damage_class;
+    return f;
+  }, [filters.severity, filters.status, filters.date_from, filters.date_to, filters.damage_class]);
+
   useEffect(() => {
     loadIncidents();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiFilters]);
+
+  // Client-side priority score filtering
+  const incidents = useMemo(() => {
+    let result = allIncidents;
+    if (filters.priority_min != null) {
+      result = result.filter((i) => (i.priority_score ?? 0) >= filters.priority_min!);
+    }
+    if (filters.priority_max != null) {
+      result = result.filter((i) => (i.priority_score ?? 0) <= filters.priority_max!);
+    }
+    return result;
+  }, [allIncidents, filters.priority_min, filters.priority_max]);
+
+  // Notify parent of filtered incidents
+  useEffect(() => {
+    onIncidentsLoaded?.(incidents);
+  }, [incidents, onIncidentsLoaded]);
 
   const loadIncidents = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Get incidents from API - backend returns IncidentListResponse with 'incidents' field
-      const response = await incidentsService.getIncidents({}, 1, 100);
+      // Get incidents from API with applied filters
+      const response = await incidentsService.getIncidents(apiFilters, 1, 500);
       
       // Access the incidents array (backend returns .incidents, not .items)
       const incidentsData = (response as any).incidents || [];
@@ -139,7 +173,7 @@ export function MapView({
           created_at: inc.created_at,
         }));
       
-      setIncidents(markers);
+      setAllIncidents(markers);
     } catch (err: any) {
       console.error('Error loading incidents:', err);
       setError(err.response?.data?.detail || 'Error al cargar incidentes');

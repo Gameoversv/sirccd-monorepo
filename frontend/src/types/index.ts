@@ -11,10 +11,10 @@ export interface User {
 }
 
 export enum UserRole {
-  CIUDADANO = 'CIUDADANO',
-  BRIGADA = 'BRIGADA',
-  SUPERVISOR = 'SUPERVISOR',
-  ADMIN = 'ADMIN',
+  CIUDADANO = 'ciudadano',
+  BRIGADA = 'brigada',
+  SUPERVISOR = 'supervisor',
+  ADMIN = 'admin',
 }
 
 export interface LoginCredentials {
@@ -192,6 +192,8 @@ export interface IncidentFilters {
   brigade_id?: number;
   date_from?: string;
   date_to?: string;
+  priority_min?: number;
+  priority_max?: number;
 }
 
 // API Response types
@@ -229,4 +231,63 @@ export interface ExportOptions {
   format: 'csv' | 'geojson';
   filters?: IncidentFilters;
   include_kpis?: boolean;
+}
+
+// Backend incident statuses (English values from API)
+export enum BackendIncidentStatus {
+  OPEN = 'open',
+  ASSIGNED = 'assigned',
+  IN_PROGRESS = 'in_progress',
+  RESOLVED = 'resolved',
+  VERIFIED = 'verified',
+  CLOSED = 'closed',
+}
+
+// Backend priority levels
+export enum BackendPriorityLevel {
+  BAJA = 'baja',
+  MEDIA = 'media',
+  ALTA = 'alta',
+  CRITICA = 'critica',
+}
+
+// Valid status transitions (backend rules)
+export const STATUS_TRANSITIONS: Record<string, string[]> = {
+  open: ['assigned', 'closed'],
+  assigned: ['in_progress', 'open'],
+  in_progress: ['resolved', 'assigned'],
+  resolved: ['verified', 'in_progress'],
+  verified: ['closed', 'resolved'],
+  closed: [],
+};
+
+// Detailed incident from GET /incidents/{id}
+export interface IncidentDetail {
+  id: number;
+  report_id: number;
+  reported_by: number;
+  latitude: number | null;
+  longitude: number | null;
+  address: string | null;
+  city: string | null;
+  province: string | null;
+  damage_type: string;
+  severity: string;
+  priority: string;
+  priority_score: number | null;
+  status: string;
+  assigned_brigade_id: number | null;
+  assigned_at: string | null;
+  estimated_repair_hours: number | null;
+  started_at: string | null;
+  completed_at: string | null;
+  verified_at: string | null;
+  is_verified: boolean;
+  verified_by: number | null;
+  verification_notes: string | null;
+  before_image_url: string | null;
+  after_image_url: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 }

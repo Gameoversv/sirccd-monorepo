@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, List } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { MapView } from '@/components';
 
@@ -18,13 +18,22 @@ export default function DashboardPage() {
             Bienvenido, {user?.full_name || user?.username}
           </p>
         </div>
-        <Link
-          href="/dashboard/reports/new"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Crear Reporte
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/incidents"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+          >
+            <List className="w-4 h-4" />
+            Ver Incidentes
+          </Link>
+          <Link
+            href="/dashboard/reports/new"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <PlusCircle className="w-4 h-4" />
+            Crear Reporte
+          </Link>
+        </div>
       </div>
 
       {/* Stats Cards */}
