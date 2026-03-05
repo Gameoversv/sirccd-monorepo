@@ -464,6 +464,54 @@ def get_incident_stats(
     pending_assignment = by_status.get("open", 0)
     in_progress = by_status.get("in_progress", 0)
     
+    # Activos vs Resueltos
+    active_count = (
+        by_status.get("open", 0) +
+        by_status.get("assigned", 0) +
+        by_status.get("in_progress", 0)
+    )
+    resolved_count = (
+        by_status.get("resolved", 0) +
+        by_status.get("verified", 0) +
+        by_status.get("closed", 0)
+    )
+    
+    # TTR: tiempo promedio desde created_at hasta assigned_at
+    assigned_incidents = db.query(Incident).filter(
+        and_(
+            Incident.assigned_at.isnot(None),
+            Incident.created_at.isnot(None)
+        )
+    ).all()
+    
+    if assigned_incidents:
+        ttr_hours_list = [
+            (inc.assigned_at - inc.created_at).total_seconds() / 3600
+            for inc in assigned_incidents
+            if inc.assigned_at >= inc.created_at
+        ]
+        avg_ttr_hours = round(sum(ttr_hours_list) / len(ttr_hours_list), 2) if ttr_hours_list else None
+    else:
+        avg_ttr_hours = None
+    
+    # SLA compliance: % de incidentes completados dentro de 48 horas
+    SLA_HOURS = 48
+    completed_for_sla = db.query(Incident).filter(
+        and_(
+            Incident.started_at.isnot(None),
+            Incident.completed_at.isnot(None)
+        )
+    ).all()
+    
+    if completed_for_sla:
+        within_sla = sum(
+            1 for inc in completed_for_sla
+            if (inc.completed_at - inc.started_at).total_seconds() / 3600 <= SLA_HOURS
+        )
+        sla_compliance_pct = round(within_sla / len(completed_for_sla) * 100, 1)
+    else:
+        sla_compliance_pct = None
+    
     return IncidentStatsResponse(
         total_incidents=total_incidents or 0,
         by_status=by_status,
@@ -472,5 +520,9 @@ def get_incident_stats(
         avg_priority_score=avg_priority_score,
         avg_resolution_hours=avg_resolution_hours,
         pending_assignment=pending_assignment,
-        in_progress=in_progress
+        in_progress=in_progress,
+        active_count=active_count,
+        resolved_count=resolved_count,
+        avg_ttr_hours=avg_ttr_hours,
+        sla_compliance_pct=sla_compliance_pct
     )

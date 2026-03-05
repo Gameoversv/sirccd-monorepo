@@ -107,16 +107,23 @@ export const incidentsService = {
   },
 
   /**
-   * Get incident statistics
+   * Get incident statistics (KPI overview)
    */
   async getStats(): Promise<{
-    by_status: Record<IncidentStatus, number>;
-    by_severity: Record<string, number>;
-    by_class: Record<string, number>;
-    avg_priority_score: number;
-    avg_resolution_time: number;
+    total_incidents: number;
+    by_status: Record<string, number>;
+    by_priority: Record<string, number>;
+    by_damage_type: Record<string, number>;
+    avg_priority_score: number | null;
+    avg_resolution_hours: number | null;
+    pending_assignment: number;
+    in_progress: number;
+    active_count: number;
+    resolved_count: number;
+    avg_ttr_hours: number | null;
+    sla_compliance_pct: number | null;
   }> {
-    const response = await apiClient.get('/incidents/stats');
+    const response = await apiClient.get('/incidents/stats/overview');
     return response.data;
   },
 };

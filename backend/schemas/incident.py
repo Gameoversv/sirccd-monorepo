@@ -362,6 +362,10 @@ class IncidentStatsResponse(BaseModel):
     avg_resolution_hours: Optional[float] = Field(None, description="Horas promedio de resolución")
     pending_assignment: int = Field(..., description="Incidentes sin asignar (OPEN)")
     in_progress: int = Field(..., description="Incidentes en progreso")
+    active_count: int = Field(0, description="Incidentes activos (open + assigned + in_progress)")
+    resolved_count: int = Field(0, description="Incidentes resueltos/cerrados (resolved + verified + closed)")
+    avg_ttr_hours: Optional[float] = Field(None, description="Tiempo promedio de asignación (TTR) en horas")
+    sla_compliance_pct: Optional[float] = Field(None, description="Porcentaje de incidentes resueltos dentro del SLA (48h)")
     
     model_config = ConfigDict(
         json_schema_extra={
