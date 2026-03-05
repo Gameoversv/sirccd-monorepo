@@ -106,9 +106,8 @@ export default function NewReportPage() {
       await reportsService.createReport(formData);
       toast.success('Reporte creado exitosamente.');
       router.push('/dashboard');
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Error al crear el reporte.';
+    } catch (err: any) {
+      const message = err?.detail ?? err?.message ?? 'Error al crear el reporte.';
       toast.error(message);
     } finally {
       setSubmitting(false);

@@ -13,6 +13,8 @@ import {
   Target,
   TrendingUp,
   RefreshCw,
+  Users,
+  LogOut,
 } from 'lucide-react';
 import {
   BarChart,
@@ -26,8 +28,10 @@ import {
   Cell,
   Legend,
 } from 'recharts';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store';
 import { incidentsService } from '@/services/incidentsService';
+import { UserRole } from '@/types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type Stats = Awaited<ReturnType<typeof incidentsService.getStats>>;
@@ -127,7 +131,8 @@ function SLABar({ pct, loading }: { pct: number | null; loading: boolean }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -199,6 +204,15 @@ export default function DashboardPage() {
             <List className="w-4 h-4" />
             Ver Incidentes
           </Link>
+          {(user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERVISOR) && (
+            <Link
+              href="/dashboard/users"
+              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+            >
+              <Users className="w-4 h-4" />
+              Usuarios
+            </Link>
+          )}
           <Link
             href="/dashboard/reports/new"
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
@@ -206,6 +220,13 @@ export default function DashboardPage() {
             <PlusCircle className="w-4 h-4" />
             Crear Reporte
           </Link>
+          <button
+            onClick={() => { logout(); router.push('/auth/login'); }}
+            className="inline-flex items-center gap-2 px-3 py-2 border border-red-200 hover:bg-red-50 text-red-600 text-sm rounded-lg transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Salir
+          </button>
         </div>
       </div>
 

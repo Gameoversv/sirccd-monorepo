@@ -102,7 +102,7 @@ function formatDate(dateString: string): string {
 
 export function MapView({ 
   height = '500px', 
-  center = [18.4861, -69.9312], // Santo Domingo, RD default
+  center = [19.4517, -70.6970], // Santiago de los Caballeros, RD default
   zoom = 13,
   filters = {},
   onIncidentsLoaded,

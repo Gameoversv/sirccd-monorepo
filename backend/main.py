@@ -6,7 +6,7 @@ Sistema Inteligente de Reporte Ciudadano de Calles Dañadas
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import health, auth, reports, deduplication, incidents, export
+from api.routes import health, auth, reports, deduplication, incidents, export, users
 from core.config import settings
 from core.metrics import PrometheusMiddleware
 
@@ -39,19 +39,20 @@ app.include_router(reports.router, prefix=settings.API_V1_STR, tags=["Reportes"]
 app.include_router(deduplication.router, prefix=settings.API_V1_STR, tags=["Deduplicación"])
 app.include_router(incidents.router, prefix=f"{settings.API_V1_STR}/incidents", tags=["Incidentes"])
 app.include_router(export.router, prefix=f"{settings.API_V1_STR}/export", tags=["Exportaciones"])
+app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["Usuarios"])
 
 
 @app.on_event("startup")
 async def startup_event():
     """Evento de inicio de la aplicación"""
-    print(f"🚀 {settings.PROJECT_NAME} v{settings.VERSION} iniciando...")
-    print(f"📚 Documentación: http://{settings.HOST}:{settings.PORT}{settings.API_V1_STR}/docs")
+    print(f"[START] {settings.PROJECT_NAME} v{settings.VERSION} iniciando...")
+    print(f"[DOCS] Documentacion: http://{settings.HOST}:{settings.PORT}{settings.API_V1_STR}/docs")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Evento de cierre de la aplicación"""
-    print(f"🛑 {settings.PROJECT_NAME} cerrando...")
+    print(f"[STOP] {settings.PROJECT_NAME} cerrando...")
 
 
 if __name__ == "__main__":

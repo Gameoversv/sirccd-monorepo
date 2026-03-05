@@ -261,6 +261,49 @@ export const STATUS_TRANSITIONS: Record<string, string[]> = {
   closed: [],
 };
 
+// ── User management (W-08) ────────────────────────────────────────────────────
+
+export interface UserDetail {
+  id: number;
+  username: string;
+  email: string;
+  full_name: string | null;
+  phone: string | null;
+  role: UserRole;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
+  last_login: string | null;
+}
+
+export interface UserListResponse {
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+  users: UserDetail[];
+}
+
+export interface CreateUserData {
+  email: string;
+  username: string;
+  full_name?: string;
+  phone?: string;
+  role: UserRole;
+  password: string;
+}
+
+export interface UpdateUserData {
+  email?: string;
+  username?: string;
+  full_name?: string;
+  phone?: string;
+  role?: UserRole;
+  is_active?: boolean;
+  password?: string;
+}
+
 // Detailed incident from GET /incidents/{id}
 export interface IncidentDetail {
   id: number;
