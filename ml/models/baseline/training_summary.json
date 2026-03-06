@@ -1,0 +1,12 @@
+{
+  "model": "baseline-yolov8m",
+  "epochs": 100,
+  "batch_size": 64,
+  "img_size": 640,
+  "mAP50": 0.6977188415321762,
+  "mAP50-95": 0.40500792238098765,
+  "precision": 0.7091076836705255,
+  "recall": 0.6539139693390412,
+  "timestamp": "20260218_035327",
+  "drive_path": "/content/drive/MyDrive/SIRCCD_Models/baseline-yolov8m_20260218_035327"
+}

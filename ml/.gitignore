@@ -74,3 +74,5 @@ results/
 *.json
 !configs/*.json
 !metadata/*.json
+!models/baseline/*.json
+!models/baseline/*.csv

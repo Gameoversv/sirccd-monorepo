@@ -332,7 +332,7 @@ class MLInferenceService:
             bounding_boxes=bounding_boxes,
             image_width=image_width,
             image_height=image_height,
-            model_version=f"yolov8-{Path(self.model_path).stem}"
+            model_version="yolov8m-baseline-v1"
         )
     
     def detect(self, image_path: str) -> DetectionResult:
@@ -397,8 +397,8 @@ class MLInferenceService:
 
 
 # Instancia global del servicio de inferencia
-# Por defecto usa mock, se puede reconfigurar para usar modelo real
-ml_service = MLInferenceService(use_mock=True)
+# Usa modelo real si best.pt existe, sino cae a mock automáticamente
+ml_service = MLInferenceService(use_mock=False)
 
 
 def get_ml_service() -> MLInferenceService:

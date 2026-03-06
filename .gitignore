@@ -232,6 +232,11 @@ uvicorn.log
 runs/
 checkpoints/
 models/
+!ml/models/
+!ml/models/baseline/
+!ml/models/baseline/*.json
+!ml/models/baseline/*.yaml
+!ml/models/baseline/*.csv
 *.pt
 *.onnx
 *.engine
@@ -278,6 +283,14 @@ backend/storage/images/
 ###########################
 ml/datasets/exports/*.zip
 ml/datasets/exports/*.tar.gz
+
+###########################
+# ML MODEL WEIGHTS (large)
+###########################
+*.pt
+*.onnx
+ml/anonymization/runs/
+ml/baseline-yolov8m_*/
 
 ###########################
 # OS / EDITOR FILES
