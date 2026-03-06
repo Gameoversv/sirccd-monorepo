@@ -34,7 +34,7 @@
 
 **Problema**: Hay ~1,699 grupos de imágenes duplicadas entre RDD2020 y RDD2022. Si un duplicado aparece en train y en val/test, las métricas están **infladas**.
 
-**Solución**: El notebook `SIRCCD_Training_v2.ipynb` incluye deduplicación automática.
+**Solución**: El notebook `SIRCCD_Training_v3_FromScratch.ipynb` incluye deduplicación automática.
 
 **Impacto esperado**: Las métricas podrían BAJAR ligeramente (porque eliminamos el leakage), pero serán más **fiables**. El modelo real será mejor.
 
@@ -66,20 +66,28 @@ multi_scale: 0.0              → 0.5          # Resolución variable
 
 ---
 
-### 3. 🔍 Modelo Más Grande
+### 3. 🔍 Modelo Más Grande / Más Reciente
 
-Si el hardware lo permite:
+Si el hardware lo permite, **YOLO26** (enero 2026) es la mejor opción:
 
-| Modelo | Params | mAP50 esperado | VRAM necesaria |
-|--------|--------|----------------|----------------|
-| **YOLOv8m** (actual) | 25.9M | 0.795 | ~8 GB |
-| **YOLOv8l** | 43.7M | ~0.82-0.84 | ~12 GB |
-| **YOLOv8x** | 68.2M | ~0.84-0.86 | ~16 GB |
-| **YOLO11m** | ~22M | ~0.82+ | ~8 GB |
+| Modelo | Params | mAP50-95 COCO | VRAM | Ventaja |
+|--------|--------|---------------|------|---------|
+| **YOLOv8m** (v1) | 25.9M | 50.2 | ~8 GB | Baseline |
+| **YOLO26m** | 20.4M | **53.1** | ~8 GB | Más preciso, menos params |
+| **YOLO26l** ⭐ | 24.8M | **55.0** | ~10 GB | Supera YOLO11x con la mitad de params |
+| **YOLO26x** | 55.7M | **57.5** | ~16 GB | Máximo rendimiento |
+| ~~YOLO11l~~ | 25.3M | 53.4 | ~10 GB | Superado por YOLO26l |
+| ~~YOLO11x~~ | 56.9M | 54.7 | ~16 GB | Superado por YOLO26l |
 
-**Cómo usar YOLOv8l:**
+**¿Por qué YOLO26?**
+- **NMS-free**: Inferencia end-to-end, deployment más simple
+- **ProgLoss + STAL**: Mejor detección de objetos pequeños (grietas finas)
+- **MuSGD**: Optimizer híbrido SGD+Muon, convergencia más estable
+- **43% más rápido en CPU**: Ideal para edge/producción
+
+**Cómo usar YOLO26l:**
 ```python
-model = YOLO('yolov8l.pt')  # En vez de cargar best.pt
+model = YOLO('yolo26l.pt')  # Recomendado para T4/L4
 ```
 
 ---
@@ -154,14 +162,15 @@ models = [
 2. ✅ Fine-tune v2 con hiperparámetros mejorados
 3. ✅ Evaluar en test con TTA
 
-### Fase 2: Escalar (3-4 horas en Colab)
-4. Probar YOLOv8l o YOLO11
-5. Probar imgsz=1280
+### Fase 2: YOLO26 Desde Cero (4-6 horas en Colab)
+4. ⭐ Entrenar YOLO26l desde cero (notebook v3)
+5. Comparar con v1/v2 en test
+6. Probar imgsz=1280 si hay A100
 
 ### Fase 3: Más Datos (requiere trabajo previo)
-6. Integrar CRACK500, CFD, SUT-Crack
-7. Recuperar imágenes filtradas del pipeline
-8. Recolectar datos locales (República Dominicana)
+7. Integrar CRACK500, CFD, SUT-Crack
+8. Recuperar imágenes filtradas del pipeline
+9. Recolectar datos locales (República Dominicana)
 
 ---
 
@@ -171,17 +180,21 @@ models = [
 |------|----------------|-------------------|
 | **v1 (actual)** | 0.795 | 0.539 |
 | **v2 (fine-tune)** | 0.81 - 0.83 | 0.56 - 0.59 |
-| **v2 + modelo grande** | 0.83 - 0.86 | 0.59 - 0.63 |
-| **v2 + más datos** | 0.86 - 0.90 | 0.63 - 0.68 |
+| **v3 (YOLO26l)** ⭐ | **0.85 - 0.87** | **0.62 - 0.65** |
+| **v3 + más datos** | 0.88 - 0.92 | 0.66 - 0.72 |
 
 > **Nota**: Después de eliminar duplicados, las métricas "reales" podrían ser ligeramente  
 > menores que las reportadas en v1, pero serán más confiables.
+>
+> **YOLO26l** logra mAP50-95 de 55.0 en COCO (vs 53.4 de YOLO11l), lo que se traduce
+> en ~+2-3% sobre v2 en nuestro dataset de daños viales.
 
 ---
 
 ## 📂 Archivos Relacionados
 
-- **Notebook v2**: `ml/notebooks/SIRCCD_Training_v2.ipynb`
-- **Notebook v1**: `ml/notebooks/SIRCCD_Training_Colab.ipynb`
-- **Resume training**: `ml/notebooks/SIRCCD_Resume_Training.ipynb`
+- **Notebook v3 (YOLO26)**: `ml/notebooks/SIRCCD_Training_v3_FromScratch.ipynb` ⭐
+- **Notebook v1 (baseline)**: `ml/notebooks/SIRCCD_Training_Colab.ipynb`
+- **Anonimización**: `ml/anonymization/notebooks/SIRCCD_Anonymizer_Colab.ipynb`
 - **Guía Colab**: `ml/docs/GUIA_INICIO_RAPIDO_COLAB.md`
+- **YOLO26 docs**: https://docs.ultralytics.com/models/yolo26/

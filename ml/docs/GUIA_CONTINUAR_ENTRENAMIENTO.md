@@ -38,7 +38,7 @@ Antes de continuar, verifica que tienes:
 
 2. **Subir notebook:**
    - Archivo → Subir notebook
-   - Selecciona: `ml/notebooks/SIRCCD_Resume_Training.ipynb`
+   - Selecciona: `ml/notebooks/SIRCCD_Training_v3_FromScratch.ipynb`
 
 3. **Configurar GPU:**
    - Runtime → Change runtime type

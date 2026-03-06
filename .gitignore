@@ -256,6 +256,30 @@ docker-cache/
 compose.yaml.override
 
 ###########################
+# DEV RUNTIME ARTIFACTS
+###########################
+dev.*.err
+dev.*.out
+dev.*.log
+
+###########################
+# EXTRA VIRTUAL ENVIRONMENTS
+###########################
+.venv-*/
+**/venv-*/
+
+###########################
+# BACKEND STORAGE (uploads)
+###########################
+backend/storage/images/
+
+###########################
+# ML DATASETS (large files)
+###########################
+ml/datasets/exports/*.zip
+ml/datasets/exports/*.tar.gz
+
+###########################
 # OS / EDITOR FILES
 ###########################
 .DS_Store

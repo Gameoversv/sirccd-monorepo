@@ -1,0 +1,14 @@
+# SIRCCD Anonymization Model - Dataset Configuration
+# Model: YOLO11s Detect
+# Classes: face (0), license_plate (1)
+# Date: 2026-03-06
+
+path: ./datasets/processed
+train: images/train
+val: images/val
+test: images/test
+
+nc: 2
+names:
+  0: face
+  1: license_plate

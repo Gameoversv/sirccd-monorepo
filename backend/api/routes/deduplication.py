@@ -9,7 +9,7 @@ from PIL import Image
 import io
 
 from db.session import get_db
-from api.deps import get_current_active_user, ActiveUser
+from api.deps import get_current_active_user, ActiveUser, SupervisorUser
 from services.deduplication_service import get_deduplication_service, DeduplicationService
 from schemas.deduplication import (
     DuplicateCheckRequest,
@@ -59,7 +59,7 @@ async def check_duplicate(
         description="Umbral de distancia geográfica en metros (default: 50.0)",
         ge=0.0
     ),
-    current_user: ActiveUser = None,
+    current_user: ActiveUser,
     db: Session = Depends(get_db)
 ):
     """
@@ -130,7 +130,7 @@ async def find_similar_reports(
     longitude: float = Form(..., description="Longitud WGS84"),
     damage_type: str = Form(..., description="Tipo de daño (bache, grieta)"),
     top_k: int = Form(10, description="Número de resultados", ge=1, le=50),
-    current_user: ActiveUser = None,
+    current_user: ActiveUser,
     db: Session = Depends(get_db)
 ):
     """
@@ -209,13 +209,11 @@ async def find_similar_reports(
 )
 async def rebuild_index(
     batch_size: int = Form(100, description="Tamaño de batch", ge=10, le=1000),
-    current_user: ActiveUser = None,
+    current_user: SupervisorUser,
     db: Session = Depends(get_db)
 ):
     """
     Reconstruye el índice FAISS
-    
-    TODO: Agregar verificación de permisos de admin
     
     Returns:
         Estadísticas de la reconstrucción
@@ -260,7 +258,7 @@ async def rebuild_index(
     """
 )
 async def get_stats(
-    current_user: ActiveUser = None,
+    current_user: ActiveUser,
     db: Session = Depends(get_db)
 ):
     """
@@ -297,7 +295,7 @@ async def get_stats(
     """
 )
 async def save_index(
-    current_user: ActiveUser = None,
+    current_user: SupervisorUser,
     db: Session = Depends(get_db)
 ):
     """
@@ -307,7 +305,6 @@ async def save_index(
         Confirmación y ruta del archivo
     """
     try:
-        # TODO: Verificar permisos de admin
         
         from core.config import settings
         index_path = getattr(settings, 'FAISS_INDEX_PATH', './storage/faiss_index.bin')

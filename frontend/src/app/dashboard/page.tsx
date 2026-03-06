@@ -94,13 +94,13 @@ function KPICard({
   );
 }
 
-function SLABar({ pct, loading }: { pct: number | null; loading: boolean }) {
+function SLABar({ pct, loading, t }: { pct: number | null; loading: boolean; t: (key: string) => string }) {
   const val = pct ?? 0;
   const color = val >= 80 ? 'bg-green-500' : val >= 60 ? 'bg-yellow-500' : 'bg-red-500';
   return (
     <div>
       <div className="flex justify-between text-xs text-gray-500 mb-1">
-        <span>Cumplimiento SLA (≤48h)</span>
+        <span>{t('dashboard.sla.compliance')}</span>
         <span className="font-semibold">{loading || pct == null ? '—' : `${val}%`}</span>
       </div>
       <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
@@ -327,6 +327,9 @@ export default function DashboardPage() {
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                 <Tooltip
                   formatter={(v: number) => [v, t('dashboard.charts.incidents')]}
+                  contentStyle={{ fontSize: 12 }}
+                />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                   {statusChartData.map((entry, i) => (
                     <Cell key={i} fill={entry.fill} />
                   ))}

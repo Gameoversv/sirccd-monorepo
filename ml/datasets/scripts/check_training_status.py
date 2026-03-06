@@ -197,7 +197,7 @@ def generate_resume_instructions(metrics, found_files):
     print(f"   https://colab.research.google.com")
     
     print(f"\n2. Subir notebook:")
-    print(f"   ml/notebooks/SIRCCD_Resume_Training.ipynb")
+    print(f"   ml/notebooks/SIRCCD_Training_v3_FromScratch.ipynb")
     
     print(f"\n3. Configurar GPU:")
     print(f"   Runtime → Change runtime type → GPU (T4)")

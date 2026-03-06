@@ -11,7 +11,7 @@ from geoalchemy2.elements import WKTElement
 from geoalchemy2.shape import to_shape
 
 from db.session import get_db
-from api.deps import get_current_active_user, ActiveUser, require_supervisor
+from api.deps import get_current_active_user, ActiveUser, SupervisorUser, require_supervisor
 from models.user import User
 from models.report import Report, ReportStatus, DamageType, SeverityLevel
 from models.incident import Incident, IncidentStatus, PriorityLevel
@@ -37,7 +37,7 @@ def list_reports(
     sort_by: str = Query("created_at"),
     sort_order: str = Query("desc"),
     db: Session = Depends(get_db),
-    current_user: ActiveUser = None,
+    current_user: ActiveUser,
 ):
     query = db.query(Report)
 
@@ -251,7 +251,7 @@ async def create_report(
     
     # Dependencias
     db: Session = Depends(get_db),
-    current_user: ActiveUser = None  # ActiveUser ya incluye Depends
+    current_user: ActiveUser,
 ) -> CreateReportResponse:
     """
     Crea un nuevo reporte con imagen, GPS y descripción
@@ -384,7 +384,7 @@ async def create_report(
 async def get_report(
     report_id: int,
     db: Session = Depends(get_db),
-    current_user: ActiveUser = None  # ActiveUser ya incluye Depends
+    current_user: ActiveUser,
 ) -> ReportResponse:
     """Obtiene un reporte por su ID"""
     
@@ -434,7 +434,7 @@ async def get_report(
 )
 async def get_job_status(
     job_id: str,
-    current_user: ActiveUser = None
+    current_user: ActiveUser,
 ) -> dict:
     """
     Obtiene el estado de un job de procesamiento ML
@@ -457,7 +457,7 @@ async def get_job_status(
     description="Obtiene estadísticas de la cola de procesamiento ML (B-06)"
 )
 async def get_queue_stats(
-    current_user: ActiveUser = None
+    current_user: SupervisorUser,
 ) -> dict:
     """
     Obtiene estadísticas de la cola RQ
@@ -489,7 +489,7 @@ async def get_queue_stats(
 )
 async def verify_image_privacy(
     image: UploadFile = File(..., description="Imagen a verificar (JPG, PNG, WEBP)"),
-    current_user: ActiveUser = None,
+    current_user: ActiveUser,
 ):
     """
     Detecta rostros y placas en la imagen sin modificarla.

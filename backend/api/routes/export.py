@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status as http_sta
 from fastapi.responses import StreamingResponse, JSONResponse
 import io
 
-from api.deps import ActiveUser, CurrentUser
+from api.deps import SupervisorUser
 from services.export_service import ExportService, get_export_service
 from schemas.export import (
     ExportStatusResponse,
@@ -139,7 +139,7 @@ async def export_incidents_geojson(
     ),
     
     # Dependencias
-    current_user: ActiveUser = None,
+    current_user: SupervisorUser,
     export_service: ExportService = Depends(get_export_service)
 ):
     """
@@ -237,12 +237,12 @@ async def export_incidents_csv(
     include_closed: bool = Query(False),
     
     # Dependencias
-    current_user: ActiveUser = None,
+    current_user: SupervisorUser,
     export_service: ExportService = Depends(get_export_service)
 ):
     """
     Exportar listado detallado de incidentes en CSV
-    """
+    ""
     try:
         # Validar rango de fechas
         if date_from and date_to and date_to < date_from:
@@ -370,12 +370,12 @@ async def export_kpis_csv(
     ),
     
     # Dependencias
-    current_user: ActiveUser = None,
+    current_user: SupervisorUser,
     export_service: ExportService = Depends(get_export_service)
 ):
     """
     Exportar KPIs agregados en CSV
-    """
+    ""
     try:
         # Validar rango de fechas
         if date_to < date_from:

@@ -130,9 +130,10 @@ function ReportDetailModal({
     }
   };
 
+  const mediaBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1').replace(/\/api\/v1\/?$/, '');
   const imgSrc = report.image_url.startsWith('http')
     ? report.image_url
-    : `http://localhost:8000${report.image_url}`;
+    : `${mediaBase}${report.image_url}`;
 
   return (
     <div
@@ -470,9 +471,10 @@ export default function ReportsPage() {
                 </tr>
               ) : (
                 reports.map((r) => {
+                  const mediaBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1').replace(/\/api\/v1\/?$/, '');
                   const imgSrc = r.image_url.startsWith('http')
                     ? r.image_url
-                    : `http://localhost:8000${r.image_url}`;
+                    : `${mediaBase}${r.image_url}`;
                   return (
                     <tr
                       key={r.id}
