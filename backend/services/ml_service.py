@@ -52,6 +52,15 @@ class BoundingBox:
         }
 
     def area(self) -> float:
+        if len(self.points) >= 3:
+            pts = self.points
+            n = len(pts)
+            a = 0.0
+            for i in range(n):
+                j = (i + 1) % n
+                a += pts[i]["x"] * pts[j]["y"]
+                a -= pts[j]["x"] * pts[i]["y"]
+            return abs(a) / 2.0
         return self.width * self.height
 
 
@@ -212,10 +221,11 @@ class MLInferenceService:
         image_area = image_width * image_height
         total_damage_area = sum(bb.area() for bb in bounding_boxes)
         damage_ratio = total_damage_area / image_area if image_area > 0 else 0
-        num_detections = len(bounding_boxes)
-        if damage_ratio > 0.15 or num_detections >= 4:
+        # Detecciones ponderadas por confianza (evita que conf=45% cuente igual que conf=95%)
+        weighted_detections = sum(bb.confidence for bb in bounding_boxes)
+        if damage_ratio > 0.15 or weighted_detections >= 3.0:
             return SeverityLevel.ALTA
-        elif damage_ratio > 0.05 or num_detections >= 2:
+        elif damage_ratio > 0.05 or weighted_detections >= 1.5:
             return SeverityLevel.MEDIA
         else:
             return SeverityLevel.BAJA
