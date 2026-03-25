@@ -326,7 +326,7 @@ export default function DashboardPage() {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                 <Tooltip
-                  formatter={(v: number) => [v, t('dashboard.charts.incidents')]}
+                  formatter={(v: number | string | undefined) => [v ?? 0, t('dashboard.charts.incidents')]}
                   contentStyle={{ fontSize: 12 }}
                 />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
@@ -362,7 +362,7 @@ export default function DashboardPage() {
                   ))}
                 </Pie>
                 <Legend iconSize={10} wrapperStyle={{ fontSize: 12 }} />
-                <Tooltip formatter={(v: number) => [v, t('dashboard.charts.incidents')]} contentStyle={{ fontSize: 12 }} />
+                <Tooltip formatter={(v: number | string | undefined) => [v ?? 0, t('dashboard.charts.incidents')]} contentStyle={{ fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -380,7 +380,7 @@ export default function DashboardPage() {
               <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11 }} />
               <Tooltip
-                formatter={(v: number) => [v, t('dashboard.charts.incidents')]}
+                formatter={(v: number | string | undefined) => [v ?? 0, t('dashboard.charts.incidents')]}
                 contentStyle={{ fontSize: 12 }}
               />
               <Bar dataKey="value" radius={[0, 4, 4, 0]}>

@@ -92,8 +92,6 @@ AdminUser = Annotated[User, Depends(require_admin)]
 SupervisorUser = Annotated[User, Depends(require_supervisor)]
 # → SUPERVISOR o ADMIN
 
-BrigadaUser = Annotated[User, Depends(require_brigada)]
-# → BRIGADA, SUPERVISOR o ADMIN
 ```
 
 **Factory para roles personalizados:**
@@ -276,8 +274,7 @@ Authorization: Bearer {token}
 ```python
 class UserRole(str, enum.Enum):
     ADMIN = "admin"          # Administrador del sistema
-    SUPERVISOR = "supervisor"  # Supervisor de brigadas
-    BRIGADA = "brigada"       # Miembro de brigada
+    SUPERVISOR = "supervisor"  # Supervisor
     CIUDADANO = "ciudadano"   # Ciudadano reportante
 ```
 
@@ -285,8 +282,6 @@ class UserRole(str, enum.Enum):
 
 ```
 CIUDADANO (nivel más bajo)
-    ↓
-BRIGADA
     ↓
 SUPERVISOR
     ↓
@@ -305,17 +300,7 @@ async def delete_user(user_id: int, current_user: AdminUser):
     pass
 ```
 
-**Ejemplo 2: Brigada o superior**
-```python
-from api.deps import BrigadaUser
-
-@router.get("/incidents/assigned")
-async def get_assigned_incidents(current_user: BrigadaUser):
-    # BRIGADA, SUPERVISOR o ADMIN pueden acceder
-    pass
-```
-
-**Ejemplo 3: Múltiples roles específicos**
+**Ejemplo 2: Múltiples roles específicos**
 ```python
 from api.deps import require_role
 from models.user import UserRole
@@ -329,7 +314,7 @@ async def approve_report():
     pass
 ```
 
-**Ejemplo 4: Usuario autenticado (cualquier rol)**
+**Ejemplo 3: Usuario autenticado (cualquier rol)**
 ```python
 from api.deps import CurrentUser
 
@@ -418,7 +403,7 @@ async def get_profile(current_user: CurrentUser):
 
 6. **Autorización por roles (2 tests):**
    - Admin access
-   - Brigada access
+   - Supervisor access
 
 7. **Seguridad (2 tests):**
    - Password hasheado
@@ -558,7 +543,7 @@ async def delete_user(user_id: int, admin: AdminUser):
     "/incidents/assign",
     dependencies=[Depends(require_role(UserRole.SUPERVISOR, UserRole.ADMIN))]
 )
-async def assign_incident(incident_id: int, brigade_id: int):
+async def assign_incident(incident_id: int):
     return {"message": "Incidente asignado"}
 
 # Acceso condicional basado en rol

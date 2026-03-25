@@ -50,10 +50,9 @@ class QueueService:
             logger.info(f" Cola 'ml_inference' creada")
             
         except Exception as e:
-            logger.error(f" Error conectando a Redis: {e}")
+            logger.warning(f"⚠ Redis no disponible: {e}")
             self.redis_conn = None
             self.queue = None
-            raise
     
     def enqueue_ml_detection(
         self,

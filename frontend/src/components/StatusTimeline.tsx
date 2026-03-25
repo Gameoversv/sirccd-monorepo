@@ -22,7 +22,6 @@ interface StatusTimelineProps {
     verified_at: string | null;
     status: string;
     notes: string | null;
-    assigned_brigade_id: number | null;
   };
 }
 
@@ -79,17 +78,6 @@ export function StatusTimeline({ incident }: StatusTimelineProps) {
     note: 'Incidente registrado',
     type: 'created',
   });
-
-  if (incident.assigned_at) {
-    milestones.push({
-      timestamp: incident.assigned_at,
-      status: 'assigned',
-      note: incident.assigned_brigade_id
-        ? `Asignado a brigada #${incident.assigned_brigade_id}`
-        : 'Asignado a brigada',
-      type: 'assigned',
-    });
-  }
 
   if (incident.started_at) {
     milestones.push({

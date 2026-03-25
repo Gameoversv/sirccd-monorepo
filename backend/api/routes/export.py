@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Rutas de API para Exportaciones (B-09)
 
@@ -13,7 +14,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status as http_sta
 from fastapi.responses import StreamingResponse, JSONResponse
 import io
 
-from api.deps import SupervisorUser
+from api.deps import SupervisorUser, CurrentUser
 from services.export_service import ExportService, get_export_service
 from schemas.export import (
     ExportStatusResponse,
@@ -42,12 +43,11 @@ router = APIRouter()
     - Aplicaciones móviles con mapas
     
     **Filtros disponibles:**
-    - Estado (status): open, assigned, in_progress, resolved, verified, closed
+    - Estado (status): open, in_progress, resolved, verified, closed
     - Prioridad (priority): baja, media, alta, critica
     - Tipo de daño (damage_type): bache, grieta
     - Severidad (severity): baja, media, alta
     - Ubicación (city, province)
-    - Brigada (brigade_id)
     - Rango de fechas (date_from, date_to)
     - Incluir cerrados (include_closed)
     
@@ -76,12 +76,15 @@ router = APIRouter()
     tags=["Exportaciones"]
 )
 async def export_incidents_geojson(
+    # Dependencias
+    current_user: SupervisorUser,
+    
     # Filtros de clasificación
     filter_status: Optional[List[str]] = Query(
         None,
         alias="status",
         description="Estados a incluir (puede especificar múltiples)",
-        examples=["open", "assigned"]
+        examples=["open", "in_progress"]
     ),
     priority: Optional[List[str]] = Query(
         None,
@@ -113,13 +116,6 @@ async def export_incidents_geojson(
         examples=["Distrito Nacional"]
     ),
     
-    # Filtro de brigada
-    brigade_id: Optional[int] = Query(
-        None,
-        gt=0,
-        description="ID de brigada asignada"
-    ),
-    
     # Filtros temporales
     date_from: Optional[datetime] = Query(
         None,
@@ -138,8 +134,6 @@ async def export_incidents_geojson(
         description="Incluir incidentes cerrados"
     ),
     
-    # Dependencias
-    current_user: SupervisorUser,
     export_service: ExportService = Depends(get_export_service)
 ):
     """
@@ -161,7 +155,6 @@ async def export_incidents_geojson(
             severity=severity,
             city=city,
             province=province,
-            brigade_id=brigade_id,
             date_from=date_from,
             date_to=date_to,
             include_closed=include_closed
@@ -211,9 +204,8 @@ async def export_incidents_geojson(
     - Identificación: id, report_id
     - Clasificación: status, priority, priority_score, damage_type, severity
     - Ubicación: latitude, longitude, address, city, province
-    - Asignación: assigned_brigade_id, assigned_brigade_name
     - Personas: reported_by_name, verified_by_name
-    - Fechas: created_at, assigned_at, started_at, completed_at, verified_at
+    - Fechas: created_at, started_at, completed_at, verified_at
     - Tiempos: resolution_time_hours, estimated_repair_hours
     - Verificación: is_verified
     
@@ -224,6 +216,9 @@ async def export_incidents_geojson(
     tags=["Exportaciones"]
 )
 async def export_incidents_csv(
+    # Dependencias
+    current_user: SupervisorUser,
+    
     # Filtros (mismos que GeoJSON)
     filter_status: Optional[List[str]] = Query(None, alias="status"),
     priority: Optional[List[str]] = Query(None),
@@ -231,18 +226,15 @@ async def export_incidents_csv(
     severity: Optional[str] = Query(None),
     city: Optional[str] = Query(None, max_length=100),
     province: Optional[str] = Query(None, max_length=100),
-    brigade_id: Optional[int] = Query(None, gt=0),
     date_from: Optional[datetime] = Query(None),
     date_to: Optional[datetime] = Query(None),
     include_closed: bool = Query(False),
     
-    # Dependencias
-    current_user: SupervisorUser,
     export_service: ExportService = Depends(get_export_service)
 ):
     """
     Exportar listado detallado de incidentes en CSV
-    ""
+    """
     try:
         # Validar rango de fechas
         if date_from and date_to and date_to < date_from:
@@ -259,7 +251,6 @@ async def export_incidents_csv(
             severity=severity,
             city=city,
             province=province,
-            brigade_id=brigade_id,
             date_from=date_from,
             date_to=date_to,
             include_closed=include_closed
@@ -313,7 +304,7 @@ async def export_incidents_csv(
     
     **Métricas incluidas por período:**
     - Total de incidentes
-    - Distribución por estado (nuevos, asignados, en proceso, resueltos, verificados, cerrados)
+    - Distribución por estado (nuevos, en proceso, resueltos, verificados, cerrados)
     - Distribución por prioridad (baja, media, alta, crítica)
     - Distribución por tipo de daño (baches, grietas)
     - Distribución por severidad (baja, media, alta)
@@ -337,6 +328,9 @@ async def export_incidents_csv(
     tags=["Exportaciones"]
 )
 async def export_kpis_csv(
+    # Dependencias
+    current_user: SupervisorUser,
+    
     # Filtros temporales (obligatorios)
     date_from: datetime = Query(
         ...,
@@ -369,13 +363,11 @@ async def export_kpis_csv(
         examples=["Distrito Nacional"]
     ),
     
-    # Dependencias
-    current_user: SupervisorUser,
     export_service: ExportService = Depends(get_export_service)
 ):
     """
     Exportar KPIs agregados en CSV
-    ""
+    """
     try:
         # Validar rango de fechas
         if date_to < date_from:

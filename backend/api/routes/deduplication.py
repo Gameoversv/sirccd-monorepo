@@ -9,7 +9,7 @@ from PIL import Image
 import io
 
 from db.session import get_db
-from api.deps import get_current_active_user, ActiveUser, SupervisorUser
+from api.deps import get_current_active_user, ActiveUser, SupervisorUser, DbSession
 from services.deduplication_service import get_deduplication_service, DeduplicationService
 from schemas.deduplication import (
     DuplicateCheckRequest,
@@ -44,6 +44,8 @@ router = APIRouter(prefix="/deduplication", tags=["Deduplicación"])
     """
 )
 async def check_duplicate(
+    current_user: ActiveUser,
+    db: DbSession,
     image: UploadFile = File(..., description="Imagen del reporte"),
     latitude: float = Form(..., description="Latitud WGS84"),
     longitude: float = Form(..., description="Longitud WGS84"),
@@ -59,8 +61,6 @@ async def check_duplicate(
         description="Umbral de distancia geográfica en metros (default: 50.0)",
         ge=0.0
     ),
-    current_user: ActiveUser,
-    db: Session = Depends(get_db)
 ):
     """
     Verifica si un reporte es duplicado
@@ -125,13 +125,13 @@ async def check_duplicate(
     """
 )
 async def find_similar_reports(
+    current_user: ActiveUser,
+    db: DbSession,
     image: UploadFile = File(..., description="Imagen del reporte"),
     latitude: float = Form(..., description="Latitud WGS84"),
     longitude: float = Form(..., description="Longitud WGS84"),
     damage_type: str = Form(..., description="Tipo de daño (bache, grieta)"),
     top_k: int = Form(10, description="Número de resultados", ge=1, le=50),
-    current_user: ActiveUser,
-    db: Session = Depends(get_db)
 ):
     """
     Busca reportes similares
@@ -208,9 +208,9 @@ async def find_similar_reports(
     """
 )
 async def rebuild_index(
-    batch_size: int = Form(100, description="Tamaño de batch", ge=10, le=1000),
     current_user: SupervisorUser,
-    db: Session = Depends(get_db)
+    db: DbSession,
+    batch_size: int = Form(100, description="Tamaño de batch", ge=10, le=1000),
 ):
     """
     Reconstruye el índice FAISS
@@ -259,7 +259,7 @@ async def rebuild_index(
 )
 async def get_stats(
     current_user: ActiveUser,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """
     Obtiene estadísticas del servicio
@@ -296,7 +296,7 @@ async def get_stats(
 )
 async def save_index(
     current_user: SupervisorUser,
-    db: Session = Depends(get_db)
+    db: DbSession,
 ):
     """
     Guarda el índice FAISS en disco

@@ -33,7 +33,7 @@ Implementación completa de suite de pruebas unitarias, de integración y de con
 |---------|--------|-------|-----------|
 | `backend/tests/test_auth.py` | 377 | 20+ | Autenticación, JWT, Roles |
 | `backend/tests/test_reports.py` | 335 | 15+ | Reportes, Upload, ML |
-| `backend/tests/test_incidents.py` | 401 | 18+ | Incidentes, Prioridad, Brigadas |
+| `backend/tests/test_incidents.py` | 401 | 18+ | Incidentes, Prioridad |
 
 ### Tests de Contrato
 
@@ -63,7 +63,7 @@ Implementación completa de suite de pruebas unitarias, de integración y de con
 - ✅ Registro de usuarios (válido, duplicado, validaciones)
 - ✅ Login (exitoso, contraseña incorrecta, usuario inactivo)
 - ✅ JWT tokens (creación, decodificación, expiración)
-- ✅ Autorización por roles (admin, ciudadano, brigada)
+- ✅ Autorización por roles (admin, ciudadano, supervisor)
 - ✅ Refresh tokens
 - ✅ Seguridad (password hashing, no retornar contraseñas)
 
@@ -85,7 +85,6 @@ Implementación completa de suite de pruebas unitarias, de integración y de con
 - ✅ Filtrado (por estado, prioridad, tipo de daño)
 - ✅ Obtener detalle de incidente
 - ✅ Actualización de estado
-- ✅ Asignación de brigadas
 - ✅ Cálculo de prioridad
 - ✅ Estadísticas
 
@@ -163,13 +162,11 @@ Implementadas en `tests/conftest.py`:
 ### Usuarios
 - `admin_user` - Usuario con rol ADMIN
 - `citizen_user` - Usuario con rol CITIZEN
-- `brigade_user` - Usuario con rol BRIGADE
 - `inactive_user` - Usuario inactivo
 
 ### Autenticación
 - `admin_token` - JWT token de admin
 - `citizen_token` - JWT token de ciudadano
-- `brigade_token` - JWT token de brigada
 - `auth_headers_*` - Headers HTTP con tokens
 
 ### Mocks de Servicios

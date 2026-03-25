@@ -62,9 +62,10 @@ class Settings(BaseSettings):
     MINIO_BUCKET_IMAGES: str = "sirccd-images"
     MINIO_BUCKET_MODELS: str = "sirccd-models"
     
-    # ML Model
-    YOLO_MODEL_PATH: str = "../ml/models/baseline/best.pt"
-    CONFIDENCE_THRESHOLD: float = 0.3
+    # Roboflow Inference API
+    ROBOFLOW_API_KEY: str = "2Mn6nf96sMJnX7Lj7khX"
+    ROBOFLOW_MODEL_ID: str = "rd-roaddataset/5"
+    CONFIDENCE_THRESHOLD: float = 0.4
     IOU_THRESHOLD: float = 0.4
     
     # Deduplication Service (B-07)

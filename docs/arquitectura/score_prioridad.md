@@ -18,7 +18,7 @@ El municipio recibe cientos de reportes diarios de daños viales. Sin un sistema
 - ❌ Se atienden reportes por orden de llegada (FIFO), no por urgencia
 - ❌ Daños críticos en zonas de alto tráfico quedan desatendidos
 - ❌ Decisiones subjetivas de operadores
-- ❌ Ineficiencia en asignación de brigadas
+- ❌ Ineficiencia en asignación de recursos
 
 ### 1.2 Solución: Score multicriterio
 
@@ -1829,7 +1829,7 @@ asyncio.run(validate_with_historical_data())
 
 **Score final:** 0.944 → **CRÍTICA**
 
-**Acción:** Asignación inmediata, notificación a brigada de emergencias, cierre temporal de vía.
+**Acción:** Asignación inmediata, notificación al equipo de emergencias, cierre temporal de vía.
 
 ---
 

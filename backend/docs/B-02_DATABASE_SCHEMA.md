@@ -17,7 +17,7 @@ Se ha implementado el esquema completo de base de datos PostgreSQL con PostGIS, 
 - hashed_password: VARCHAR(255) NOT NULL
 - is_active: BOOLEAN DEFAULT true
 - is_verified: BOOLEAN DEFAULT false
-- role: ENUM('ADMIN', 'CIUDADANO', 'BRIGADA', 'SUPERVISOR') DEFAULT 'CIUDADANO'
+- role: ENUM('ADMIN', 'CIUDADANO', 'SUPERVISOR') DEFAULT 'CIUDADANO'
 - created_at: TIMESTAMP DEFAULT NOW()
 - updated_at: TIMESTAMP DEFAULT NOW()
 - last_login: TIMESTAMP
@@ -26,44 +26,8 @@ Se ha implementado el esquema completo de base de datos PostgreSQL con PostGIS, 
 **Relaciones**:
 - `reports`: Un usuario puede crear múltiples reportes
 - `incidents`: Un usuario puede reportar múltiples incidentes
-- `brigade_assignments`: Usuarios pueden ser miembros de brigadas (many-to-many)
 
-### 2. **brigades** - Equipos de trabajo
-
-```sql
-- id: SERIAL PRIMARY KEY
-- name: VARCHAR(255) UNIQUE NOT NULL
-- code: VARCHAR(50) UNIQUE NOT NULL  -- Ej: BRG-001
-- contact_phone: VARCHAR(20)
-- contact_email: VARCHAR(255)
-- is_active: BOOLEAN DEFAULT true
-- is_available: BOOLEAN DEFAULT true
-- current_location: GEOGRAPHY(POINT, 4326)  -- PostGIS
-- last_location_update: TIMESTAMP
-- max_concurrent_incidents: INTEGER DEFAULT 5
-- total_incidents_resolved: INTEGER DEFAULT 0
-- avg_resolution_hours: FLOAT
-- created_at: TIMESTAMP DEFAULT NOW()
-- updated_at: TIMESTAMP DEFAULT NOW()
-```
-
-**Campos geoespaciales**:
-- `current_location`: Ubicación actual de la brigada (tracking en tiempo real)
-
-**Relaciones**:
-- `members`: Miembros de la brigada (many-to-many con users)
-- `incidents`: Incidentes asignados a la brigada
-
-### 3. **brigade_members** - Asociación brigadas-usuarios
-
-```sql
-- brigade_id: INTEGER FK(brigades.id) ON DELETE CASCADE
-- user_id: INTEGER FK(users.id) ON DELETE CASCADE
-- joined_at: TIMESTAMP DEFAULT NOW()
-- PRIMARY KEY(brigade_id, user_id)
-```
-
-### 4. **reports** - Reportes ciudadanos
+### 2. **reports** - Reportes ciudadanos
 
 ```sql
 - id: SERIAL PRIMARY KEY
@@ -94,7 +58,7 @@ Se ha implementado el esquema completo de base de datos PostgreSQL con PostGIS, 
 - `user`: Usuario que reportó
 - `incident`: Incidente generado (one-to-one)
 
-### 5. **incidents** - Incidentes confirmados
+### 3. **incidents** - Incidentes confirmados
 
 ```sql
 - id: SERIAL PRIMARY KEY
@@ -109,7 +73,6 @@ Se ha implementado el esquema completo de base de datos PostgreSQL con PostGIS, 
 - priority: ENUM('BAJA', 'MEDIA', 'ALTA', 'CRITICA') NOT NULL
 - priority_score: FLOAT  -- Score calculado por algoritmo
 - status: ENUM('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'VERIFIED', 'CLOSED') DEFAULT 'OPEN'
-- assigned_brigade_id: INTEGER FK(brigades.id)
 - assigned_at: TIMESTAMP
 - estimated_repair_hours: FLOAT
 - started_at: TIMESTAMP
@@ -131,10 +94,9 @@ Se ha implementado el esquema completo de base de datos PostgreSQL con PostGIS, 
 **Relaciones**:
 - `original_report`: Reporte que generó el incidente
 - `reported_by_user`: Usuario que reportó
-- `assigned_brigade`: Brigada asignada
 - `metrics`: Métricas asociadas
 
-### 6. **pois** - Puntos de Interés
+### 4. **pois** - Puntos de Interés
 
 ```sql
 - id: SERIAL PRIMARY KEY
@@ -158,7 +120,7 @@ Se ha implementado el esquema completo de base de datos PostgreSQL con PostGIS, 
 
 **Uso**: Priorización de incidentes basada en proximidad a POIs críticos.
 
-### 7. **metrics** - Métricas y estadísticas
+### 5. **metrics** - Métricas y estadísticas
 
 ```sql
 - id: SERIAL PRIMARY KEY
@@ -202,13 +164,8 @@ incidents_near_poi = session.query(Incident).filter(
 
 # Calcular distancia entre dos puntos
 distance = session.query(
-    func.ST_Distance(incident.location, brigade.current_location)
+    func.ST_Distance(incident.location, poi.location)
 ).scalar()
-
-# Ordenar por proximidad
-incidents_sorted = session.query(Incident).order_by(
-    func.ST_Distance(Incident.location, brigade.current_location)
-).all()
 ```
 
 ## 🚀 Configuración de Base de Datos
@@ -371,7 +328,6 @@ backend/
 │   ├── user.py               # Modelo User
 │   ├── report.py             # Modelo Report
 │   ├── incident.py           # Modelo Incident
-│   ├── brigade.py            # Modelo Brigade
 │   ├── poi.py                # Modelo POI
 │   └── metric.py             # Modelo Metric
 │
@@ -391,8 +347,7 @@ backend/
 ### UserRole
 - `ADMIN`: Administrador del sistema
 - `CIUDADANO`: Usuario ciudadano que reporta
-- `BRIGADA`: Miembro de equipo de reparación
-- `SUPERVISOR`: Supervisor de brigadas
+- `SUPERVISOR`: Supervisor
 
 ### DamageType
 - `BACHE`: Bache/hueco en el pavimento
@@ -411,7 +366,7 @@ backend/
 
 ### IncidentStatus
 - `OPEN`: Abierto, sin asignar
-- `ASSIGNED`: Asignado a brigada
+- `ASSIGNED`: Asignado
 - `IN_PROGRESS`: En reparación
 - `RESOLVED`: Reparado
 - `VERIFIED`: Verificado por supervisor
@@ -438,9 +393,8 @@ backend/
 ## 🔐 Índices Creados
 
 - **users**: email, username, id
-- **brigades**: code, name, id, current_location (spatial)
 - **reports**: user_id, status, created_at, location (spatial)
-- **incidents**: report_id, reported_by, assigned_brigade_id, status, priority, severity, damage_type, created_at, location (spatial)
+- **incidents**: report_id, reported_by, status, priority, severity, damage_type, created_at, location (spatial)
 - **pois**: category, id, location (spatial)
 - **metrics**: incident_id, metric_type, category, recorded_at
 
@@ -472,8 +426,6 @@ docker exec -it sirccd-postgres psql -U sirccd_user -d sirccd_db -c "\dt"
 #  Schema |      Name       | Type  |    Owner     
 # --------+-----------------+-------+--------------
 #  public | alembic_version | table | sirccd_user
-#  public | brigade_members | table | sirccd_user
-#  public | brigades        | table | sirccd_user
 #  public | incidents       | table | sirccd_user
 #  public | metrics         | table | sirccd_user
 #  public | pois            | table | sirccd_user
@@ -487,11 +439,9 @@ docker exec -it sirccd-postgres psql -U sirccd_user -d sirccd_db -c "\dt"
 ```
 users (1) ----> (N) reports
 users (1) ----> (N) incidents
-users (N) <----> (N) brigades (via brigade_members)
 
 reports (1) ----> (1) incidents
 
-incidents (N) ----> (1) brigades
 incidents (1) ----> (N) metrics
 
 pois (standalone, usado para priorización)
@@ -501,7 +451,7 @@ pois (standalone, usado para priorización)
 
 **✅ B-02 COMPLETADO**
 
-- 7 tablas creadas
+- 5 tablas creadas
 - 3 tipos geoespaciales (Geography POINT)
 - 7 enumeraciones
 - Múltiples índices (incluyendo espaciales)

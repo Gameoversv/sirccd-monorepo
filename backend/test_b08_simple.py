@@ -326,9 +326,8 @@ print("TEST 9: Transiciones de estado válidas")
 print("="*60)
 
 VALID_TRANSITIONS = {
- "OPEN": ["ASSIGNED", "CLOSED"],
- "ASSIGNED": ["IN_PROGRESS", "OPEN"],
- "IN_PROGRESS": ["RESOLVED", "ASSIGNED"],
+ "OPEN": ["IN_PROGRESS", "CLOSED"],
+ "IN_PROGRESS": ["RESOLVED", "OPEN"],
  "RESOLVED": ["VERIFIED", "IN_PROGRESS"],
  "VERIFIED": ["CLOSED", "RESOLVED"],
  "CLOSED": []
@@ -341,8 +340,7 @@ def is_valid_transition(current, new):
  return new in VALID_TRANSITIONS.get(current, [])
 
 test_cases = [
- ("OPEN", "ASSIGNED", True, "OPEN  ASSIGNED (asignar brigada)"),
- ("ASSIGNED", "IN_PROGRESS", True, "ASSIGNED  IN_PROGRESS (iniciar trabajo)"),
+ ("OPEN", "IN_PROGRESS", True, "OPEN  IN_PROGRESS (iniciar trabajo)"),
  ("IN_PROGRESS", "RESOLVED", True, "IN_PROGRESS  RESOLVED (completar)"),
  ("RESOLVED", "VERIFIED", True, "RESOLVED  VERIFIED (verificar)"),
  ("VERIFIED", "CLOSED", True, "VERIFIED  CLOSED (cerrar)"),
@@ -373,11 +371,10 @@ print("="*60)
 
 print("Flujo completo del ciclo de vida:")
 print(" 1. OPEN (nuevo incidente)")
-print(" 2. ASSIGNED (asignado a brigada)")
-print(" 3. IN_PROGRESS (trabajo iniciado)")
-print(" 4. RESOLVED (trabajo completado)")
-print(" 5. VERIFIED (calidad verificada)")
-print(" 6. CLOSED (cerrado definitivamente)")
+print(" 2. IN_PROGRESS (trabajo iniciado)")
+print(" 3. RESOLVED (trabajo completado)")
+print(" 4. VERIFIED (calidad verificada)")
+print(" 5. CLOSED (cerrado definitivamente)")
 
 print("\n CLOSED es estado final (sin transiciones salientes)")
 print(" Cada estado tiene transiciones definidas")

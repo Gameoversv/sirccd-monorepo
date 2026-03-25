@@ -218,169 +218,7 @@ Como Ciudadano, quiero ver un mapa con reportes cercanos, para tomar rutas más 
 
 ---
 
-## 👷 2. Brigade (Brigada)
-
-### US-BRI-01 — Ver trabajos asignados
-
-**Historia:**  
-Como Brigada, quiero ver la lista de reportes asignados, para organizar mi jornada de atención.
-
-**Prioridad:** Alta  
-**Estimación:** 3 puntos
-
-**Criterios de Aceptación:**
-
-- **Given** que inicié sesión como brigada,  
-  **When** entro a "Asignados",  
-  **Then** veo reportes con prioridad, ubicación y SLA/fecha.
-
-- **Given** que selecciono un reporte,  
-  **When** abro el detalle,  
-  **Then** veo evidencia (fotos), descripción y ruta sugerida.
-
----
-
-### US-BRI-02 — Aceptar o rechazar asignación con motivo
-
-**Historia:**  
-Como Brigada, quiero aceptar o rechazar una asignación, para manejar casos fuera de alcance o saturación.
-
-**Prioridad:** Media  
-**Estimación:** 5 puntos
-
-**Criterios de Aceptación:**
-
-- **Given** que tengo una asignación nueva,  
-  **When** presiono "Aceptar",  
-  **Then** el estado pasa a "en progreso" (o "aceptado").
-
-- **Given** que presiono "Rechazar",  
-  **When** selecciono un motivo,  
-  **Then** el sistema registra el motivo y notifica al operador.
-
----
-
-### US-BRI-03 — Navegar hacia el punto del incidente
-
-**Historia:**  
-Como Brigada, quiero abrir navegación desde la ubicación del reporte, para llegar más rápido al lugar.
-
-**Prioridad:** Media  
-**Estimación:** 3 puntos
-
-**Criterios de Aceptación:**
-
-- **Given** que estoy en el detalle,  
-  **When** presiono "Navegar",  
-  **Then** se abre el mapa con destino precargado.
-
-- **Given** que la ubicación es aproximada,  
-  **When** navego,  
-  **Then** se muestra aviso de precisión estimada.
-
----
-
-### US-BRI-04 — Actualizar estado durante la atención
-
-**Historia:**  
-Como Brigada, quiero actualizar el estado (en camino/en progreso/resuelto), para reflejar avances en tiempo real.
-
-**Prioridad:** Alta  
-**Estimación:** 5 puntos
-
-**Criterios de Aceptación:**
-
-- **Given** que el reporte está asignado,  
-  **When** marco "En camino",  
-  **Then** se registra fecha/hora y se notifica (si aplica).
-
-- **Given** que termino el trabajo,  
-  **When** marco "Resuelto",  
-  **Then** se solicita evidencia de cierre (foto y/o nota).
-
----
-
-### US-BRI-05 — Subir evidencia antes/después
-
-**Historia:**  
-Como Brigada, quiero subir fotos de antes y después, para documentar el trabajo realizado.
-
-**Prioridad:** Alta  
-**Estimación:** 5 puntos
-
-**Criterios de Aceptación:**
-
-- **Given** que estoy cerrando el caso,  
-  **When** adjunto foto "después",  
-  **Then** el sistema la guarda y la asocia al reporte.
-
-- **Given** que no adjunto evidencia mínima,  
-  **When** intento cerrar,  
-  **Then** el sistema bloquea el cierre y explica requisitos.
-
----
-
-### US-BRI-06 — Reportar impedimentos o riesgos
-
-**Historia:**  
-Como Brigada, quiero registrar impedimentos (clima, acceso, seguridad), para justificar retrasos o reprogramaciones.
-
-**Prioridad:** Media  
-**Estimación:** 3 puntos
-
-**Criterios de Aceptación:**
-
-- **Given** que no puedo intervenir,  
-  **When** selecciono "Imposible atender" e indico motivo,  
-  **Then** el sistema registra el evento y retorna a operador.
-
-- **Given** que indico riesgo,  
-  **When** guardo,  
-  **Then** queda marcado con etiqueta de riesgo para seguimiento.
-
----
-
-### US-BRI-07 — Solicitar información adicional
-
-**Historia:**  
-Como Brigada, quiero pedir aclaraciones, para reducir errores por información incompleta.
-
-**Prioridad:** Baja  
-**Estimación:** 3 puntos
-
-**Criterios de Aceptación:**
-
-- **Given** que el reporte no es claro,  
-  **When** envío una solicitud de info,  
-  **Then** el ciudadano/operador recibe el mensaje.
-
-- **Given** que se responde,  
-  **When** llega la respuesta,  
-  **Then** se adjunta al historial del reporte.
-
----
-
-### US-BRI-08 — Registrar tiempos y recursos
-
-**Historia:**  
-Como Brigada, quiero registrar tiempo invertido y materiales, para apoyar métricas y costos.
-
-**Prioridad:** Baja  
-**Estimación:** 5 puntos
-
-**Criterios de Aceptación:**
-
-- **Given** que estoy cerrando o actualizando,  
-  **When** ingreso tiempo y materiales,  
-  **Then** se guardan como parte del reporte.
-
-- **Given** que dejo campos en blanco,  
-  **When** son opcionales,  
-  **Then** el sistema permite continuar sin bloquear.
-
----
-
-## 🏢 3. Operator (Operador Municipal)
+## 🏢 2. Operator (Operador Municipal)
 
 ### US-OPE-01 — Ver cola de reportes entrantes
 
@@ -422,23 +260,19 @@ Como Operador Municipal, quiero validar reportes (completitud/categoría/ubicaci
 
 ---
 
-### US-OPE-03 — Asignar reportes a brigadas
+### US-OPE-03 — Asignar reportes
 
-**Historia:**  
-Como Operador Municipal, quiero asignar reportes a una brigada, para asegurar atención oportuna.
+**Historia:**
+Como Operador Municipal, quiero asignar reportes, para asegurar atención oportuna.
 
-**Prioridad:** Alta  
+**Prioridad:** Alta
 **Estimación:** 5 puntos
 
 **Criterios de Aceptación:**
 
-- **Given** que seleccioné un reporte,  
-  **When** elijo brigada y confirmo,  
-  **Then** el reporte cambia a "asignado" y notifica a la brigada.
-
-- **Given** que la brigada está saturada/no disponible,  
-  **When** intento asignar,  
-  **Then** el sistema advierte y sugiere alternativas.
+- **Given** que seleccioné un reporte,
+  **When** confirmo la asignación,
+  **Then** el reporte cambia a "asignado".
 
 ---
 
@@ -485,7 +319,7 @@ Como Operador Municipal, quiero unificar reportes duplicados, para evitar trabaj
 ### US-OPE-06 — Comunicación y notas internas
 
 **Historia:**  
-Como Operador Municipal, quiero agregar notas internas y comunicarme con brigada/ciudadano, para coordinar acciones.
+Como Operador Municipal, quiero agregar notas internas y comunicarme con el ciudadano, para coordinar acciones.
 
 **Prioridad:** Media  
 **Estimación:** 5 puntos
@@ -542,7 +376,7 @@ Como Operador Municipal, quiero ver métricas (tiempos, backlog, resueltos), par
 
 ---
 
-## 🔧 4. Admin (Administrador)
+## 🔧 3. Admin (Administrador)
 
 ### US-ADM-01 — Gestionar roles y permisos (RBAC)
 
@@ -669,17 +503,16 @@ Como Administrador, quiero bloquear usuarios/reportes abusivos, para proteger el
 | Rol | Total US | Alta Prioridad | Media Prioridad | Baja Prioridad |
 |-----|----------|----------------|-----------------|----------------|
 | **Citizen** | 10 | 4 | 5 | 1 |
-| **Brigade** | 8 | 3 | 3 | 2 |
 | **Operator** | 8 | 4 | 4 | 0 |
 | **Admin** | 6 | 2 | 4 | 0 |
-| **TOTAL** | **32** | **13** | **16** | **3** |
+| **TOTAL** | **24** | **10** | **13** | **1** |
 
 ---
 
 ## 🎯 Estimación Total
 
-**Story Points:** ~170 puntos  
-**Sprints estimados (20 pts/sprint):** ~8-9 sprints
+**Story Points:** ~138 puntos
+**Sprints estimados (20 pts/sprint):** ~7 sprints
 
 ---
 
@@ -696,19 +529,13 @@ US-CIT-05 (Ver estado)
 US-CIT-06 (Notificaciones)
 ```
 
-### Flujo Operador → Brigada
+### Flujo Operador
 ```
 US-OPE-01 (Ver cola)
   ↓
 US-OPE-02 (Validar)
   ↓
 US-OPE-03 (Asignar)
-  ↓
-US-BRI-01 (Ver asignados)
-  ↓
-US-BRI-04 (Actualizar estado)
-  ↓
-US-BRI-05 (Evidencia)
 ```
 
 ### Configuración Administrativa
@@ -743,7 +570,6 @@ Al agregar nuevas historias de usuario:
 
 **Convención de IDs:**
 - `US-CIT-XX` - Ciudadano
-- `US-BRI-XX` - Brigada
 - `US-OPE-XX` - Operador
 - `US-ADM-XX` - Administrador
 

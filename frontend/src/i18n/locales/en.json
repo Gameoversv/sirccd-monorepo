@@ -106,8 +106,6 @@
       "damageType": "Damage type",
       "severity": "Severity",
       "status": "Status",
-      "assignedBrigade": "Assigned brigade",
-      "notAssigned": "Unassigned",
       "estimatedTime": "Estimated time",
       "notEstimated": "Not estimated",
       "location": "Location",
@@ -126,8 +124,7 @@
       "priorityRecalculated": "Priority recalculated",
       "priorityError": "Error recalculating priority",
       "recalculate": "Recalculate priority",
-      "loadError": "Could not load incident",
-      "brigadeRef": "Brigade #{{id}}"
+      "loadError": "Could not load incident"
     }
   },
   "reports": {
@@ -239,7 +236,6 @@
     "deleteError": "Error deleting user",
     "roles": {
       "ciudadano": "Citizen",
-      "brigada": "Brigade",
       "supervisor": "Supervisor",
       "admin": "Admin"
     },

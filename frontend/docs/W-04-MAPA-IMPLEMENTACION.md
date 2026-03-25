@@ -232,7 +232,6 @@ El componente usa `incidentsService` que automáticamente incluye:
       "priority_score": 8.5,
       "status": "asignado",
       "created_at": "2026-03-04T10:30:00Z",
-      "assigned_brigade_id": 3
     }
   ],
   "page": 1,
@@ -316,11 +315,7 @@ El componente usa `incidentsService` que automáticamente incluye:
    - Buscar por dirección
    - Centrar mapa en resultado
 
-5. **Rutas de Brigadas**
-   - Mostrar ubicación en tiempo real de brigadas
-   - Mostrar ruta planificada
-
-6. **Geolocalización del Usuario**
+5. **Geolocalización del Usuario**
    - Botón para centrar mapa en ubicación actual
    - Mostrar incidentes cercanos
 

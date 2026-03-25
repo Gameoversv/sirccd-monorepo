@@ -16,6 +16,7 @@
     "date-fns": "^3.3.1",
     "i18next": "^25.8.14",
     "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
     "lucide-react": "^0.323.0",
     "next": "^14.1.0",
     "react": "^18.2.0",

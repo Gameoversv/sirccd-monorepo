@@ -10,7 +10,7 @@
 
 El **SIRCCD** es un sistema integral para digitalizar y optimizar la gestión de daños viales en zonas urbanas. Combina inteligencia artificial, geolocalización y herramientas de gestión municipal para:
 
-- Recibir reportes ciudadanos y de brigadas con foto + GPS.
+- Recibir reportes ciudadanos con foto + GPS.
 - Clasificar automáticamente daños (bache, grieta) con YOLOv8.
 - Estimar severidad mediante segmentación de área/longitud.
 - Eliminar reportes duplicados con análisis visual (CLIP/FAISS) + geográfico (DBSCAN/Haversine).
@@ -73,7 +73,7 @@ sirccd-monorepo/
 
 ### Resumen por módulo
 
-**Backend** — API REST completa: autenticación JWT con RBAC (ciudadano/brigada/supervisor/admin), CRUD de reportes e incidentes, anonimización automática, inferencia ML con cola asíncrona (Redis), deduplicación visual, priorización multicriterio, exportaciones GeoJSON/CSV, health checks con métricas Prometheus, tests (~75% cobertura).
+**Backend** — API REST completa: autenticación JWT con RBAC (ciudadano/supervisor/admin), CRUD de reportes e incidentes, anonimización automática, inferencia ML con cola asíncrona (Redis), deduplicación visual, priorización multicriterio, exportaciones GeoJSON/CSV, health checks con métricas Prometheus, tests (~75% cobertura).
 
 **Frontend** — Dashboard funcional: login/registro, mapa interactivo Leaflet con marcadores por prioridad, KPIs (TTR, SLA, deduplicación), gestión de incidentes con filtros y panel dividido, gestión de usuarios CRUD, revisión de reportes ciudadanos, i18n ES/EN.
 

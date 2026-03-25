@@ -12,7 +12,7 @@ Definir la arquitectura lógica del sistema, identificando componentes principal
 
 ### A. Frontend (Web + App)
 
-**Responsabilidad:** Interfaz para ciudadanos, brigadas, operadores y administradores.
+**Responsabilidad:** Interfaz para ciudadanos, operadores y administradores.
 
 #### 🌐 Web (Operador/Admin)
 
@@ -26,15 +26,10 @@ Definir la arquitectura lógica del sistema, identificando componentes principal
   - Evidencias (antes/después)
 
 - **Mapa interactivo**
-  - Capas configurables (reportes, incidentes, brigadas, POIs)
+  - Capas configurables (reportes, incidentes, POIs)
   - Clusters dinámicos por zoom
   - Heatmaps de densidad
   - Filtros geográficos (dibujar polígono, radio)
-
-- **Asignación a brigadas**
-  - Workflow de aprobación
-  - Rutas sugeridas
-  - Carga de trabajo en tiempo real
 
 - **Métricas/BI**
   - Dashboards interactivos
@@ -50,7 +45,7 @@ Definir la arquitectura lógica del sistema, identificando componentes principal
 
 ---
 
-#### 📱 App (Ciudadano/Brigada)
+#### 📱 App (Ciudadano)
 
 **Tecnología:** Flutter (iOS + Android)
 
@@ -102,8 +97,7 @@ Definir la arquitectura lógica del sistema, identificando componentes principal
 
 **Roles:**
 - `ciudadano` - Crear reportes, ver historial propio
-- `brigada` - Ver asignaciones, actualizar estado, subir evidencia
-- `operador` - Gestionar reportes, asignar brigadas
+- `operador` - Gestionar reportes, asignar incidentes
 - `supervisor` - Validación y supervisión
 - `administrador` - Configuración completa del sistema
 
@@ -156,7 +150,6 @@ pendiente → procesando → validado
 
 **Operaciones típicas:**
 - Reportes en radio de 100m
-- Brigada más cercana a incidente
 - Incidentes en zona específica
 
 ---
@@ -189,7 +182,7 @@ Donde:
 ##### 6. 🔄 Workflow Operativo
 
 **Funcionalidades:**
-- Asignación automática/manual a brigadas
+- Asignación automática/manual de incidentes
 - Gestión de SLA
 - Cambios de estado con validaciones
 - Reasignación
@@ -213,13 +206,12 @@ pendiente → asignado → en_proceso → resuelto → cerrado
 - Eventos configurables:
   - Reporte creado
   - Estado cambiado
-  - Asignación a brigada
+  - Asignación de incidente
   - Resolución completada
   - SLA próximo a vencer
 
 **Segmentación por rol:**
 - Ciudadano: solo sus reportes
-- Brigada: solo sus asignaciones
 - Operador/Admin: eventos configurables
 
 ---
@@ -239,7 +231,6 @@ pendiente → asignado → en_proceso → resuelto → cerrado
 - Cumplimiento de SLA
 - F1-score del modelo
 - Tasa de deduplicación
-- Brigadas activas
 - Incidentes por zona
 
 ---
@@ -301,8 +292,6 @@ pendiente → asignado → en_proceso → resuelto → cerrado
 |-------|-------------|
 | `user_account` | Usuarios del sistema |
 | `municipality` | Municipalidades |
-| `brigade` | Brigadas de trabajo |
-| `brigade_member` | Miembros de brigadas |
 | `report` | Reportes ciudadanos |
 | `report_image` | Evidencias fotográficas |
 | `report_dedup` | Análisis de deduplicación |
@@ -472,49 +461,46 @@ sequenceDiagram
     participant API as Backend API
     participant DB as PostgreSQL
     participant Queue as Redis Queue
-    participant Brigada as App Brigada
     participant Notif as Notification Service
 
     Op->>API: GET /incidentes?prioridad=critica
     API->>DB: SELECT incidents ORDER BY score DESC
     DB-->>API: Lista de incidentes
     API-->>Op: JSON con incidentes prioritarios
-    
+
     Op->>Op: Selecciona incidente
-    Op->>API: POST /incidentes/{id}/asignar {brigada_id}
+    Op->>API: POST /incidentes/{id}/asignar
     API->>DB: INSERT work_order (estado: asignada)
     API->>DB: UPDATE incident (estado: asignado)
     DB-->>API: OK
-    
-    API->>Notif: Send push to brigada
-    Notif->>Brigada: "Nueva asignación: Bache en Calle 5"
+
+    API->>Notif: Send push notification
     API-->>Op: 200 OK
-    
-    Brigada->>API: PATCH /work_orders/{id} {estado: iniciada}
+
+    Op->>API: PATCH /work_orders/{id} {estado: iniciada}
     API->>DB: UPDATE work_order, started_at=NOW()
-    API-->>Brigada: 200 OK
-    
-    Note over Brigada: Brigada trabaja en campo
-    
-    Brigada->>Brigada: Captura foto "después"
-    Brigada->>API: POST /work_orders/{id}/evidence (foto)
+    API-->>Op: 200 OK
+
+    Note over Op: Trabajo en campo
+
+    Op->>API: POST /work_orders/{id}/evidence (foto)
     API->>DB: INSERT work_order_image
-    Brigada->>API: PATCH /work_orders/{id} {estado: completada}
+    Op->>API: PATCH /work_orders/{id} {estado: completada}
     API->>DB: UPDATE work_order (completed_at=NOW())
     API->>DB: UPDATE incident (estado: resuelto)
-    
+
     API->>Queue: Encolar compute_daily_metrics
     API->>Notif: Send notification to operador
-    Notif->>Op: "Incidente resuelto por Brigada Norte 1"
-    
+    Notif->>Op: "Incidente resuelto"
+
     API->>Queue: Calculate TTR
     Queue->>DB: UPDATE daily_metrics
-    
+
     Op->>API: GET /incidentes/{id}
     API->>DB: SELECT incident + images (before/after)
     DB-->>API: Incident details
     API-->>Op: Ver evidencia antes/después
-    
+
     Op->>API: PATCH /incidentes/{id} {estado: cerrado}
     API->>DB: UPDATE incident (estado: cerrado)
     API-->>Op: 200 OK
@@ -527,17 +513,11 @@ sequenceDiagram
    - Ordenamiento: score descendente
    - Visualización en mapa con clusters
 
-2. **Selecciona incidente y asigna a brigada**
+2. **Selecciona incidente y asigna**
    - Crear work_order
-   - Asociar brigada disponible
    - Establecer SLA (ej: 24h para crítica)
 
-3. **Brigada recibe notificación**
-   - Push notification con detalles
-   - Ubicación en mapa
-   - Evidencia fotográfica
-
-4. **Brigada cambia estado en campo**
+3. **Cambio de estado en campo**
    - `iniciada`: al llegar al sitio
    - Timestamp de inicio
 

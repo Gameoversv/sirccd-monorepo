@@ -26,14 +26,12 @@ import type { UserDetail, CreateUserData, UpdateUserData } from '@/types';
 
 const ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.CIUDADANO]: 'Ciudadano',
-  [UserRole.BRIGADA]: 'Brigada',
   [UserRole.SUPERVISOR]: 'Supervisor',
   [UserRole.ADMIN]: 'Admin',
 };
 
 const ROLE_COLORS: Record<UserRole, string> = {
   [UserRole.CIUDADANO]: 'bg-gray-100 text-gray-700',
-  [UserRole.BRIGADA]: 'bg-blue-100 text-blue-700',
   [UserRole.SUPERVISOR]: 'bg-violet-100 text-violet-700',
   [UserRole.ADMIN]: 'bg-red-100 text-red-700',
 };

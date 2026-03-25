@@ -10,7 +10,6 @@ La API permite la integración entre el frontend web, la aplicación móvil y lo
 - Clasificación automática mediante IA
 - Deduplicación de reportes
 - Priorización multicriterio de incidentes
-- Gestión operativa de brigadas municipales
 - KPIs y métricas del sistema
 
 ---
@@ -37,13 +36,12 @@ Especificación completa de la API REST siguiendo el estándar OpenAPI 3.0.3.
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/auth/login` | Iniciar sesión (ciudadano, brigada, admin) |
+| POST | `/auth/login` | Iniciar sesión (ciudadano, admin) |
 | POST | `/auth/refresh` | Renovar token de acceso |
 | POST | `/auth/logout` | Cerrar sesión |
 
 **Roles soportados:**
 - `ciudadano` - Usuarios que reportan daños
-- `brigada` - Personal de brigadas municipales
 - `administrador` - Gestión completa del sistema
 - `supervisor` - Supervisión y validación
 
@@ -83,12 +81,12 @@ Gestión de incidentes validados con priorización y asignación operativa.
 | GET | `/incidentes` | Listar incidentes con filtros y ordenamiento |
 | GET | `/incidentes/{id}` | Detalles completos del incidente |
 | PATCH | `/incidentes/{id}` | Actualizar estado operativo |
-| POST | `/incidentes/{id}/asignar` | Asignar a brigada específica |
+| POST | `/incidentes/{id}/asignar` | Asignar incidente |
 
 **Estados operativos:**
 - `pendiente` - Sin asignar
-- `asignado` - Asignado a brigada
-- `en_proceso` - Brigada trabajando en él
+- `asignado` - Asignado
+- `en_proceso` - Equipo trabajando en él
 - `resuelto` - Reparación completada
 - `cerrado` - Verificado y cerrado
 
@@ -97,31 +95,6 @@ Gestión de incidentes validados con priorización y asignación operativa.
 - `alta` - Urgente (24-48h)
 - `media` - Programable (3-7 días)
 - `baja` - Mantenimiento rutinario (> 7 días)
-
----
-
-### 👷 Brigadas (`/brigadas`)
-
-Gestión de brigadas municipales de reparación.
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/brigadas` | Listar brigadas (filtro por estado) |
-| POST | `/brigadas` | Crear nueva brigada |
-| GET | `/brigadas/{id}` | Detalles de brigada |
-| PATCH | `/brigadas/{id}` | Actualizar estado/capacidad |
-| GET | `/brigadas/{id}/incidentes` | Incidentes asignados a la brigada |
-
-**Tipos de brigada:**
-- `baches` - Especializada en reparación de baches
-- `señalizacion` - Señalización vial
-- `drenaje` - Sistemas de drenaje
-- `mixta` - Multipropósito
-
-**Estados:**
-- `disponible` - Lista para asignaciones
-- `ocupada` - Con carga de trabajo activa
-- `inactiva` - Fuera de servicio
 
 ---
 
@@ -171,7 +144,6 @@ KPIs y estadísticas del sistema.
 - Incidentes activos vs. resueltos
 - Tasa de deduplicación
 - Tiempo de respuesta promedio (TTR)
-- Brigadas activas
 - Cumplimiento de SLA
 
 **Métricas ML:**
@@ -213,7 +185,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   "id": "uuid",
   "email": "string",
   "nombre": "string",
-  "rol": "ciudadano|brigada|administrador|supervisor",
+  "rol": "ciudadano|administrador|supervisor",
   "activo": true
 }
 ```
@@ -253,27 +225,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   "longitud": -89.218191,
   "direccion": "string",
   "estado_operativo": "pendiente|asignado|en_proceso|resuelto|cerrado",
-  "brigada_id": "uuid|null",
-  "brigada": { /* objeto Brigada */ },
   "fecha_asignacion": "datetime|null",
   "fecha_resolucion": "datetime|null",
   "tiempo_resolucion_horas": 48.5,
   "notas_resolucion": "string|null",
-  "created_at": "datetime",
-  "updated_at": "datetime"
-}
-```
-
-### Brigada
-```json
-{
-  "id": "uuid",
-  "nombre": "Brigada Norte 1",
-  "tipo": "baches|señalizacion|drenaje|mixta",
-  "estado": "disponible|ocupada|inactiva",
-  "capacidad_diaria": 10,
-  "incidentes_asignados": 3,
-  "zona_asignada": "Zona Norte",
   "created_at": "datetime",
   "updated_at": "datetime"
 }
@@ -407,20 +362,6 @@ curl -X POST http://localhost:8000/api/v1/reportes \
 ```bash
 curl -X GET "http://localhost:8000/api/v1/incidentes?prioridad=critica&estado_operativo=pendiente&orden=prioridad_desc" \
   -H "Authorization: Bearer $TOKEN"
-```
-
----
-
-### Asignar Incidente a Brigada
-
-```bash
-curl -X POST http://localhost:8000/api/v1/incidentes/123e4567-e89b-12d3-a456-426614174000/asignar \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "brigada_id": "987e6543-e21b-98c7-d654-426614174999",
-    "notas": "Asignado por alta prioridad"
-  }'
 ```
 
 ---

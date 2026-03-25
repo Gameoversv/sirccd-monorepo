@@ -11,13 +11,21 @@ from geoalchemy2.elements import WKTElement
 from geoalchemy2.shape import to_shape
 
 from db.session import get_db
-from api.deps import get_current_active_user, ActiveUser, SupervisorUser, require_supervisor
+from api.deps import get_current_active_user, ActiveUser, SupervisorUser, DbSession, require_supervisor
 from models.user import User
 from models.report import Report, ReportStatus, DamageType, SeverityLevel
 from models.incident import Incident, IncidentStatus, PriorityLevel
 from schemas.report import CreateReportResponse, ReportResponse, UpdateReportStatusRequest
 from services.storage import storage_service
 from services.queue_service import queue_service
+
+
+def _public_url(url: str) -> str:
+    """Convierte URLs internas de MinIO (minio:9000) a URLs accesibles por el browser (localhost:9000)"""
+    if url and "minio:" in url:
+        return url.replace("minio:", "localhost:", 1)
+    return url
+from services.ml_service import ml_service
 from services.priority_service import get_priority_service
 
 
@@ -28,6 +36,8 @@ router = APIRouter(prefix="/reportes", tags=["Reportes"])
 
 @router.get("", summary="Listar reportes con filtros y paginación")
 def list_reports(
+    db: DbSession,
+    current_user: ActiveUser,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     status_filter: Optional[str] = Query(None, alias="status"),
@@ -36,8 +46,6 @@ def list_reports(
     search: Optional[str] = Query(None),
     sort_by: str = Query("created_at"),
     sort_order: str = Query("desc"),
-    db: Session = Depends(get_db),
-    current_user: ActiveUser,
 ):
     query = db.query(Report)
 
@@ -65,6 +73,23 @@ def list_reports(
     items = []
     for r in reports:
         point = to_shape(r.location)
+
+        # Parse detections_json to extract derived fields
+        import json as _json
+        annotated_image_url = None
+        model_precision = None
+        model_recall = None
+        model_map50 = None
+        if r.detections_json:
+            try:
+                det = _json.loads(r.detections_json)
+                annotated_image_url = det.get("annotated_image_url")
+                model_precision = det.get("model_precision")
+                model_recall = det.get("model_recall")
+                model_map50 = det.get("model_map50")
+            except Exception:
+                pass
+
         items.append({
             "id": r.id,
             "user_id": r.user_id,
@@ -76,11 +101,16 @@ def list_reports(
             "damage_type": r.damage_type.value,
             "severity": r.severity.value,
             "confidence": r.confidence,
-            "image_url": r.image_url,
+            "image_url": _public_url(r.image_url),
+            "annotated_image_url": annotated_image_url,
+            "model_precision": model_precision,
+            "model_recall": model_recall,
+            "model_map50": model_map50,
+            "detections_json": r.detections_json,
             "status": r.status.value,
             "description": r.description,
-            "created_at": r.created_at.isoformat(),
-            "updated_at": r.updated_at.isoformat(),
+            "created_at": r.created_at.isoformat() + "Z",
+            "updated_at": r.updated_at.isoformat() + "Z",
         })
 
     return {
@@ -154,7 +184,7 @@ def review_report(
     return {
         "id": report.id,
         "status": report.status.value,
-        "reviewed_at": report.reviewed_at.isoformat() if report.reviewed_at else None,
+        "reviewed_at": (report.reviewed_at.isoformat() + "Z") if report.reviewed_at else None,
         "incident_id": incident_id,
     }
 
@@ -205,6 +235,10 @@ def _mock_ml_detection(image_url: str) -> tuple[DamageType, SeverityLevel, float
     """
 )
 async def create_report(
+    # Dependencias
+    db: DbSession,
+    current_user: ActiveUser,
+    
     # Imagen (multipart/form-data)
     image: UploadFile = File(
         ...,
@@ -248,10 +282,6 @@ async def create_report(
         max_length=100,
         description="Provincia/Estado"
     ),
-    
-    # Dependencias
-    db: Session = Depends(get_db),
-    current_user: ActiveUser,
 ) -> CreateReportResponse:
     """
     Crea un nuevo reporte con imagen, GPS y descripción
@@ -314,37 +344,82 @@ async def create_report(
         db.commit()
         db.refresh(new_report)
         
-        # 3. Encolar tarea de detección ML (B-06: procesamiento asíncrono)
+        # 3. Detección ML: siempre ejecutar inline (no hay worker RQ activo)
         job_id = None
+        ml_ran_inline = False
         try:
-            # Construir ruta local a la imagen
-            # Formato de image_url: "/storage/images/reports/2026/03/03/abc123_file.jpg"
+            import tempfile, requests as _req
             from pathlib import Path
-            
+
+            # Resolver ruta local o descargar desde MinIO
+            image_local_path = None
+            _tmp_file = None
+
             if image_url.startswith("/storage/images/"):
-                # Extraer ruta relativa
                 relative_path = image_url.replace("/storage/images/", "")
-                
-                # Construir ruta absoluta (backend/storage/images/...)
                 backend_dir = Path(__file__).resolve().parent.parent.parent
                 image_local_path = str(backend_dir / "storage" / "images" / relative_path)
-                
-                # Encolar job para procesamiento ML
-                job = queue_service.enqueue_ml_detection(
-                    report_id=new_report.id,
-                    image_local_path=image_local_path
+            elif image_url.startswith("http"):
+                # Descargar imagen desde MinIO usando el cliente autenticado
+                from minio import Minio
+                from core.config import settings as _cfg
+                _mc = Minio(
+                    _cfg.MINIO_ENDPOINT,
+                    access_key=_cfg.MINIO_ACCESS_KEY,
+                    secret_key=_cfg.MINIO_SECRET_KEY,
+                    secure=_cfg.MINIO_SECURE,
                 )
-                
-                if job:
-                    job_id = job.id
-                    print(f" Job ML encolado: {job_id} para reporte {new_report.id}")
-                else:
-                    print(f" No se pudo encolar job ML para reporte {new_report.id}")
-            
+                # Extraer bucket y object key de la URL
+                # URL format: http://minio:9000/bucket/object/key
+                _url_path = image_url.split(_cfg.MINIO_ENDPOINT)[-1].lstrip("/")
+                _bucket = _url_path.split("/")[0]
+                _object_key = "/".join(_url_path.split("/")[1:])
+                _tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+                _tmp_file.close()
+                _mc.fget_object(_bucket, _object_key, _tmp_file.name)
+                image_local_path = _tmp_file.name
+
+            if image_local_path:
+                print(f" Ejecutando detección ML inline para reporte {new_report.id}")
+                result = ml_service.detect(image_local_path)
+
+                # Generar imagen anotada con bounding boxes
+                import json as _json, os as _os
+                det_dict = result.to_dict()
+                try:
+                    backend_dir = Path(__file__).resolve().parent.parent.parent
+                    ann_name = f"report_{new_report.id}_det.jpg"
+                    annotated_local = str(backend_dir / "storage" / "images" / "annotated" / ann_name)
+                    ml_service.annotate_image(image_local_path, result, annotated_local)
+                    det_dict["annotated_image_url"] = f"/storage/images/annotated/{ann_name}"
+                    print(f" Imagen anotada guardada: {ann_name}")
+                except Exception as ann_err:
+                    import traceback as _tb
+                    print(f" Error generando imagen anotada: {ann_err}")
+                    _tb.print_exc()
+                finally:
+                    # Limpiar archivo temporal si se descargó de MinIO
+                    if _tmp_file and _os.path.exists(image_local_path):
+                        _os.remove(image_local_path)
+
+                new_report.damage_type = result.damage_type
+                new_report.severity = result.severity
+                new_report.confidence = result.confidence
+                new_report.detections_json = _json.dumps(det_dict)
+                new_report.status = ReportStatus.PENDING
+                new_report.updated_at = datetime.utcnow()
+                db.commit()
+                db.refresh(new_report)
+                damage_type = result.damage_type
+                severity = result.severity
+                confidence = result.confidence
+                ml_ran_inline = True
+                print(f" Detección inline: {result.damage_type.value} ({result.severity.value}) conf={result.confidence:.2f}")
+
         except Exception as e:
-            # Si falla el encolado, no bloquear la creación del reporte
-            print(f" Error al encolar job ML: {e}")
-            # El reporte queda en PROCESSING, puede reprocesarse manualmente
+            import traceback
+            print(f" Error en detección ML: {e}")
+            traceback.print_exc()
         
     except Exception as e:
         db.rollback()
@@ -362,16 +437,16 @@ async def create_report(
     # 4. Preparar respuesta
     return CreateReportResponse(
         id=new_report.id,
-        status=ReportStatus.PROCESSING,
-        damage_type=damage_type,  # Placeholder
-        severity=severity,  # Placeholder
-        confidence=confidence,  # 0.0 hasta que se procese
-        image_url=image_url,
+        status=new_report.status,
+        damage_type=damage_type,
+        severity=severity,
+        confidence=confidence,
+        image_url=_public_url(image_url),
         latitude=latitude,
         longitude=longitude,
         description=description,
         created_at=new_report.created_at,
-        job_id=job_id  # B-06: ID del job RQ para seguimiento
+        job_id=job_id
     )
 
 
@@ -383,7 +458,7 @@ async def create_report(
 )
 async def get_report(
     report_id: int,
-    db: Session = Depends(get_db),
+    db: DbSession,
     current_user: ActiveUser,
 ) -> ReportResponse:
     """Obtiene un reporte por su ID"""
@@ -414,7 +489,7 @@ async def get_report(
         damage_type=report.damage_type,
         severity=report.severity,
         confidence=report.confidence,
-        image_url=report.image_url,
+        image_url=_public_url(report.image_url),
         image_width=report.image_width,
         image_height=report.image_height,
         detections_json=report.detections_json,
@@ -488,8 +563,8 @@ async def get_queue_stats(
     """
 )
 async def verify_image_privacy(
-    image: UploadFile = File(..., description="Imagen a verificar (JPG, PNG, WEBP)"),
     current_user: ActiveUser,
+    image: UploadFile = File(..., description="Imagen a verificar (JPG, PNG, WEBP)"),
 ):
     """
     Detecta rostros y placas en la imagen sin modificarla.

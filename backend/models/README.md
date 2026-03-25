@@ -15,7 +15,6 @@ backend/models/
 ├── base.py                      # Clase base SQLAlchemy
 ├── user.py                      # Modelo USER_ACCOUNT
 ├── municipality.py              # Modelo MUNICIPALITY
-├── brigade.py                   # Modelos BRIGADE, BRIGADE_MEMBER
 ├── report.py                    # Modelos REPORT, REPORT_IMAGE
 ├── deduplication.py             # Modelo REPORT_DEDUP
 ├── incident.py                  # Modelo INCIDENT
@@ -124,24 +123,6 @@ reportes_cercanos = session.query(
 
 ---
 
-### Asignar Incidente a Brigada
-
-```python
-from models.work_order import WorkOrder
-from datetime import datetime
-
-orden = WorkOrder(
-    incident_id=incident_id,
-    brigade_id=brigade_id,
-    assigned_by_user_id=admin_id,
-    status='asignada',
-    assigned_at=datetime.utcnow()
-)
-
-session.add(orden)
-session.commit()
-```
-
 ---
 
 ## 📊 Enums
@@ -150,7 +131,6 @@ session.commit()
 ```python
 class UserRole(str, Enum):
     CIUDADANO = "ciudadano"
-    BRIGADA = "brigada"
     ADMINISTRADOR = "administrador"
     SUPERVISOR = "supervisor"
 ```

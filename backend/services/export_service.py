@@ -10,7 +10,6 @@ Soporta filtros por:
 - Estado del incidente
 - Nivel de prioridad
 - Ciudad/provincia
-- Brigada asignada
 - Tipo de daño
 - Severidad
 """
@@ -28,7 +27,6 @@ from db.session import get_db
 from models.incident import Incident, IncidentStatus, PriorityLevel
 from models.report import DamageType, SeverityLevel
 from models.user import User
-from models.brigade import Brigade
 
 
 class ExportService:
@@ -51,14 +49,13 @@ class ExportService:
         severity: Optional[str] = None,
         city: Optional[str] = None,
         province: Optional[str] = None,
-        brigade_id: Optional[int] = None,
         date_from: Optional[datetime] = None,
         date_to: Optional[datetime] = None,
         include_closed: bool = False
     ) -> Dict[str, Any]:
         """
         Exportar incidentes en formato GeoJSON con filtros aplicados
-        
+
         Args:
             status: Lista de estados a incluir
             priority: Lista de prioridades a incluir
@@ -66,7 +63,6 @@ class ExportService:
             severity: Nivel de severidad
             city: Ciudad
             province: Provincia
-            brigade_id: ID de brigada asignada
             date_from: Fecha inicio (por created_at)
             date_to: Fecha fin (por created_at)
             include_closed: Incluir incidentes cerrados (por defecto no)
@@ -107,14 +103,10 @@ class ExportService:
         if province:
             filters.append(Incident.province.ilike(f"%{province}%"))
         
-        # Filtro de brigada
-        if brigade_id:
-            filters.append(Incident.assigned_brigade_id == brigade_id)
-        
         # Filtro de fechas
         if date_from:
             filters.append(Incident.created_at >= date_from)
-        
+
         if date_to:
             # Incluir todo el día final
             date_to_end = date_to.replace(hour=23, minute=59, second=59)
@@ -142,11 +134,7 @@ class ExportService:
             reporter_name = None
             if incident.reported_by_user:
                 reporter_name = incident.reported_by_user.username
-            
-            brigade_name = None
-            if incident.assigned_brigade:
-                brigade_name = incident.assigned_brigade.name
-            
+
             verifier_name = None
             if incident.verified_by:
                 verifier = self.db.query(User).filter(User.id == incident.verified_by).first()
@@ -187,11 +175,9 @@ class ExportService:
                     "latitude": lat,
                     "longitude": lon,
                     
-                    # Asignación
-                    "assigned_brigade_id": incident.assigned_brigade_id,
-                    "assigned_brigade_name": brigade_name,
+                    # Tiempos
                     "estimated_repair_hours": incident.estimated_repair_hours,
-                    
+
                     # Reportante
                     "reported_by_id": incident.reported_by,
                     "reported_by_name": reporter_name,
@@ -204,7 +190,6 @@ class ExportService:
                     # Fechas (formato ISO 8601)
                     "created_at": incident.created_at.isoformat() if incident.created_at else None,
                     "updated_at": incident.updated_at.isoformat() if incident.updated_at else None,
-                    "assigned_at": incident.assigned_at.isoformat() if incident.assigned_at else None,
                     "started_at": incident.started_at.isoformat() if incident.started_at else None,
                     "completed_at": incident.completed_at.isoformat() if incident.completed_at else None,
                     "verified_at": incident.verified_at.isoformat() if incident.verified_at else None,
@@ -236,7 +221,6 @@ class ExportService:
                     "severity": severity,
                     "city": city,
                     "province": province,
-                    "brigade_id": brigade_id,
                     "date_from": date_from.isoformat() if date_from else None,
                     "date_to": date_to.isoformat() if date_to else None,
                     "include_closed": include_closed
@@ -309,7 +293,6 @@ class ExportService:
             "periodo",
             "total_incidentes",
             "nuevos",
-            "asignados",
             "en_proceso",
             "resueltos",
             "verificados",
@@ -335,7 +318,6 @@ class ExportService:
                 period,
                 stats["total"],
                 stats["by_status"].get("open", 0),
-                stats["by_status"].get("assigned", 0),
                 stats["by_status"].get("in_progress", 0),
                 stats["by_status"].get("resolved", 0),
                 stats["by_status"].get("verified", 0),
@@ -363,7 +345,6 @@ class ExportService:
             "TOTAL",
             total_stats["total"],
             total_stats["by_status"].get("open", 0),
-            total_stats["by_status"].get("assigned", 0),
             total_stats["by_status"].get("in_progress", 0),
             total_stats["by_status"].get("resolved", 0),
             total_stats["by_status"].get("verified", 0),
@@ -393,7 +374,6 @@ class ExportService:
         severity: Optional[str] = None,
         city: Optional[str] = None,
         province: Optional[str] = None,
-        brigade_id: Optional[int] = None,
         date_from: Optional[datetime] = None,
         date_to: Optional[datetime] = None,
         include_closed: bool = False
@@ -427,10 +407,7 @@ class ExportService:
         
         if province:
             filters.append(Incident.province.ilike(f"%{province}%"))
-        
-        if brigade_id:
-            filters.append(Incident.assigned_brigade_id == brigade_id)
-        
+
         if date_from:
             filters.append(Incident.created_at >= date_from)
         
@@ -453,9 +430,8 @@ class ExportService:
             "id", "report_id", "status", "priority", "priority_score",
             "damage_type", "severity", "latitude", "longitude",
             "address", "city", "province",
-            "assigned_brigade_id", "assigned_brigade_name",
             "reported_by_name", "is_verified", "verified_by_name",
-            "created_at", "assigned_at", "started_at", "completed_at", "verified_at",
+            "created_at", "started_at", "completed_at", "verified_at",
             "resolution_time_hours", "estimated_repair_hours"
         ]
         writer.writerow(headers)
@@ -466,7 +442,6 @@ class ExportService:
             lat = self.db.scalar(ST_Y(incident.location))
             
             reporter_name = incident.reported_by_user.username if incident.reported_by_user else None
-            brigade_name = incident.assigned_brigade.name if incident.assigned_brigade else None
             verifier_name = None
             if incident.verified_by:
                 verifier = self.db.query(User).filter(User.id == incident.verified_by).first()
@@ -491,13 +466,10 @@ class ExportService:
                 incident.address,
                 incident.city,
                 incident.province,
-                incident.assigned_brigade_id,
-                brigade_name,
                 reporter_name,
                 incident.is_verified,
                 verifier_name,
                 incident.created_at.isoformat() if incident.created_at else "",
-                incident.assigned_at.isoformat() if incident.assigned_at else "",
                 incident.started_at.isoformat() if incident.started_at else "",
                 incident.completed_at.isoformat() if incident.completed_at else "",
                 incident.verified_at.isoformat() if incident.verified_at else "",

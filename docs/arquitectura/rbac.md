@@ -26,39 +26,16 @@ Definir un esquema de control de acceso basado en roles (RBAC) para el sistema S
 **Limitaciones:**
 - No puede ver reportes de otros ciudadanos (excepto en mapa público si se implementa)
 - No puede modificar estados operativos
-- No puede asignar o gestionar brigadas
 - Sin acceso a métricas o configuración del sistema
 
 ---
 
-### 1.2 Brigada (BRIGADE)
-
-**Descripción:** Personal de campo que atiende reportes asignados a su brigada.
-
-**Responsabilidades:**
-- Revisar reportes asignados a su brigada
-- Actualizar progreso y estado (En progreso → Resuelto)
-- Adjuntar evidencia de reparación (fotos antes/después)
-- Registrar observaciones técnicas
-- Proponer cierre de reportes
-- Comentar en reportes asignados
-
-**Limitaciones:**
-- Solo accede a reportes asignados a su brigada
-- No puede asignar ni reasignar reportes
-- No puede cerrar reportes finalmente (solo proponer)
-- Métricas limitadas a su propia brigada
-- Sin acceso a configuración del sistema
-
----
-
-### 1.3 Operador Municipal (OPERATOR)
+### 1.2 Operador Municipal (OPERATOR)
 
 **Descripción:** Personal de coordinación y triage que valida, asigna y gestiona el ciclo de vida de los reportes.
 
 **Responsabilidades:**
 - Validar reportes nuevos (verificar calidad, categoría, ubicación)
-- Asignar y reasignar reportes a brigadas
 - Gestionar estados operativos (validar, asignar, cerrar, reabrir)
 - Marcar duplicados y vincular reportes relacionados
 - Rechazar reportes fraudulentos o spam
@@ -73,14 +50,14 @@ Definir un esquema de control de acceso basado en roles (RBAC) para el sistema S
 
 ---
 
-### 1.4 Administrador (ADMIN)
+### 1.3 Administrador (ADMIN)
 
 **Descripción:** Administra el sistema completo y la configuración global.
 
 **Responsabilidades:**
 - Gestionar usuarios y asignar roles
 - Configurar pesos del algoritmo de priorización
-- Administrar catálogos (categorías, severidades, zonas, brigadas)
+- Administrar catálogos (categorías, severidades, zonas)
 - Configurar reglas de negocio y umbrales
 - Acceso completo a métricas y auditoría
 - Exportar datos sin restricciones
@@ -101,7 +78,7 @@ El sistema RBAC protege los siguientes recursos:
 |---------|-------------|--------------|
 | **Reportes** | Datos del reporte: descripción, ubicación, categoría, estado, severidad | Alta |
 | **Evidencias** | Fotos/archivos adjuntos y metadatos (timestamp, ubicación GPS) | Alta |
-| **Asignaciones** | Relación reporte ↔ brigada/responsable | Media |
+| **Asignaciones** | Relación reporte ↔ responsable | Media |
 | **Comentarios** | Bitácora de comunicación y actualizaciones | Media |
 | **Usuarios** | Perfil, rol, estado, datos de contacto | Alta |
 | **Métricas** | Dashboards, KPIs, análisis agregados | Media |
@@ -120,7 +97,7 @@ Lista de permisos granulares que se pueden asignar a roles:
 - `report:view` - Ver reporte
 - `report:edit_content` - Editar campos del ciudadano (descripción, categoría)
 - `report:edit_operational` - Editar campos operativos (estado, prioridad interna)
-- `report:assign` - Asignar/reasignar a brigada
+- `report:assign` - Asignar/reasignar
 - `report:validate` - Validar reporte (Nuevo → Validado)
 - `report:reject` - Rechazar reporte (marcar como spam/inválido)
 - `report:mark_duplicate` - Marcar como duplicado y vincular
@@ -159,24 +136,24 @@ Lista de permisos granulares que se pueden asignar a roles:
 
 **Leyenda:** ✅ Permitido | ❌ No permitido | ⚠️ Permitido con restricción
 
-| Acción / Recurso | Ciudadano | Brigada | Operador Municipal | Administrador |
-|------------------|-----------|---------|-------------------|---------------|
-| **Crear reporte** | ✅ | ❌ | ✅ (por terceros) | ✅ |
-| **Ver reportes** | ✅ (solo propios / públicos) | ✅ (asignados) | ✅ (todos) | ✅ (todos) |
-| **Editar reporte (campos del ciudadano)** | ✅ (solo propios, limitado) | ❌ | ✅ (con auditoría) | ✅ |
-| **Editar reporte (campos operativos)** | ❌ | ✅ (asignados) | ✅ | ✅ |
-| **Asignar / reasignar** | ❌ | ❌ | ✅ | ✅ |
-| **Cambiar estado a "En progreso"** | ❌ | ✅ (asignados) | ✅ | ✅ |
-| **Marcar "Resuelto"** | ❌ | ✅ (asignados) | ✅ | ✅ |
-| **Cerrar reporte** | ❌ | ⚠️ (solo proponer cierre) | ✅ | ✅ |
-| **Reabrir reporte** | ❌ | ❌ | ✅ (con motivo) | ✅ |
-| **Adjuntar evidencia** | ✅ (propio) | ✅ (asignados) | ✅ | ✅ |
-| **Comentar** | ✅ (propio) | ✅ (asignados) | ✅ | ✅ |
-| **Ver métricas** | ❌ | ⚠️ (solo su brigada) | ✅ | ✅ |
-| **Exportar métricas/datos** | ❌ | ❌ | ⚠️ (según política) | ✅ |
-| **Configurar pesos de score** | ❌ | ❌ | ⚠️ (solo proponer) | ✅ |
-| **Gestionar usuarios/roles** | ❌ | ❌ | ❌ | ✅ |
-| **Configurar catálogos/reglas** | ❌ | ❌ | ⚠️ (si se delega) | ✅ |
+| Acción / Recurso | Ciudadano | Operador Municipal | Administrador |
+|------------------|-----------|-------------------|---------------|
+| **Crear reporte** | ✅ | ✅ (por terceros) | ✅ |
+| **Ver reportes** | ✅ (solo propios / públicos) | ✅ (todos) | ✅ (todos) |
+| **Editar reporte (campos del ciudadano)** | ✅ (solo propios, limitado) | ✅ (con auditoría) | ✅ |
+| **Editar reporte (campos operativos)** | ❌ | ✅ | ✅ |
+| **Asignar / reasignar** | ❌ | ✅ | ✅ |
+| **Cambiar estado a "En progreso"** | ❌ | ✅ | ✅ |
+| **Marcar "Resuelto"** | ❌ | ✅ | ✅ |
+| **Cerrar reporte** | ❌ | ✅ | ✅ |
+| **Reabrir reporte** | ❌ | ✅ (con motivo) | ✅ |
+| **Adjuntar evidencia** | ✅ (propio) | ✅ | ✅ |
+| **Comentar** | ✅ (propio) | ✅ | ✅ |
+| **Ver métricas** | ❌ | ✅ | ✅ |
+| **Exportar métricas/datos** | ❌ | ⚠️ (según política) | ✅ |
+| **Configurar pesos de score** | ❌ | ⚠️ (solo proponer) | ✅ |
+| **Gestionar usuarios/roles** | ❌ | ❌ | ✅ |
+| **Configurar catálogos/reglas** | ❌ | ⚠️ (si se delega) | ✅ |
 
 ---
 
@@ -197,7 +174,7 @@ Estos campos pueden ser editados por el ciudadano que creó el reporte, pero con
 
 ---
 
-### 5.2 Campos operativos (solo Brigada / Operador / Admin)
+### 5.2 Campos operativos (solo Operador / Admin)
 
 Estos campos **no son visibles ni editables** por el ciudadano:
 
@@ -243,7 +220,6 @@ Campos que requieren **auditoría obligatoria** y justificación:
 - **No ve:**
   - Reportes de otros ciudadanos
   - Campos operativos internos
-  - Asignaciones de brigadas
   - Datos de contacto de otros ciudadanos
 
 **Implementación:**
@@ -254,34 +230,12 @@ WHERE report.user_id = :current_user_id
 
 ---
 
-### 6.2 Brigada
-
-**Alcance:**
-- Ve **solo reportes asignados a su brigada**
-- Accede a campos operativos de esos reportes
-- **No ve:**
-  - Reportes de otras brigadas
-  - Reportes sin asignar (en cola)
-  - Configuración global del sistema
-  - Datos personales detallados de ciudadanos
-
-**Implementación:**
-```sql
-WHERE EXISTS (
-    SELECT 1 FROM work_order wo
-    WHERE wo.report_id = report.id
-      AND wo.brigade_id = :current_brigade_id
-)
-```
-
----
-
-### 6.3 Operador Municipal
+### 6.2 Operador Municipal
 
 **Alcance:**
 - Ve **todos los reportes** sin restricción
 - Accede a todos los campos (excepto configuración del sistema)
-- Puede filtrar por zona, brigada, estado, prioridad
+- Puede filtrar por zona, estado, prioridad
 - **No ve:**
   - Configuración de pesos del score (solo lectura)
   - Gestión de usuarios/roles
@@ -294,7 +248,7 @@ SELECT * FROM report
 
 ---
 
-### 6.4 Administrador
+### 6.3 Administrador
 
 **Alcance:**
 - Acceso **total** a reportes, usuarios, configuración y auditoría
@@ -327,7 +281,7 @@ SELECT * FROM report -- Incluye registros con deleted_at IS NOT NULL
 
 | Evento | Datos registrados |
 |--------|-------------------|
-| Asignación/reasignación | Usuario, reporte, brigada anterior/nueva, motivo |
+| Asignación/reasignación | Usuario, reporte, asignación anterior/nueva, motivo |
 | Cambio de estado | Usuario, reporte, estado anterior/nuevo, timestamp |
 | Cierre/reapertura | Usuario, reporte, motivo |
 | Marcar duplicado | Usuario, reporte origen/destino, motivo |
@@ -348,12 +302,12 @@ SELECT * FROM report -- Incluye registros con deleted_at IS NOT NULL
   "resource_type": "report",
   "resource_id": "uuid",
   "changes": {
-    "brigade_id": {
-      "before": null,
-      "after": "uuid-brigada-1"
+    "status": {
+      "before": "pendiente",
+      "after": "asignado"
     }
   },
-  "reason": "Reporte urgente en Zona Norte",
+  "reason": "Reporte urgente",
   "ip_address": "192.168.1.100",
   "user_agent": "Mozilla/5.0..."
 }
@@ -375,7 +329,7 @@ if (user.role === 'OPERATOR') {
 }
 // Backend confía en la petición
 app.post('/assign', (req, res) => {
-  assignReportToBrigade(req.body) // ¡SIN VALIDACIÓN!
+  assignReport(req.body) // ¡SIN VALIDACIÓN!
 })
 ```
 
@@ -383,7 +337,7 @@ app.post('/assign', (req, res) => {
 ```python
 # Backend SIEMPRE valida permisos
 @require_permission('report:assign')
-def assign_report(report_id, brigade_id, current_user):
+def assign_report(report_id, current_user):
     # Verificar rol
     if current_user.role not in ['OPERATOR', 'ADMIN']:
         raise PermissionDenied("No autorizado")
@@ -393,7 +347,7 @@ def assign_report(report_id, brigade_id, current_user):
         raise PermissionDenied("Fuera de tu zona")
     
     # Acción + auditoría
-    report.assign_to_brigade(brigade_id)
+    report.assign()
     audit_log.record('report:assign', ...)
 ```
 
@@ -496,12 +450,12 @@ stateDiagram-v2
     EnValidacion --> Rechazado: Operador rechaza
     EnValidacion --> Duplicado: Operador marca duplicado
     
-    Validado --> Asignado: Operador asigna brigada
-    Asignado --> EnProgreso: Brigada inicia trabajo
-    EnProgreso --> Resuelto: Brigada completa trabajo
+    Validado --> Asignado: Operador asigna
+    Asignado --> EnProgreso: Se inicia trabajo
+    EnProgreso --> Resuelto: Se completa trabajo
     Resuelto --> Cerrado: Operador cierra (con evidencia)
     Cerrado --> Reabierto: Operador reabre (con motivo)
-    Reabierto --> EnProgreso: Brigada retoma
+    Reabierto --> EnProgreso: Se retoma trabajo
     
     Rechazado --> [*]
     Duplicado --> [*]
@@ -512,20 +466,18 @@ stateDiagram-v2
 
 ### 8.2 Matriz de transiciones por rol
 
-| Transición | Ciudadano | Brigada | Operador | Admin |
-|------------|-----------|---------|----------|-------|
-| Nuevo → En validación | ✅ (automático) | ❌ | ❌ | ❌ |
-| En validación → Validado | ❌ | ❌ | ✅ | ✅ |
-| En validación → Rechazado | ❌ | ❌ | ✅ | ✅ |
-| En validación → Duplicado | ❌ | ❌ | ✅ | ✅ |
-| Validado → Asignado | ❌ | ❌ | ✅ | ✅ |
-| Asignado → En progreso | ❌ | ✅ | ✅ | ✅ |
-| En progreso → Resuelto | ❌ | ✅ | ✅ | ✅ |
-| Resuelto → Cerrado | ❌ | ⚠️ (proponer) | ✅ | ✅ |
-| Cerrado → Reabierto | ❌ | ❌ | ✅ (con motivo) | ✅ |
-| Reabierto → En progreso | ❌ | ✅ | ✅ | ✅ |
-
-**⚠️ Nota:** Brigada puede "proponer cierre" que genera notificación al Operador, quien decide si cerrar o solicitar más trabajo.
+| Transición | Ciudadano | Operador | Admin |
+|------------|-----------|----------|-------|
+| Nuevo → En validación | ✅ (automático) | ❌ | ❌ |
+| En validación → Validado | ❌ | ✅ | ✅ |
+| En validación → Rechazado | ❌ | ✅ | ✅ |
+| En validación → Duplicado | ❌ | ✅ | ✅ |
+| Validado → Asignado | ❌ | ✅ | ✅ |
+| Asignado → En progreso | ❌ | ✅ | ✅ |
+| En progreso → Resuelto | ❌ | ✅ | ✅ |
+| Resuelto → Cerrado | ❌ | ✅ | ✅ |
+| Cerrado → Reabierto | ❌ | ✅ (con motivo) | ✅ |
+| Reabierto → En progreso | ❌ | ✅ | ✅ |
 
 ---
 
@@ -547,29 +499,27 @@ stateDiagram-v2
 - **Estado:** Aprobado pero sin asignar
 - **Duración típica:** < 48 horas (depende de prioridad)
 - **Acciones permitidas:**
-  - Operador: asignar a brigada
+  - Operador: asignar
   - Ciudadano: solo lectura
 
 #### Asignado
-- **Estado:** Brigada notificada
+- **Estado:** Asignado para atención
 - **Duración típica:** < 72 horas (según prioridad)
 - **Acciones permitidas:**
-  - Brigada: iniciar trabajo (→ En progreso)
-  - Operador: reasignar si no hay respuesta
+  - Operador: iniciar trabajo (→ En progreso), reasignar
 
 #### En progreso
-- **Estado:** Brigada trabajando activamente
+- **Estado:** Trabajo activo en curso
 - **Duración típica:** Variable (según daño)
 - **Acciones permitidas:**
-  - Brigada: actualizar progreso, adjuntar evidencia, marcar resuelto
+  - Operador: actualizar progreso, adjuntar evidencia, marcar resuelto
   - Ciudadano: ver progreso, comentar
 
 #### Resuelto
-- **Estado:** Brigada completó trabajo
+- **Estado:** Trabajo completado
 - **Duración típica:** < 48 horas (verificación)
 - **Acciones permitidas:**
   - Operador: verificar evidencia, cerrar
-  - Brigada: agregar más evidencia si se solicita
 
 #### Cerrado
 - **Estado:** Final exitoso
@@ -587,8 +537,7 @@ stateDiagram-v2
 - **Estado:** Cerrado incorrectamente o daño recurrente
 - **Requiere:** Motivo obligatorio + evidencia nueva
 - **Acciones permitidas:** 
-  - Operador: asignar nuevamente
-  - Brigada: retomar trabajo
+  - Operador: asignar nuevamente y retomar trabajo
 
 ---
 
@@ -602,7 +551,6 @@ from enum import Enum
 
 class UserRole(str, Enum):
     CITIZEN = "CITIZEN"
-    BRIGADE = "BRIGADE"
     OPERATOR = "OPERATOR"
     ADMIN = "ADMIN"
 
@@ -663,18 +611,6 @@ ROLE_PERMISSIONS: dict[UserRole, Set[Permission]] = {
         Permission.EVIDENCE_VIEW,  # Solo propios
         Permission.COMMENT_CREATE,  # Solo propios
         Permission.COMMENT_VIEW,  # Solo propios
-    },
-    
-    UserRole.BRIGADE: {
-        Permission.REPORT_VIEW,  # Solo asignados
-        Permission.REPORT_EDIT_OPERATIONAL,  # Solo asignados
-        Permission.EVIDENCE_CREATE,  # En asignados
-        Permission.EVIDENCE_VIEW,  # En asignados
-        Permission.STATE_SET_IN_PROGRESS,  # Solo asignados
-        Permission.STATE_SET_RESOLVED,  # Solo asignados
-        Permission.COMMENT_CREATE,
-        Permission.COMMENT_VIEW,
-        Permission.METRICS_VIEW,  # Solo su brigada
     },
     
     UserRole.OPERATOR: {
@@ -742,7 +678,6 @@ def require_permission(permission: Permission):
 @require_permission(Permission.REPORT_ASSIGN)
 async def assign_report(
     report_id: str,
-    brigade_id: str,
     current_user: User = Depends(get_current_user)
 ):
     # Lógica de asignación
@@ -767,15 +702,6 @@ def get_user_reports_query(user: User):
     if user.role == UserRole.CITIZEN:
         # Solo reportes propios
         return base_query.where(Report.user_id == user.id)
-    
-    elif user.role == UserRole.BRIGADE:
-        # Solo reportes asignados a su brigada
-        return base_query.join(WorkOrder).where(
-            and_(
-                WorkOrder.brigade_id == user.brigade_id,
-                WorkOrder.status.in_(['assigned', 'in_progress'])
-            )
-        )
     
     elif user.role == UserRole.OPERATOR:
         # Todos los reportes (puede filtrar por municipio si aplica)
@@ -858,11 +784,10 @@ async def audit_middleware(request: Request, call_next):
 **Alcance mínimo para lanzamiento:**
 
 ✅ **4 roles base:**
-- Ciudadano, Brigada, Operador, Administrador
+- Ciudadano, Operador, Administrador
 
 ✅ **Visibilidad básica:**
 - Ciudadano: solo propios
-- Brigada: solo asignados
 - Operador/Admin: todos
 
 ✅ **Permisos core:**
@@ -870,7 +795,7 @@ async def audit_middleware(request: Request, call_next):
 - Adjuntar evidencia, comentar
 
 ✅ **Cierre final:**
-- Solo Operador/Admin (Brigada propone)
+- Solo Operador/Admin
 
 ✅ **Configuración del score:**
 - Solo Admin puede modificar pesos
@@ -898,8 +823,6 @@ async def audit_middleware(request: Request, call_next):
 user.role = UserRole.OPERATOR
 user.allowed_municipalities = ['MUN-001', 'MUN-002']
 
-# Brigada puede tener especialización
-brigade.specialization = ['asfalto', 'señalización']
 ```
 
 🔮 **Workflow de aprobaciones:**
@@ -1040,7 +963,6 @@ async def update_profile(data: UserUpdateDTO, current_user: User):
 # Límites diferentes según rol
 RATE_LIMITS = {
     UserRole.CITIZEN: "10/hour",  # 10 reportes por hora
-    UserRole.BRIGADE: "100/hour",  # Actualizaciones frecuentes
     UserRole.OPERATOR: "500/hour",  # Operaciones masivas
     UserRole.ADMIN: None,  # Sin límite (con auditoría)
 }
@@ -1057,7 +979,7 @@ async def create_report(...):
 
 | Aspecto | Decisión |
 |---------|----------|
-| **Roles** | 4 roles: Ciudadano, Brigada, Operador, Administrador |
+| **Roles** | 3 roles: Ciudadano, Operador, Administrador |
 | **Permisos** | 24 permisos granulares (report:*, evidence:*, state:*, config:*, etc.) |
 | **Visibilidad** | Row-level: propio / asignado / todos / completo |
 | **Edición de campos** | Field-level: ciudadano limitado, operativo protegido, sensible con auditoría |

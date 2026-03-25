@@ -24,7 +24,6 @@ try:
         VerifiedUser,
         AdminUser,
         SupervisorUser,
-        BrigadaUser,
         require_role
     )
     from models.user import User, UserRole
@@ -216,57 +215,11 @@ def example_supervisor_endpoint():
             "role": supervisor.role.value
         }
     
-    @router.patch("/incidents/{incident_id}/assign")
-    async def assign_incident(incident_id: int, brigade_id: int, supervisor: SupervisorUser):
-        """Asignar incidente a brigada (SUPERVISOR o ADMIN)"""
-        return {
-            "message": f"Incidente {incident_id} asignado a brigada {brigade_id}",
-            "assigned_by": supervisor.username
-        }
-    
     return router
 
 
 # ==============================================================================
-# EJEMPLO 7: Endpoint para Brigadas, Supervisores y Admins
-# ==============================================================================
-
-def example_brigada_endpoint():
-    """Endpoint para brigadas y roles superiores"""
-    
-    from fastapi import APIRouter
-    router = APIRouter()
-    
-    @router.patch("/incidents/{incident_id}/status")
-    async def update_incident_status(incident_id: int, status: str, brigada: BrigadaUser):
-        """
-        Actualizar estado de incidente (BRIGADA, SUPERVISOR o ADMIN).
-        
-        - Requiere: Token JWT válido
-        - Requiere: Rol BRIGADA, SUPERVISOR o ADMIN
-        - Acceso: Personal operativo
-        """
-        # brigada.role in [UserRole.BRIGADA, UserRole.SUPERVISOR, UserRole.ADMIN]
-        return {
-            "message": f"Incidente {incident_id} actualizado a {status}",
-            "updated_by": brigada.username,
-            "role": brigada.role.value
-        }
-    
-    @router.post("/incidents/{incident_id}/photos")
-    async def upload_incident_photo(incident_id: int, brigada: BrigadaUser):
-        """Subir foto de incidente (BRIGADA o superior)"""
-        return {
-            "message": "Foto cargada",
-            "incident_id": incident_id,
-            "uploaded_by": brigada.username
-        }
-    
-    return router
-
-
-# ==============================================================================
-# EJEMPLO 8: Endpoint con Múltiples Roles Personalizados
+# EJEMPLO 7: Endpoint con Múltiples Roles Personalizados
 # ==============================================================================
 
 def example_custom_roles_endpoint():
@@ -292,21 +245,10 @@ def example_custom_roles_endpoint():
             "analytics": {
                 "total_incidents": 1000,
                 "average_resolution_time": "24h",
-                "brigades_efficiency": {"brigade_1": 0.85, "brigade_2": 0.92}
+                "team_efficiency": 0.88
             },
             "generated_by": user.username,
             "role": user.role.value
-        }
-    
-    @router.post("/brigades/{brigade_id}/special-assignment")
-    async def create_special_assignment(
-        brigade_id: int,
-        user: Annotated[User, Depends(require_role(UserRole.ADMIN))]
-    ):
-        """Asignación especial (solo ADMIN)"""
-        return {
-            "message": f"Asignación especial creada para brigada {brigade_id}",
-            "created_by": user.username
         }
     
     return router
@@ -339,7 +281,7 @@ def example_conditional_access():
             return {"report_id": report_id, "details": "...", "access": "admin"}
         
         # Supervisor/Brigada puede ver sus asignaciones
-        if user.role in [UserRole.SUPERVISOR, UserRole.BRIGADA]:
+        if user.role == UserRole.SUPERVISOR:
             # Aquí verificarías si el reporte está asignado al usuario
             return {"report_id": report_id, "details": "...", "access": "assigned"}
         
@@ -378,7 +320,6 @@ def example_complex_business_logic():
         Marcar incidente como completado.
         
         Reglas de negocio:
-        - Brigadas: Pueden completar incidentes asignados a ellos
         - Supervisores: Pueden completar cualquier incidente de su zona
         - Admins: Pueden completar cualquier incidente
         - Ciudadanos: No pueden completar incidentes
@@ -393,20 +334,9 @@ def example_complex_business_logic():
         # Simulación de datos del incidente
         incident = {
             "id": incident_id,
-            "assigned_brigade_id": 5,
             "zone": "norte",
             "status": "in_progress"
         }
-        
-        # Brigadas: Solo sus incidentes asignados
-        if user.role == UserRole.BRIGADA:
-            # Aquí verificarías si el usuario pertenece a la brigada asignada
-            user_brigade_id = 5  # Simular obtención de BD
-            if incident["assigned_brigade_id"] != user_brigade_id:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Este incidente no está asignado a tu brigada"
-                )
         
         # Supervisores: Verificar zona
         if user.role == UserRole.SUPERVISOR:
@@ -453,14 +383,12 @@ app.include_router(incidents.router, prefix="/api/v1", tags=["Incidentes"])
 from examples_b03_usage import (
     example_authenticated_endpoint,
     example_admin_only_endpoint,
-    example_supervisor_endpoint,
-    example_brigada_endpoint
+    example_supervisor_endpoint
 )
 
 app.include_router(example_authenticated_endpoint(), prefix="/api/v1")
 app.include_router(example_admin_only_endpoint(), prefix="/api/v1/admin")
 app.include_router(example_supervisor_endpoint(), prefix="/api/v1/supervisor")
-app.include_router(example_brigada_endpoint(), prefix="/api/v1/brigada")
 """
     
     print(example_code)
@@ -482,7 +410,6 @@ if __name__ == "__main__":
         ("Usuario Verificado", example_verified_user_endpoint),
         ("Solo Administradores", example_admin_only_endpoint),
         ("Supervisores y Admins", example_supervisor_endpoint),
-        ("Brigadas y Superiores", example_brigada_endpoint),
         ("Roles Personalizados", example_custom_roles_endpoint),
         ("Acceso Condicional", example_conditional_access),
         ("Lógica Compleja", example_complex_business_logic)

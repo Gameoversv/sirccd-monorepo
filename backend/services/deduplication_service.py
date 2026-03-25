@@ -14,10 +14,8 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import faiss
+import cv2
 from PIL import Image
-import torch
-import torchvision.transforms as transforms
-import torchvision.models as models
 from sqlalchemy.orm import Session
 from geoalchemy2.functions import ST_Distance, ST_MakePoint
 from sqlalchemy import cast, Float, and_
@@ -30,121 +28,45 @@ logger = logging.getLogger(__name__)
 
 class VisualEmbedder:
     """
-    Generador de embeddings visuales usando ResNet50 pre-entrenado
+    Generador de embeddings visuales usando histogramas de color (OpenCV).
+    Liviano, sin dependencias de torch/torchvision.
     """
-    
+
+    # Dimensión del embedding: 3 canales × 64 bins = 192
+    embedding_dim = 192
+
     def __init__(self, model_name: str = "resnet50"):
-        """
-        Inicializa el modelo de embeddings
-        
-        Args:
-            model_name: Nombre del modelo ('resnet50', 'resnet101', 'mobilenet_v2')
-        """
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        logger.info(f"Inicializando VisualEmbedder con {model_name} en {self.device}")
-        
-        # Cargar modelo pre-entrenado
-        if model_name == "resnet50":
-            self.model = models.resnet50(pretrained=True)
-            self.embedding_dim = 2048
-        elif model_name == "resnet101":
-            self.model = models.resnet101(pretrained=True)
-            self.embedding_dim = 2048
-        elif model_name == "mobilenet_v2":
-            self.model = models.mobilenet_v2(pretrained=True)
-            self.embedding_dim = 1280
-        else:
-            raise ValueError(f"Modelo no soportado: {model_name}")
-        
-        # Remover la última capa (clasificación) para obtener embeddings
-        if model_name.startswith("resnet"):
-            self.model = torch.nn.Sequential(*list(self.model.children())[:-1])
-        else:  # mobilenet
-            self.model = torch.nn.Sequential(*list(self.model.children())[:-1])
-        
-        self.model = self.model.to(self.device)
-        self.model.eval()
-        
-        # Transformaciones para normalizar imágenes (ImageNet stats)
-        self.transform = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225]
-            )
-        ])
-        
-        logger.info(f"Modelo cargado. Dimensión de embeddings: {self.embedding_dim}")
-    
+        # model_name ignorado — mantenemos la firma para compatibilidad
+        logger.info("VisualEmbedder inicializado con histogramas de color (OpenCV)")
+
+    def _compute(self, image: Image.Image) -> np.ndarray:
+        """Calcula histograma de color normalizado como embedding"""
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        img = cv2.cvtColor(np.array(image.resize((224, 224))), cv2.COLOR_RGB2BGR)
+        hist_parts = []
+        for ch in range(3):
+            h = cv2.calcHist([img], [ch], None, [64], [0, 256]).flatten()
+            hist_parts.append(h)
+        embedding = np.concatenate(hist_parts).astype('float32')
+        norm = np.linalg.norm(embedding)
+        if norm > 0:
+            embedding /= norm
+        return embedding
+
     def embed(self, image: Image.Image) -> np.ndarray:
-        """
-        Genera embedding para una imagen
-        
-        Args:
-            image: Imagen PIL
-            
-        Returns:
-            Vector de embedding (ndarray)
-        """
         try:
-            # Convertir a RGB si es necesario
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
-            
-            # Aplicar transformaciones
-            img_tensor = self.transform(image).unsqueeze(0).to(self.device)
-            
-            # Generar embedding
-            with torch.no_grad():
-                embedding = self.model(img_tensor)
-            
-            # Aplanar y normalizar
-            embedding = embedding.cpu().numpy().flatten()
-            embedding = embedding / np.linalg.norm(embedding)  # L2 normalization
-            
-            return embedding
-            
+            return self._compute(image)
         except Exception as e:
             logger.error(f"Error generando embedding: {e}")
             raise
-    
+
     def embed_batch(self, images: List[Image.Image]) -> np.ndarray:
-        """
-        Genera embeddings para un batch de imágenes
-        
-        Args:
-            images: Lista de imágenes PIL
-            
-        Returns:
-            Matriz de embeddings (n_images, embedding_dim)
-        """
         try:
-            # Preparar batch
-            batch_tensors = []
-            for image in images:
-                if image.mode != 'RGB':
-                    image = image.convert('RGB')
-                img_tensor = self.transform(image)
-                batch_tensors.append(img_tensor)
-            
-            batch = torch.stack(batch_tensors).to(self.device)
-            
-            # Generar embeddings
-            with torch.no_grad():
-                embeddings = self.model(batch)
-            
-            # Aplanar y normalizar
-            embeddings = embeddings.cpu().numpy()
-            embeddings = embeddings.reshape(len(images), -1)
-            
-            # L2 normalization
+            embeddings = np.stack([self._compute(img) for img in images])
             norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-            embeddings = embeddings / norms
-            
-            return embeddings
-            
+            norms[norms == 0] = 1
+            return embeddings / norms
         except Exception as e:
             logger.error(f"Error generando embeddings batch: {e}")
             raise

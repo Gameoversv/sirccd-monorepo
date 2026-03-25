@@ -49,9 +49,8 @@ class PriorityService:
     
     # Transiciones de estado válidas
     VALID_TRANSITIONS = {
-        IncidentStatus.OPEN: [IncidentStatus.ASSIGNED, IncidentStatus.CLOSED],
-        IncidentStatus.ASSIGNED: [IncidentStatus.IN_PROGRESS, IncidentStatus.OPEN],
-        IncidentStatus.IN_PROGRESS: [IncidentStatus.RESOLVED, IncidentStatus.ASSIGNED],
+        IncidentStatus.OPEN: [IncidentStatus.IN_PROGRESS, IncidentStatus.CLOSED],
+        IncidentStatus.IN_PROGRESS: [IncidentStatus.RESOLVED, IncidentStatus.OPEN],
         IncidentStatus.RESOLVED: [IncidentStatus.VERIFIED, IncidentStatus.IN_PROGRESS],
         IncidentStatus.VERIFIED: [IncidentStatus.CLOSED, IncidentStatus.RESOLVED],
         IncidentStatus.CLOSED: [],  # Estado final
@@ -177,9 +176,7 @@ class PriorityService:
         incident.updated_at = datetime.utcnow()
         
         # Actualizar timestamps según el estado
-        if new_status == IncidentStatus.ASSIGNED and not incident.assigned_at:
-            incident.assigned_at = datetime.utcnow()
-        elif new_status == IncidentStatus.IN_PROGRESS and not incident.started_at:
+        if new_status == IncidentStatus.IN_PROGRESS and not incident.started_at:
             incident.started_at = datetime.utcnow()
         elif new_status == IncidentStatus.RESOLVED and not incident.completed_at:
             incident.completed_at = datetime.utcnow()

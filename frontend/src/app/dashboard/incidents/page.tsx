@@ -10,9 +10,10 @@ import {
   ChevronLeft,
   SlidersHorizontal,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { FilterPanel } from '@/components/FilterPanel';
 import { IncidentsTable } from '@/components/IncidentsTable';
-import { MapView } from '@/components';
+const MapView = dynamic(() => import('@/components/MapView').then(m => m.MapView), { ssr: false });
 import { incidentsService } from '@/services';
 import { useIncidentsStore } from '@/store';
 import type { IncidentFilters, IncidentStatus, SeverityLevel } from '@/types';

@@ -14,10 +14,9 @@ Implementación completa de la API de gestión del ciclo de vida de incidentes c
 
 ✅ **Cálculo de score de prioridad** basado en 5 factores ponderados  
 ✅ **Gestión del ciclo de vida** con 6 estados y transiciones validadas  
-✅ **Filtros avanzados** por estado, prioridad, tipo de daño, brigada  
+✅ **Filtros avanzados** por estado, prioridad, tipo de daño
 ✅ **Endpoints REST** completos con paginación y ordenamiento  
 ✅ **Estadísticas** aggregadas de incidentes  
-✅ **Asignación de brigadas** con timestamps automáticos  
 ✅ **Recalculación dinámica** de prioridades
 
 ---
@@ -37,8 +36,7 @@ backend/
 ├── core/
 │   └── config.py                    # 3 configuraciones nuevas
 └── models/
-    ├── incident.py                  # Modelo existente (usado)
-    └── brigade.py                   # Modelo existente (usado)
+    └── incident.py                  # Modelo existente (usado)
 ```
 
 ---
@@ -50,7 +48,7 @@ backend/
 ```mermaid
 stateDiagram-v2
     [*] --> OPEN: Crear incidente
-    OPEN --> ASSIGNED: Asignar brigada
+    OPEN --> ASSIGNED: Asignar
     OPEN --> CLOSED: Rechazar
     ASSIGNED --> IN_PROGRESS: Iniciar trabajo
     ASSIGNED --> OPEN: Reasignar
@@ -68,7 +66,7 @@ stateDiagram-v2
 | Estado Actual  | Siguientes Estados Permitidos      | Descripción |
 |---------------|-------------------------------------|-------------|
 | **OPEN**      | ASSIGNED, CLOSED                   | Nuevo incidente sin asignar |
-| **ASSIGNED**  | IN_PROGRESS, OPEN                  | Asignado a brigada |
+| **ASSIGNED**  | IN_PROGRESS, OPEN                  | Asignado |
 | **IN_PROGRESS** | RESOLVED, ASSIGNED               | Reparación en curso |
 | **RESOLVED**  | VERIFIED, IN_PROGRESS              | Trabajo completado |
 | **VERIFIED**  | CLOSED, RESOLVED                   | Calidad verificada |
@@ -197,7 +195,6 @@ GET /api/v1/incidents?status=open,assigned&priority=alta,critica&limit=20
 - `priority`: Lista de prioridades (múltiples)
 - `damage_type`: bache | grieta
 - `severity`: baja | media | alta
-- `brigade_id`: ID de brigada asignada
 - `city`: Nombre de ciudad (búsqueda parcial)
 - `is_verified`: true | false
 - `skip`: Offset de paginación (default: 0)
@@ -222,7 +219,6 @@ GET /api/v1/incidents?status=open,assigned&priority=alta,critica&limit=20
       "longitude": -58.381592,
       "address": "Av. Corrientes 1234",
       "city": "Buenos Aires",
-      "assigned_brigade_id": 5,
       "created_at": "2026-03-01T08:30:00Z",
       "updated_at": "2026-03-03T10:00:00Z"
     }
@@ -255,7 +251,6 @@ GET /api/v1/incidents/{incident_id}
   "priority": "critica",
   "priority_score": 85.5,
   "status": "in_progress",
-  "assigned_brigade_id": 5,
   "assigned_at": "2026-03-02T10:00:00Z",
   "estimated_repair_hours": 4.0,
   "started_at": "2026-03-03T08:00:00Z",
@@ -284,7 +279,7 @@ Content-Type: application/json
 ```json
 {
   "status": "in_progress",
-  "notes": "Brigada iniciando trabajo en el sitio"
+  "notes": "Equipo iniciando trabajo en el sitio"
 }
 ```
 
@@ -331,31 +326,7 @@ Authorization: Bearer <token>
 - Se han reportado más incidentes similares en el área
 - Necesitas auditar el score actual
 
-### 5. Asignar Brigada
-
-```http
-POST /api/v1/incidents/{incident_id}/assign-brigade
-Authorization: Bearer <token>
-Content-Type: application/json
-```
-
-**Request Body**:
-```json
-{
-  "brigade_id": 5,
-  "estimated_hours": 4.5
-}
-```
-
-**Efectos**:
-- Asigna la brigada especificada
-- Establece `assigned_at` a la hora actual
-- Si estado es `OPEN`, lo cambia a `ASSIGNED`
-- Actualiza `estimated_repair_hours` (opcional)
-
-**Response** (200 OK): Detalle completo del incidente actualizado.
-
-### 6. Obtener Estadísticas
+### 5. Obtener Estadísticas
 
 ```http
 GET /api/v1/incidents/stats/overview
@@ -428,29 +399,7 @@ curl -X GET "http://localhost:8000/api/v1/incidents?status=open&priority=critica
   -H "Authorization: Bearer <token>"
 ```
 
-### Ejemplo 2: Asignar Brigada y Actualizar Estado
-
-```bash
-# Paso 1: Asignar brigada
-curl -X POST "http://localhost:8000/api/v1/incidents/123/assign-brigade" \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "brigade_id": 5,
-    "estimated_hours": 4.0
-  }'
-
-# Paso 2: Iniciar trabajo
-curl -X PATCH "http://localhost:8000/api/v1/incidents/123/status" \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "status": "in_progress",
-    "notes": "Brigada #5 iniciando reparación"
-  }'
-```
-
-### Ejemplo 3: Recalibración Masiva
+### Ejemplo 2: Recalibración Masiva
 
 ```python
 import requests
@@ -472,11 +421,11 @@ for incident in incidents_response.json()["incidents"]:
         print(f"Incidente {incident['id']}: {result['old_priority']} → {result['new_priority']}")
 ```
 
-### Ejemplo 4: Filtros Combinados
+### Ejemplo 3: Filtros Combinados
 
 ```bash
-# Incidentes de Barcelona, asignados a brigada 3, severidad alta o media
-curl -X GET "http://localhost:8000/api/v1/incidents?city=Barcelona&brigade_id=3&severity=alta,media" \
+# Incidentes de Barcelona, severidad alta o media
+curl -X GET "http://localhost:8000/api/v1/incidents?city=Barcelona&severity=alta,media" \
   -H "Authorization: Bearer <token>"
 ```
 
@@ -490,7 +439,7 @@ curl -X GET "http://localhost:8000/api/v1/incidents?city=Barcelona&brigade_id=3&
 2. **Distribución por Estado**: Visualizar cuellos de botella
 3. **Distribución por Prioridad**: Identificar carga crítica
 4. **Score Promedio**: Indicador de urgencia general
-5. **Tiempo de Resolución**: Eficiencia de las brigadas
+5. **Tiempo de Resolución**: Eficiencia operativa
 6. **Pendientes de Asignación**: Incidentes sin atender
 7. **En Progreso**: Carga de trabajo actual
 
@@ -499,8 +448,8 @@ curl -X GET "http://localhost:8000/api/v1/incidents?city=Barcelona&brigade_id=3&
 **Cuello de Botella**:
 ```
 Si `assigned` >> `in_progress`:
-  → Las brigadas no están iniciando trabajo a tiempo
-  → Considerar agregar más brigadas o redistribuir
+  → Los equipos no están iniciando trabajo a tiempo
+  → Considerar redistribuir recursos
 ```
 
 **Alta Criticidad**:
@@ -513,8 +462,8 @@ Si `critica` > 30% del total:
 **Baja Eficiencia**:
 ```
 Si `avg_resolution_hours` > SLA esperado:
-  → Brigadas sobrecargadas o mal equipadas
-  → Optimizar rutas y asignaciones
+  → Equipos sobrecargados o mal equipados
+  → Optimizar asignaciones
 ```
 
 ---
@@ -536,7 +485,6 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 | GET /incidents | user | Consulta básica |
 | GET /incidents/{id} | user | Ver detalles |
 | PATCH /status | admin, supervisor | Cambiar estados |
-| POST /assign-brigade | admin, coordinator | Asignación de recursos |
 | POST /recalculate-priority | admin | Ajuste de scores |
 | GET /stats/overview | admin, coordinator | Métricas operacionales |
 
@@ -592,7 +540,7 @@ else:
 
 Enviar alertas cuando:
 - Incidente crítico creado (priority = critica)
-- Incidente asignado a brigada
+- Incidente asignado
 - Incidente resuelto (para verificación)
 - Incidente lleva más de X días sin progresar
 
@@ -656,14 +604,12 @@ backend/
 │   ├── GET  /incidents/{id}             # Detalle
 │   ├── PATCH /incidents/{id}/status     # Cambiar estado
 │   ├── POST /incidents/{id}/recalculate-priority
-│   ├── POST /incidents/{id}/assign-brigade
 │   └── GET  /incidents/stats/overview   # Estadísticas
 │
 ├── schemas/incident.py                  (350 líneas)
 │   ├── IncidentStatusEnum               # 6 estados
 │   ├── PriorityLevelEnum                # 4 niveles
 │   ├── UpdateIncidentStatusRequest
-│   ├── AssignBrigadeRequest
 │   ├── RecalculatePriorityResponse
 │   ├── IncidentBriefResponse            # Para listas
 │   ├── IncidentDetailResponse           # Completo
@@ -689,11 +635,10 @@ backend/
 - [x] Cálculo de score con 5 factores ponderados
 - [x] Gestión de ciclo de vida con 6 estados
 - [x] Validación de transiciones de estado
-- [x] 6 endpoints REST API funcionales
-- [x] Filtros por estado, prioridad, tipo, brigada
+- [x] 5 endpoints REST API funcionales
+- [x] Filtros por estado, prioridad, tipo
 - [x] Paginación y ordenamiento configurables
 - [x] Estadísticas agregadas
-- [x] Asignación de brigadas con timestamps
 - [x] Recalculación dinámica de prioridades
 - [x] Schemas Pydantic con validaciones
 - [x] Autenticación JWT requerida
@@ -720,7 +665,7 @@ backend/
 ### Fase 3: Features Adicionales
 - [ ] Notificaciones automáticas por cambio de estado
 - [ ] Dashboard visual de prioridades (heatmap)
-- [ ] Algoritmo de asignación automática de brigadas
+- [ ] Algoritmo de asignación automática
 - [ ] Predicción de tiempo de resolución con ML
 - [ ] Exportación de reportes en PDF/Excel
 
@@ -728,7 +673,7 @@ backend/
 - [ ] Implementar RBAC con decoradores
 - [ ] Auditoría de cambios de estado (audit log)
 - [ ] Rate limiting en endpoints públicos
-- [ ] Validación de permisos por brigada
+- [ ] Validación de permisos por rol
 
 ---
 
@@ -738,7 +683,7 @@ backend/
 
 1. **Pesos del Algoritmo**: Se eligió 35% para severidad porque es el factor más directo de peligro.
 
-2. **Transiciones de Estado**: Se permite retroceder (ej: IN_PROGRESS → ASSIGNED) para casos donde una brigada necesita reasignación.
+2. **Transiciones de Estado**: Se permite retroceder (ej: IN_PROGRESS → ASSIGNED) para casos donde se requiere reasignación.
 
 3. **Paginación**: Límite máximo de 500 para prevenir queries demasiado pesadas.
 
@@ -749,7 +694,7 @@ backend/
 ### Performance
 
 **Consultas Optimizadas**:
-- Índices en `status`, `priority`, `damage_type`, `brigade_id`
+- Índices en `status`, `priority`, `damage_type`
 - Uso de `ST_DWithin` en lugar de `ST_Distance` (más rápido)
 - `count()` antes de `all()` para evitar cargar todo en memoria
 

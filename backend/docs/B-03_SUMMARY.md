@@ -17,11 +17,11 @@ Estado: ✅ **COMPLETADO Y VERIFICADO**
 - ✅ Validación de tipos de token
 
 ### 2. Modelos de Datos (`models/user.py`) ✅
-- ✅ Enum UserRole (ADMIN, CIUDADANO, BRIGADA, SUPERVISOR)
+- ✅ Enum UserRole (ADMIN, CIUDADANO, SUPERVISOR)
 - ✅ Modelo User con todos los campos necesarios
 - ✅ Campos de seguridad (hashed_password, is_active, is_verified)
 - ✅ Timestamps (created_at, updated_at, last_login)
-- ✅ Relaciones con Reports, Incidents y Brigades
+- ✅ Relaciones con Reports e Incidents
 
 ### 3. Schemas Pydantic (`schemas/`) ✅
 
@@ -54,7 +54,6 @@ Estado: ✅ **COMPLETADO Y VERIFICADO**
 - ✅ `require_role(*roles)` - Factory para múltiples roles
 - ✅ `require_admin` - Solo ADMIN
 - ✅ `require_supervisor` - SUPERVISOR o ADMIN
-- ✅ `require_brigada` - BRIGADA, SUPERVISOR o ADMIN
 
 #### Tipos Anotados:
 - ✅ `CurrentUser` - Usuario autenticado
@@ -62,7 +61,6 @@ Estado: ✅ **COMPLETADO Y VERIFICADO**
 - ✅ `VerifiedUser` - Usuario verificado
 - ✅ `AdminUser` - Solo admin
 - ✅ `SupervisorUser` - Supervisor o admin
-- ✅ `BrigadaUser` - Brigada o superior
 
 ### 5. Rutas de API (`api/routes/auth.py`) ✅
 
@@ -82,7 +80,7 @@ Endpoints implementados:
 - ✅ `alembic/versions/001_initial_schema_with_postgis.py`
 - ✅ Tabla `users` con todos los campos
 - ✅ Índices en email y username
-- ✅ Enum `userrole` con 4 roles
+- ✅ Enum `userrole` con 3 roles
 - ✅ Defaults apropiados (is_active=true, role=CIUDADANO)
 
 ### 7. Configuración (`core/config.py`) ✅
@@ -138,7 +136,6 @@ VERIFICACIÓN RÁPIDA B-03 - AUTENTICACIÓN
 6. Dependencias FastAPI:
    ✓ get_current_user disponible
    ✓ require_admin disponible
-   ✓ require_brigada disponible
    ✓ require_supervisor disponible
 
 7. Rutas de Autenticación:

@@ -24,8 +24,6 @@ tags:
     description: Reportes ciudadanos de daños viales
   - name: incidentes
     description: Incidentes validados y gestionados
-  - name: brigadas
-    description: Gestión de brigadas municipales
   - name: prioridad
     description: Cálculo y consulta de priorización
   - name: metrics
@@ -40,7 +38,7 @@ paths:
       tags:
         - auth
       summary: Iniciar sesión
-      description: Autenticación de usuario (ciudadano, brigada, administrador)
+      description: Autenticación de usuario (ciudadano, supervisor, administrador)
       requestBody:
         required: true
         content:
@@ -339,7 +337,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [pendiente, asignado, en_proceso, resuelto, cerrado]
+            enum: [pendiente, en_proceso, resuelto, cerrado]
         - name: prioridad
           in: query
           schema:
@@ -423,10 +421,7 @@ paths:
               properties:
                 estado_operativo:
                   type: string
-                  enum: [pendiente, asignado, en_proceso, resuelto, cerrado]
-                brigada_id:
-                  type: string
-                  format: uuid
+                  enum: [pendiente, en_proceso, resuelto, cerrado]
                 notas_resolucion:
                   type: string
       responses:
@@ -438,191 +433,6 @@ paths:
                 $ref: '#/components/schemas/Incidente'
         '404':
           $ref: '#/components/responses/NotFound'
-
-  /incidentes/{id}/asignar:
-    post:
-      tags:
-        - incidentes
-      summary: Asignar incidente a brigada
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - brigada_id
-              properties:
-                brigada_id:
-                  type: string
-                  format: uuid
-                notas:
-                  type: string
-      responses:
-        '200':
-          description: Incidente asignado exitosamente
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Incidente'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ==========================================
-  # BRIGADAS - Gestión de brigadas municipales
-  # ==========================================
-  /brigadas:
-    get:
-      tags:
-        - brigadas
-      summary: Listar brigadas
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: estado
-          in: query
-          schema:
-            type: string
-            enum: [disponible, ocupada, inactiva]
-      responses:
-        '200':
-          description: Lista de brigadas
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Brigada'
-
-    post:
-      tags:
-        - brigadas
-      summary: Crear nueva brigada
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - nombre
-                - tipo
-              properties:
-                nombre:
-                  type: string
-                  example: Brigada Norte 1
-                tipo:
-                  type: string
-                  enum: [baches, señalizacion, drenaje, mixta]
-                capacidad_diaria:
-                  type: integer
-                  example: 10
-                zona_asignada:
-                  type: string
-                  example: Zona Norte
-      responses:
-        '201':
-          description: Brigada creada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Brigada'
-
-  /brigadas/{id}:
-    get:
-      tags:
-        - brigadas
-      summary: Obtener brigada por ID
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Detalles de la brigada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Brigada'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - brigadas
-      summary: Actualizar brigada
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                estado:
-                  type: string
-                  enum: [disponible, ocupada, inactiva]
-                capacidad_diaria:
-                  type: integer
-      responses:
-        '200':
-          description: Brigada actualizada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Brigada'
-
-  /brigadas/{id}/incidentes:
-    get:
-      tags:
-        - brigadas
-      summary: Obtener incidentes asignados a brigada
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: estado
-          in: query
-          schema:
-            type: string
-            enum: [asignado, en_proceso, resuelto]
-      responses:
-        '200':
-          description: Lista de incidentes de la brigada
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Incidente'
 
   # ==========================================
   # PRIORIDAD - Cálculo de priorización
@@ -763,9 +573,6 @@ paths:
                     type: number
                     description: En horas
                     example: 48.5
-                  brigadas_activas:
-                    type: integer
-                    example: 8
                   distribucion_tipos:
                     type: object
                     properties:
@@ -892,7 +699,7 @@ components:
           type: string
         rol:
           type: string
-          enum: [ciudadano, brigada, administrador, supervisor]
+          enum: [ciudadano, administrador, supervisor]
         activo:
           type: boolean
 
@@ -980,18 +787,7 @@ components:
           type: string
         estado_operativo:
           type: string
-          enum: [pendiente, asignado, en_proceso, resuelto, cerrado]
-        brigada_id:
-          type: string
-          format: uuid
-          nullable: true
-        brigada:
-          $ref: '#/components/schemas/Brigada'
-          nullable: true
-        fecha_asignacion:
-          type: string
-          format: date-time
-          nullable: true
+          enum: [pendiente, en_proceso, resuelto, cerrado]
         fecha_resolucion:
           type: string
           format: date-time
@@ -1000,34 +796,6 @@ components:
           type: number
           nullable: true
         notas_resolucion:
-          type: string
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    Brigada:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        nombre:
-          type: string
-        tipo:
-          type: string
-          enum: [baches, señalizacion, drenaje, mixta]
-        estado:
-          type: string
-          enum: [disponible, ocupada, inactiva]
-        capacidad_diaria:
-          type: integer
-        incidentes_asignados:
-          type: integer
-        zona_asignada:
           type: string
           nullable: true
         created_at:

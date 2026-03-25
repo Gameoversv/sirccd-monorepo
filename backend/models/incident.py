@@ -14,8 +14,7 @@ from models.report import DamageType, SeverityLevel
 
 class IncidentStatus(str, enum.Enum):
     """Estados de un incidente"""
-    OPEN = "open"                 # Abierto, sin asignar
-    ASSIGNED = "assigned"         # Asignado a brigada
+    OPEN = "open"                 # Abierto
     IN_PROGRESS = "in_progress"   # En progreso de reparación
     RESOLVED = "resolved"         # Resuelto/reparado
     VERIFIED = "verified"         # Verificado por supervisor
@@ -65,10 +64,6 @@ class Incident(Base):
     # Estado
     status = Column(SQLEnum(IncidentStatus), default=IncidentStatus.OPEN, nullable=False, index=True)
     
-    # Asignación de brigada
-    assigned_brigade_id = Column(Integer, ForeignKey("brigades.id"), nullable=True, index=True)
-    assigned_at = Column(DateTime, nullable=True)
-    
     # Tiempos
     estimated_repair_hours = Column(Float, nullable=True)
     started_at = Column(DateTime, nullable=True)
@@ -94,7 +89,6 @@ class Incident(Base):
     # Relaciones
     original_report = relationship("Report", back_populates="incident")
     reported_by_user = relationship("User", back_populates="incidents", foreign_keys=[reported_by])
-    assigned_brigade = relationship("Brigade", back_populates="incidents")
     metrics = relationship("Metric", back_populates="incident", cascade="all, delete-orphan")
     
     def __repr__(self):

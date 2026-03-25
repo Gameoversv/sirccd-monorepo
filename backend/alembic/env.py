@@ -18,8 +18,7 @@ from db.base import Base
 
 # Importar todos los modelos para que Alembic los detecte
 from models import (
-    User, Report, Incident, Brigade, POI, Metric,
-    brigade_members
+    User, Report, Incident, POI, Metric,
 )
 
 # this is the Alembic Config object, which provides

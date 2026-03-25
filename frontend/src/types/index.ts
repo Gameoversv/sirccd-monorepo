@@ -7,12 +7,10 @@ export interface User {
   role: UserRole;
   is_active: boolean;
   created_at: string;
-  brigade_id?: number;
 }
 
 export enum UserRole {
   CIUDADANO = 'ciudadano',
-  BRIGADA = 'brigada',
   SUPERVISOR = 'supervisor',
   ADMIN = 'admin',
 }
@@ -68,7 +66,6 @@ export interface Incident {
   address: string;
   priority_score: number;
   status: IncidentStatus;
-  assigned_brigade_id?: number;
   assigned_at?: string;
   started_at?: string;
   completed_at?: string;
@@ -111,16 +108,6 @@ export enum IncidentStatus {
   COMPLETADO = 'completado',
   VERIFICADO = 'verificado',
   CERRADO = 'cerrado',
-}
-
-// Types for brigades
-export interface Brigade {
-  id: number;
-  name: string;
-  description?: string;
-  is_active: boolean;
-  created_at: string;
-  members?: User[];
 }
 
 // Types for POIs
@@ -189,7 +176,6 @@ export interface IncidentFilters {
   status?: IncidentStatus;
   damage_class?: DamageClass;
   severity?: SeverityLevel;
-  brigade_id?: number;
   date_from?: string;
   date_to?: string;
   priority_min?: number;
@@ -220,7 +206,6 @@ export interface MapFilter {
   showReports: boolean;
   showIncidents: boolean;
   showPOIs: boolean;
-  showBrigades: boolean;
   damageClasses: DamageClass[];
   statuses: IncidentStatus[];
   severities: SeverityLevel[];
@@ -319,7 +304,6 @@ export interface IncidentDetail {
   priority: string;
   priority_score: number | null;
   status: string;
-  assigned_brigade_id: number | null;
   assigned_at: string | null;
   estimated_repair_hours: number | null;
   started_at: string | null;

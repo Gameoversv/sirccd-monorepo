@@ -17,7 +17,7 @@ with engine.connect() as conn:
  print(f"\n PostGIS: {result.scalar()}")
  
  # 2. Nuestras tablas (modelos SIRCCD)
- our_tables = ['users', 'brigades', 'brigade_members', 'reports', 
+ our_tables = ['users', 'reports',
  'incidents', 'pois', 'metrics', 'alembic_version']
  
  print(f"\n Tablas del modelo SIRCCD:")
@@ -40,7 +40,7 @@ with engine.connect() as conn:
  srid
  FROM geography_columns
  WHERE f_table_schema = 'public'
- AND f_table_name IN ('brigades', 'reports', 'incidents', 'pois')
+ AND f_table_name IN ('reports', 'incidents', 'pois')
  ORDER BY f_table_name;
  """))
  
@@ -56,7 +56,7 @@ with engine.connect() as conn:
  indexname
  FROM pg_indexes
  WHERE schemaname = 'public'
- AND tablename IN ('brigades', 'reports', 'incidents', 'pois')
+ AND tablename IN ('reports', 'incidents', 'pois')
  AND indexname LIKE 'idx_%location%'
  ORDER BY tablename;
  """))
@@ -81,7 +81,7 @@ with engine.connect() as conn:
  ON ccu.constraint_name = tc.constraint_name
  AND ccu.table_schema = tc.table_schema
  WHERE tc.constraint_type = 'FOREIGN KEY'
- AND tc.table_name IN ('reports', 'incidents', 'brigade_members')
+ AND tc.table_name IN ('reports', 'incidents')
  ORDER BY tc.table_name;
  """))
  

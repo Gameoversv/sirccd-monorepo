@@ -21,15 +21,16 @@ minio==7.2.11
 # Autenticación
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 python-multipart==0.0.20
+email-validator==2.2.0
 
 # ML/IA
-ultralytics==8.3.0
+requests>=2.31.0
 opencv-python-headless==4.10.0.84
 numpy==1.26.4
 pillow==11.0.0
-torch==2.5.1
-torchvision==0.20.1
+shapely==2.0.6
 faiss-cpu==1.8.0
 scikit-learn==1.5.2
 

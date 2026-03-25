@@ -44,7 +44,6 @@ const defaultMapFilters: MapFilter = {
   showReports: true,
   showIncidents: true,
   showPOIs: false,
-  showBrigades: false,
   damageClasses: [],
   statuses: [],
   severities: [],

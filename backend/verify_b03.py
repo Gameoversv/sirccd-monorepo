@@ -63,12 +63,10 @@ try:
  from api.deps import (
  get_current_user,
  require_admin,
- require_brigada,
  require_supervisor
  )
  print(" get_current_user disponible")
  print(" require_admin disponible")
- print(" require_brigada disponible")
  print(" require_supervisor disponible")
 except Exception as e:
  print(f" Error: {e}")

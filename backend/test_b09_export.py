@@ -41,7 +41,6 @@ class MockIncident:
  province: str,
  created_at: datetime,
  completed_at: datetime = None,
- assigned_brigade_id: int = None,
  is_verified: bool = False
  ):
  self.id = id
@@ -58,12 +57,10 @@ class MockIncident:
  self.province = province
  self.created_at = created_at
  self.completed_at = completed_at
- self.assigned_brigade_id = assigned_brigade_id
  self.is_verified = is_verified
- 
+
  # Atributos opcionales
  self.reported_by_user = None
- self.assigned_brigade = None
  self.verified_by = None
 
 
@@ -257,7 +254,7 @@ def mock_export_kpis_csv(incidents: List[MockIncident], group_by: str = "day") -
  writer = csv.writer(output)
  
  headers = [
- "periodo", "total_incidentes", "nuevos", "asignados", "en_proceso", "resueltos",
+ "periodo", "total_incidentes", "nuevos", "en_proceso", "resueltos",
  "prioridad_critica", "prioridad_alta", "baches", "grietas",
  "tiempo_resolucion_promedio_horas", "tasa_verificacion_porcentaje"
  ]
@@ -268,7 +265,6 @@ def mock_export_kpis_csv(incidents: List[MockIncident], group_by: str = "day") -
  period,
  stats["total"],
  stats["by_status"].get("open", 0),
- stats["by_status"].get("assigned", 0),
  stats["by_status"].get("in_progress", 0),
  stats["by_status"].get("resolved", 0),
  stats["by_priority"].get("critica", 0),
@@ -359,12 +355,11 @@ def test_3_geojson_properties():
  
  incidents = [
  MockIncident(
- id=1, report_id=10, status="assigned", priority="critica", priority_score=88.3,
+ id=1, report_id=10, status="in_progress", priority="critica", priority_score=88.3,
  damage_type="bache", severity="alta", latitude=18.5, longitude=-70.0,
  address="Calle Test #123", city="Santo Domingo", province="DN",
  created_at=datetime(2024, 12, 1),
  completed_at=datetime(2024, 12, 3),
- assigned_brigade_id=5,
  is_verified=True
  )
  ]
@@ -387,7 +382,7 @@ def test_3_geojson_properties():
  assert props["priority_score"] == 88.3
  assert props["damage_type"] == "bache"
  assert props["severity"] == "alta"
- assert props["status"] == "assigned"
+ assert props["status"] == "in_progress"
  assert props["city"] == "Santo Domingo"
  assert props["is_verified"] == True
  
@@ -492,7 +487,7 @@ def test_6_kpis_csv_grouping_daily():
  incidents = [
  MockIncident(1, 10, "open", "alta", 75.0, "bache", "alta", 18.5, -70.0, "A", "SD", "DN",
  datetime(2024, 12, 1)),
- MockIncident(2, 11, "assigned", "critica", 85.0, "bache", "alta", 18.5, -70.0, "B", "SD", "DN",
+ MockIncident(2, 11, "in_progress", "critica", 85.0, "bache", "alta", 18.5, -70.0, "B", "SD", "DN",
  datetime(2024, 12, 1)),
  MockIncident(3, 12, "open", "media", 50.0, "grieta", "media", 18.5, -70.0, "C", "SD", "DN",
  datetime(2024, 12, 2)),
@@ -515,7 +510,7 @@ def test_6_kpis_csv_grouping_daily():
  # Validar totales del primer día (2 incidentes)
  assert rows[0]["total_incidentes"] == "2"
  assert rows[0]["nuevos"] == "1" # 1 open
- assert rows[0]["asignados"] == "1" # 1 assigned
+ assert rows[0]["en_proceso"] == "1" # 1 in_progress
  
  # Validar totales del segundo día (1 incidente)
  assert rows[1]["total_incidentes"] == "1"
@@ -577,7 +572,7 @@ def test_8_kpis_metrics_calculation():
  datetime(2024, 12, 1), is_verified=False),
  MockIncident(2, 11, "resolved", "alta", 75.0, "bache", "alta", 18.5, -70.0, "B", "SD", "DN",
  datetime(2024, 12, 1), completed_at=datetime(2024, 12, 2), is_verified=True),
- MockIncident(3, 12, "assigned", "media", 50.0, "grieta", "media", 18.5, -70.0, "C", "SD", "DN",
+ MockIncident(3, 12, "in_progress", "media", 50.0, "grieta", "media", 18.5, -70.0, "C", "SD", "DN",
  datetime(2024, 12, 1), is_verified=False),
  ]
  
@@ -590,7 +585,7 @@ def test_8_kpis_metrics_calculation():
  
  # Validar distribución por estado
  assert row["nuevos"] == "1" # 1 open
- assert row["asignados"] == "1" # 1 assigned
+ assert row["en_proceso"] == "1" # 1 in_progress
  assert row["resueltos"] == "1" # 1 resolved
  
  # Validar distribución por prioridad

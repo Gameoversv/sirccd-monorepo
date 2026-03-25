@@ -206,7 +206,7 @@
 **Mitigación:**
 - Flujo de uso simple
 - Onboarding guiado
-- Comunicación con brigadas municipales
+- Comunicación con equipos municipales
 
 ---
 

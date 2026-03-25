@@ -69,7 +69,7 @@ sirccd-monorepo/
 |-------|--------|-------------|
 | **B-01** | ✅ | Inicialización de proyecto FastAPI con estructura modular |
 | **B-02** | ✅ | Esquema de base de datos PostgreSQL + PostGIS con Alembic |
-| **B-03** | ✅ | Sistema de autenticación JWT con roles (ciudadano/brigada/admin) |
+| **B-03** | ✅ | Sistema de autenticación JWT con roles (ciudadano/supervisor/admin) |
 | **B-04** | ✅ | Endpoints CRUD para reportes, incidentes y usuarios |
 | **B-05** | ✅ | Middleware de anonimización (blur de rostros/placas con OpenCV) |
 | **B-06** | ✅ | Inferencia ML con YOLOv8 + queue asíncrono (Redis) |
@@ -291,11 +291,11 @@ backend/
 
 ### Modelos de Datos Principales
 
-1. **User** - Usuarios con roles (ciudadano/brigada/admin)
+1. **User** - Usuarios con roles (ciudadano/supervisor/admin)
 2. **Report** - Reportes ciudadanos con foto + GPS
 3. **Incident** - Incidentes validados con clasificación IA
 4. **DuplicateGroup** - Grupos de reportes duplicados
-5. **WorkOrder** - Órdenes de trabajo para brigadas
+5. **WorkOrder** - Órdenes de trabajo operativas
 6. **RepairHistory** - Historial de reparaciones
 
 ### Endpoints Implementados
@@ -315,9 +315,9 @@ backend/
 - `POST /{id}/process` - Forzar procesamiento ML del reporte
 
 **Incidentes** (`/api/incidents/`):
-- `GET /` - Lista con filtros (estado, prioridad, tipo, brigada, rango de fechas)
+- `GET /` - Lista con filtros (estado, prioridad, tipo, rango de fechas)
 - `GET /{id}` - Detalle completo con reportes asociados
-- `PATCH /{id}` - Actualizar estado, prioridad o asignar brigada
+- `PATCH /{id}` - Actualizar estado o prioridad
 - `POST /{id}/transition` - Cambiar estado con validación de transiciones
 - `GET /{id}/priority` - Calcular y retornar score de prioridad actualizado
 - `POST /recalculate-priorities` - Recalcular todas las prioridades (admin)
@@ -421,7 +421,7 @@ score_prioridad = (
   - CRUD con filtros
   - Transiciones de estado
   - Cálculo de prioridad
-  - Asignación de brigadas
+  - Asignación de incidentes
   
 - **Tests de contrato** (`test_contract.py`): Schemathesis
   - Validación automática de OpenAPI schema
@@ -620,15 +620,14 @@ frontend/
 
 #### 2. **Sistema de Work Orders** (No implementado)
 - ❌ CRUD de órdenes de trabajo
-- ❌ Asignación automática a brigadas
+- ❌ Asignación automática de órdenes de trabajo
 - ❌ Tracking de progreso de reparación
 - ❌ Historial de trabajo completado
-- ❌ Reportes de brigadas
 
 #### 3. **Optimización de Rutas** (No implementado)
 - ❌ Algoritmo TSP (Traveling Salesman Problem)
 - ❌ Agrupamiento geográfico de incidentes
-- ❌ Generación de rutas óptimas para brigadas
+- ❌ Generación de rutas óptimas para operadores
 - ❌ Exportación a GPS/navegación
 
 #### 4. **Sistema de Notificaciones** (No implementado)
@@ -657,7 +656,7 @@ frontend/
 - ❌ Procedimientos de restore documentados
 
 #### 8. **Permisos Granulares** (Básico implementado)
-- ✅ RBAC con 4 roles (ciudadano/brigada/supervisor/admin)
+- ✅ RBAC con 4 roles (ciudadano/operador/supervisor/admin)
 - ❌ Permisos específicos por recurso
 - ❌ Delegación de permisos temporales
 - ❌ Grupos de usuarios
@@ -715,7 +714,7 @@ frontend/
 
 7. **Sistema de Work Orders**
    - CRUD de órdenes de trabajo (modelo ya existe en BD)
-   - Asignación a brigadas con tracking de progreso
+   - Asignación con tracking de progreso
    - Estados: pendiente, en progreso, completada
 
 8. **Mobile App MVP (Flutter)**
@@ -733,7 +732,7 @@ frontend/
 
 10. **Sistema de Notificaciones por Email**
     - Email al ciudadano cuando su reporte cambia de estado
-    - Email a brigada cuando se le asigna una orden
+    - Email al operador cuando se le asigna una orden
     - Templates HTML con Jinja2
 
 11. **Analytics Avanzado**
@@ -841,7 +840,7 @@ frontend/
 
 9. **Sistema de Work Orders**
    - CRUD de órdenes (modelo ya en BD)
-   - Asignación a brigadas
+   - Asignación operativa
    - Tracking de progreso
 
 10. **Notificaciones push / email**
@@ -899,7 +898,7 @@ frontend/
 - Password hashing con bcrypt (10 rounds)
 
 ✅ **Control de acceso**:
-- RBAC con 4 roles (ciudadano/brigada/supervisor/admin)
+- RBAC con 4 roles (ciudadano/operador/supervisor/admin)
 - Decoradores de permisos en endpoints
 - Validación de ownership en operaciones
 
@@ -984,7 +983,7 @@ Docs:        ████████████████████ 100% (
 - Storage (local, falta MinIO completo) (100-200 épocas en Colab)
 2. **Integración MinIO-Backend pendiente** - Necesaria para producción (almacenamiento escalable)
 3. **App móvil no iniciada** - Crítica para adopción ciudadana (captura de reportes in-situ)
-4. **Work Orders sin implementar** - Necesario para tracking de brigadas
+4. **Work Orders sin implementar** - Necesario para tracking operativo
 5. **Frontend incompleto** - Faltan páginas de listado, detalle y deduplicación
 
 **❌ Pendiente (15%)**:

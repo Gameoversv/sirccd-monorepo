@@ -5,6 +5,7 @@ Sistema Inteligente de Reporte Ciudadano de Calles Dañadas
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from api.routes import health, auth, reports, deduplication, incidents, export, users
 from core.config import settings
@@ -41,12 +42,21 @@ app.include_router(incidents.router, prefix=f"{settings.API_V1_STR}/incidents", 
 app.include_router(export.router, prefix=f"{settings.API_V1_STR}/export", tags=["Exportaciones"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["Usuarios"])
 
+# Montar archivos estáticos (imágenes subidas)
+app.mount("/storage", StaticFiles(directory="storage"), name="storage")
+
 
 @app.on_event("startup")
 async def startup_event():
     """Evento de inicio de la aplicación"""
     print(f"[START] {settings.PROJECT_NAME} v{settings.VERSION} iniciando...")
     print(f"[DOCS] Documentacion: http://{settings.HOST}:{settings.PORT}{settings.API_V1_STR}/docs")
+    # Obtener métricas del modelo Roboflow al iniciar
+    try:
+        from services.ml_service import ml_service
+        ml_service._fetch_model_metrics()
+    except Exception as e:
+        print(f"[WARN] No se pudieron cargar métricas del modelo: {e}")
 
 
 @app.on_event("shutdown")

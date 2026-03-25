@@ -14,7 +14,6 @@ import {
   Edit2,
   ExternalLink,
   Loader2,
-  UserCheck,
   Clock,
 } from 'lucide-react';
 import { incidentsService } from '@/services';
@@ -96,8 +95,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
 
   const canUpdateStatus =
     user?.role === UserRole.SUPERVISOR ||
-    user?.role === UserRole.ADMIN ||
-    user?.role === UserRole.BRIGADA;
+    user?.role === UserRole.ADMIN;
 
   const hasNextStates =
     incident && (STATUS_TRANSITIONS[incident.status.toLowerCase()] || []).length > 0;
@@ -303,19 +301,6 @@ export default function IncidentDetailPage({ params }: PageProps) {
                   <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(incident.status)}`}>
                     {getStatusLabel(incident.status)}
                   </span>
-                }
-              />
-              <InfoRow
-                label={t('incidents.detail.assignedBrigade')}
-                value={
-                  incident.assigned_brigade_id ? (
-                    <span className="flex items-center gap-1">
-                      <UserCheck className="h-3.5 w-3.5 text-blue-500" />
-                      {t('incidents.detail.brigadeRef', { id: incident.assigned_brigade_id })}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400 italic">{t('incidents.detail.notAssigned')}</span>
-                  )
                 }
               />
               <InfoRow

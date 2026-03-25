@@ -1,7 +1,7 @@
 """initial schema with postgis
 
 Revision ID: 001
-Revises: 
+Revises:
 Create Date: 2026-02-25 00:00:00.000000
 
 """
@@ -22,7 +22,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     # Enable PostGIS extension
     op.execute('CREATE EXTENSION IF NOT EXISTS postgis')
-    
+
     # Create users table
     op.create_table(
         'users',
@@ -34,7 +34,7 @@ def upgrade() -> None:
         sa.Column('hashed_password', sa.String(length=255), nullable=False),
         sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
         sa.Column('is_verified', sa.Boolean(), nullable=False, server_default='false'),
-        sa.Column('role', sa.Enum('ADMIN', 'CIUDADANO', 'BRIGADA', 'SUPERVISOR', name='userrole'), nullable=False, server_default='CIUDADANO'),
+        sa.Column('role', sa.Enum('ADMIN', 'CIUDADANO', 'SUPERVISOR', name='userrole'), nullable=False, server_default='CIUDADANO'),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
         sa.Column('last_login', sa.DateTime(), nullable=True),
@@ -43,41 +43,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
-    
-    # Create brigades table
-    op.create_table(
-        'brigades',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('name', sa.String(length=255), nullable=False),
-        sa.Column('code', sa.String(length=50), nullable=False),
-        sa.Column('contact_phone', sa.String(length=20), nullable=True),
-        sa.Column('contact_email', sa.String(length=255), nullable=True),
-        sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
-        sa.Column('is_available', sa.Boolean(), nullable=False, server_default='true'),
-        sa.Column('current_location', Geography(geometry_type='POINT', srid=4326, spatial_index=True), nullable=True),
-        sa.Column('last_location_update', sa.DateTime(), nullable=True),
-        sa.Column('max_concurrent_incidents', sa.Integer(), nullable=False, server_default='5'),
-        sa.Column('total_incidents_resolved', sa.Integer(), nullable=False, server_default='0'),
-        sa.Column('avg_resolution_hours', sa.Float(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
-        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_brigades_code'), 'brigades', ['code'], unique=True)
-    op.create_index(op.f('ix_brigades_id'), 'brigades', ['id'], unique=False)
-    op.create_index(op.f('ix_brigades_name'), 'brigades', ['name'], unique=True)
-    
-    # Create brigade_members association table
-    op.create_table(
-        'brigade_members',
-        sa.Column('brigade_id', sa.Integer(), nullable=False),
-        sa.Column('user_id', sa.Integer(), nullable=False),
-        sa.Column('joined_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
-        sa.ForeignKeyConstraint(['brigade_id'], ['brigades.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('brigade_id', 'user_id')
-    )
-    
+
     # Create pois table
     op.create_table(
         'pois',
@@ -97,7 +63,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_pois_category'), 'pois', ['category'], unique=False)
     op.create_index(op.f('ix_pois_id'), 'pois', ['id'], unique=False)
-    
+
     # Create reports table
     op.create_table(
         'reports',
@@ -127,7 +93,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_reports_id'), 'reports', ['id'], unique=False)
     op.create_index(op.f('ix_reports_status'), 'reports', ['status'], unique=False)
     op.create_index(op.f('ix_reports_user_id'), 'reports', ['user_id'], unique=False)
-    
+
     # Create incidents table
     op.create_table(
         'incidents',
@@ -142,9 +108,7 @@ def upgrade() -> None:
         sa.Column('severity', sa.Enum('BAJA', 'MEDIA', 'ALTA', name='severitylevel'), nullable=False),
         sa.Column('priority', sa.Enum('BAJA', 'MEDIA', 'ALTA', 'CRITICA', name='prioritylevel'), nullable=False),
         sa.Column('priority_score', sa.Float(), nullable=True),
-        sa.Column('status', sa.Enum('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'VERIFIED', 'CLOSED', name='incidentstatus'), nullable=False, server_default='OPEN'),
-        sa.Column('assigned_brigade_id', sa.Integer(), nullable=True),
-        sa.Column('assigned_at', sa.DateTime(), nullable=True),
+        sa.Column('status', sa.Enum('OPEN', 'IN_PROGRESS', 'RESOLVED', 'VERIFIED', 'CLOSED', name='incidentstatus'), nullable=False, server_default='OPEN'),
         sa.Column('estimated_repair_hours', sa.Float(), nullable=True),
         sa.Column('started_at', sa.DateTime(), nullable=True),
         sa.Column('completed_at', sa.DateTime(), nullable=True),
@@ -157,13 +121,11 @@ def upgrade() -> None:
         sa.Column('notes', sa.Text(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
-        sa.ForeignKeyConstraint(['assigned_brigade_id'], ['brigades.id'], ),
         sa.ForeignKeyConstraint(['report_id'], ['reports.id'], ),
         sa.ForeignKeyConstraint(['reported_by'], ['users.id'], ),
         sa.ForeignKeyConstraint(['verified_by'], ['users.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_incidents_assigned_brigade_id'), 'incidents', ['assigned_brigade_id'], unique=False)
     op.create_index(op.f('ix_incidents_created_at'), 'incidents', ['created_at'], unique=False)
     op.create_index(op.f('ix_incidents_damage_type'), 'incidents', ['damage_type'], unique=False)
     op.create_index(op.f('ix_incidents_id'), 'incidents', ['id'], unique=False)
@@ -172,7 +134,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_incidents_reported_by'), 'incidents', ['reported_by'], unique=False)
     op.create_index(op.f('ix_incidents_severity'), 'incidents', ['severity'], unique=False)
     op.create_index(op.f('ix_incidents_status'), 'incidents', ['status'], unique=False)
-    
+
     # Create metrics table
     op.create_table(
         'metrics',
@@ -198,14 +160,13 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Drop tables in reverse order
     op.drop_index(op.f('ix_metrics_recorded_at'), table_name='metrics')
     op.drop_index(op.f('ix_metrics_metric_type'), table_name='metrics')
     op.drop_index(op.f('ix_metrics_incident_id'), table_name='metrics')
     op.drop_index(op.f('ix_metrics_id'), table_name='metrics')
     op.drop_index(op.f('ix_metrics_category'), table_name='metrics')
     op.drop_table('metrics')
-    
+
     op.drop_index(op.f('ix_incidents_status'), table_name='incidents')
     op.drop_index(op.f('ix_incidents_severity'), table_name='incidents')
     op.drop_index(op.f('ix_incidents_reported_by'), table_name='incidents')
@@ -214,32 +175,23 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_incidents_id'), table_name='incidents')
     op.drop_index(op.f('ix_incidents_damage_type'), table_name='incidents')
     op.drop_index(op.f('ix_incidents_created_at'), table_name='incidents')
-    op.drop_index(op.f('ix_incidents_assigned_brigade_id'), table_name='incidents')
     op.drop_table('incidents')
-    
+
     op.drop_index(op.f('ix_reports_user_id'), table_name='reports')
     op.drop_index(op.f('ix_reports_status'), table_name='reports')
     op.drop_index(op.f('ix_reports_id'), table_name='reports')
     op.drop_index(op.f('ix_reports_created_at'), table_name='reports')
     op.drop_table('reports')
-    
+
     op.drop_index(op.f('ix_pois_id'), table_name='pois')
     op.drop_index(op.f('ix_pois_category'), table_name='pois')
     op.drop_table('pois')
-    
-    op.drop_table('brigade_members')
-    
-    op.drop_index(op.f('ix_brigades_name'), table_name='brigades')
-    op.drop_index(op.f('ix_brigades_id'), table_name='brigades')
-    op.drop_index(op.f('ix_brigades_code'), table_name='brigades')
-    op.drop_table('brigades')
-    
+
     op.drop_index(op.f('ix_users_username'), table_name='users')
     op.drop_index(op.f('ix_users_id'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
-    
-    # Drop enums
+
     op.execute('DROP TYPE IF EXISTS incidentstatus CASCADE')
     op.execute('DROP TYPE IF EXISTS prioritylevel CASCADE')
     op.execute('DROP TYPE IF EXISTS reportstatus CASCADE')
@@ -247,6 +199,3 @@ def downgrade() -> None:
     op.execute('DROP TYPE IF EXISTS severitylevel CASCADE')
     op.execute('DROP TYPE IF EXISTS poicategory CASCADE')
     op.execute('DROP TYPE IF EXISTS userrole CASCADE')
-    
-    # Drop PostGIS extension (optional - usually kept)
-    # op.execute('DROP EXTENSION IF EXISTS postgis')

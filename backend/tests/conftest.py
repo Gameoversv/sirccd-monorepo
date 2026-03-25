@@ -160,23 +160,6 @@ def citizen_user(test_db: Session) -> User:
 
 
 @pytest.fixture
-def brigade_user(test_db: Session) -> User:
-    """Crea un usuario de brigada de test"""
-    user = User(
-        email="brigade@test.com",
-        username="brigade_test",
-        full_name="Brigade Test",
-        hashed_password=get_password_hash("brigade123"),
-        role=UserRole.BRIGADA,
-        is_active=True
-    )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
-    return user
-
-
-@pytest.fixture
 def inactive_user(test_db: Session) -> User:
     """Crea un usuario inactivo de test"""
     user = User(
@@ -216,15 +199,6 @@ def citizen_token(citizen_user: User) -> str:
 
 
 @pytest.fixture
-def brigade_token(brigade_user: User) -> str:
-    """Genera token JWT para usuario de brigada"""
-    return create_access_token(
-        subject=brigade_user.id,
-        additional_claims={"role": brigade_user.role.value, "username": brigade_user.username}
-    )
-
-
-@pytest.fixture
 def auth_headers_admin(admin_token: str) -> dict:
     """Headers HTTP con autenticación de admin"""
     return {"Authorization": f"Bearer {admin_token}"}
@@ -234,12 +208,6 @@ def auth_headers_admin(admin_token: str) -> dict:
 def auth_headers_citizen(citizen_token: str) -> dict:
     """Headers HTTP con autenticación de ciudadano"""
     return {"Authorization": f"Bearer {citizen_token}"}
-
-
-@pytest.fixture
-def auth_headers_brigade(brigade_token: str) -> dict:
-    """Headers HTTP con autenticación de brigada"""
-    return {"Authorization": f"Bearer {brigade_token}"}
 
 
 # ==========================================

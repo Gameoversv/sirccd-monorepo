@@ -1,0 +1,163 @@
+version: '3.8'
+
+services:
+
+  # ── Infraestructura ──────────────────────────────────────────────
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: sirccd-postgres
+    environment:
+      POSTGRES_USER: sirccd_user
+      POSTGRES_PASSWORD: sirccd_password
+      POSTGRES_DB: sirccd_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sirccd_user -d sirccd_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - sirccd-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: sirccd-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - sirccd-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: sirccd-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: sirccd_admin
+      MINIO_ROOT_PASSWORD: sirccd_password_2026
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - sirccd-network
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: sirccd-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 sirccd_admin sirccd_password_2026 &&
+      mc mb --ignore-existing local/sirccd-images &&
+      mc mb --ignore-existing local/sirccd-models &&
+      mc anonymous set public local/sirccd-images &&
+      echo 'MinIO buckets configurados y bucket publico'
+      "
+    networks:
+      - sirccd-network
+    restart: on-failure
+
+  # ── Backend ──────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sirccd-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Server
+      HOST: "0.0.0.0"
+      PORT: "8000"
+      DEBUG: "False"
+      # Database
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: sirccd_user
+      POSTGRES_PASSWORD: sirccd_password
+      POSTGRES_DB: sirccd_db
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+      # MinIO
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: sirccd_admin
+      MINIO_SECRET_KEY: sirccd_password_2026
+      MINIO_SECURE: "False"
+      MINIO_BUCKET_IMAGES: sirccd-images
+      MINIO_BUCKET_MODELS: sirccd-models
+      # Roboflow
+      ROBOFLOW_API_KEY: "2Mn6nf96sMJnX7Lj7khX"
+      ROBOFLOW_MODEL_ID: "rd-roaddataset/5"
+      CONFIDENCE_THRESHOLD: "0.4"
+      IOU_THRESHOLD: "0.4"
+      # JWT
+      SECRET_KEY: "zK8vN3mQ1pR5tY9wX2cF6bH0jL4nM7sA1dE5gI9kO3pT6uW8zC2"
+      ALGORITHM: "HS256"
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      # Logging
+      LOG_LEVEL: "INFO"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - backend_storage:/app/storage
+      - backend_logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - sirccd-network
+
+  # ── Frontend ─────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sirccd-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:8000/api/v1"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - sirccd-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  backend_storage:
+  backend_logs:
+
+networks:
+  sirccd-network:
+    driver: bridge

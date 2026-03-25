@@ -36,7 +36,7 @@ class ExportIncidentsFilters(BaseModel):
     # Filtros de clasificación
     status: Optional[List[str]] = Field(
         None,
-        description="Lista de estados a incluir (open, assigned, in_progress, resolved, verified, closed)"
+        description="Lista de estados a incluir (open, in_progress, resolved, verified, closed)"
     )
     priority: Optional[List[str]] = Field(
         None,
@@ -61,13 +61,6 @@ class ExportIncidentsFilters(BaseModel):
         None,
         max_length=100,
         description="Provincia (búsqueda parcial, case-insensitive)"
-    )
-    
-    # Filtro de brigada
-    brigade_id: Optional[int] = Field(
-        None,
-        gt=0,
-        description="ID de brigada asignada"
     )
     
     # Filtros temporales
@@ -99,7 +92,7 @@ class ExportIncidentsFilters(BaseModel):
         json_schema_extra={
             "examples": [
                 {
-                    "status": ["open", "assigned", "in_progress"],
+                    "status": ["open", "in_progress"],
                     "priority": ["alta", "critica"],
                     "city": "Santo Domingo",
                     "date_from": "2024-01-01T00:00:00",

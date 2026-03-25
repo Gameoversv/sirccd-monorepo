@@ -10,7 +10,6 @@ from db.base import Base
 from .user import User, UserRole
 from .report import Report, ReportStatus, DamageType, SeverityLevel
 from .incident import Incident, IncidentStatus, PriorityLevel
-from .brigade import Brigade, brigade_members
 from .poi import POI, POICategory
 from .metric import Metric
 
@@ -28,9 +27,6 @@ __all__ = [
     "Incident",
     "IncidentStatus",
     "PriorityLevel",
-    # Brigade
-    "Brigade",
-    "brigade_members",
     # POI
     "POI",
     "POICategory",

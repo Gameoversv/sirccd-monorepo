@@ -14,8 +14,7 @@ from enum import Enum
 
 class IncidentStatusEnum(str, Enum):
     """Estados del ciclo de vida de un incidente"""
-    OPEN = "open"                 # Nuevo/Abierto (sin asignar)
-    ASSIGNED = "assigned"         # Asignado a brigada
+    OPEN = "open"                 # Nuevo/Abierto
     IN_PROGRESS = "in_progress"   # En proceso de reparación
     RESOLVED = "resolved"         # Resuelto/reparado
     VERIFIED = "verified"         # Verificado por supervisor
@@ -64,33 +63,7 @@ class UpdateIncidentStatusRequest(BaseModel):
             "examples": [
                 {
                     "status": "in_progress",
-                    "notes": "Brigada iniciando trabajo en el sitio"
-                }
-            ]
-        }
-    )
-
-
-class AssignBrigadeRequest(BaseModel):
-    """Request para asignar brigada a un incidente"""
-    brigade_id: int = Field(
-        ...,
-        gt=0,
-        description="ID de la brigada a asignar"
-    )
-    estimated_hours: Optional[float] = Field(
-        None,
-        gt=0,
-        le=168,  # máximo 1 semana
-        description="Horas estimadas de reparación"
-    )
-    
-    model_config = ConfigDict(
-        json_schema_extra={
-            "examples": [
-                {
-                    "brigade_id": 5,
-                    "estimated_hours": 4.5
+                    "notes": "Iniciando trabajo en el sitio"
                 }
             ]
         }
@@ -114,10 +87,6 @@ class IncidentFilterParams(BaseModel):
     severity: Optional[SeverityLevelEnum] = Field(
         None,
         description="Filtrar por nivel de severidad"
-    )
-    brigade_id: Optional[int] = Field(
-        None,
-        description="Filtrar por brigada asignada"
     )
     city: Optional[str] = Field(
         None,
@@ -152,7 +121,7 @@ class IncidentFilterParams(BaseModel):
         json_schema_extra={
             "examples": [
                 {
-                    "status": ["open", "assigned"],
+                    "status": ["open", "in_progress"],
                     "priority": ["alta", "critica"],
                     "skip": 0,
                     "limit": 20,
@@ -217,7 +186,6 @@ class IncidentBriefResponse(BaseModel):
     longitude: Optional[float] = None
     address: Optional[str]
     city: Optional[str]
-    assigned_brigade_id: Optional[int]
     created_at: datetime
     updated_at: datetime
     
@@ -247,11 +215,7 @@ class IncidentDetailResponse(BaseModel):
     
     # Estado
     status: IncidentStatusEnum
-    
-    # Asignación
-    assigned_brigade_id: Optional[int]
-    assigned_at: Optional[datetime]
-    
+
     # Tiempos
     estimated_repair_hours: Optional[float]
     started_at: Optional[datetime]
@@ -291,9 +255,7 @@ class IncidentDetailResponse(BaseModel):
                     "severity": "alta",
                     "priority": "critica",
                     "priority_score": 85.5,
-                    "status": "assigned",
-                    "assigned_brigade_id": 5,
-                    "assigned_at": "2026-03-03T10:00:00Z",
+                    "status": "in_progress",
                     "estimated_repair_hours": 4.0,
                     "started_at": None,
                     "completed_at": None,
@@ -333,12 +295,11 @@ class IncidentListResponse(BaseModel):
                             "severity": "alta",
                             "priority": "critica",
                             "priority_score": 85.5,
-                            "status": "assigned",
+                            "status": "in_progress",
                             "latitude": -34.603722,
                             "longitude": -58.381592,
                             "address": "Av. Corrientes 1234",
                             "city": "Buenos Aires",
-                            "assigned_brigade_id": 5,
                             "created_at": "2026-03-01T08:30:00Z",
                             "updated_at": "2026-03-03T10:00:00Z"
                         }
@@ -374,7 +335,6 @@ class IncidentStatsResponse(BaseModel):
                     "total_incidents": 156,
                     "by_status": {
                         "open": 23,
-                        "assigned": 45,
                         "in_progress": 32,
                         "resolved": 28,
                         "verified": 18,

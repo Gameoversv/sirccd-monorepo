@@ -8,8 +8,7 @@
 
 Diseñar wireframes de baja y media fidelidad para las tres interfaces principales del sistema SIRCCD:
 1. **App Ciudadano** (móvil iOS/Android + web responsive)
-2. **App Brigada** (móvil nativo)
-3. **Dashboard Municipal** (web)
+2. **Dashboard Municipal** (web)
 
 ---
 
@@ -79,8 +78,6 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 | **Acciones** | Plus, Camera, Upload, Send, Save, Edit, Delete |
 | **Estados** | Check, X, AlertTriangle, Info, Clock, MapPin |
 | **Reportes** | Navigation (ubicación), Image, FileText, MessageSquare |
-| **Brigadas** | Tool, Users, Calendar, Clipboard |
-
 ---
 
 ## 2. App Ciudadano (Móvil + Web)
@@ -136,7 +133,7 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 ┌─────────────────────────────────────┐
 │ [Skip]                              │
 │                                     │
-│     [Ilustración: brigada           │
+│     [Ilustración: equipo            │
 │      reparando calle]               │
 │                                     │
 │   Seguimiento en tiempo real        │
@@ -697,8 +694,8 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 │  ┌─────────────────────────────┐   │
 │  │ ● Reporte #2026-001234      │   │
 │  │                             │   │
-│  │ Tu reporte fue asignado a   │   │
-│  │ Brigada Norte.              │   │
+│  │ Tu reporte fue asignado.    │   │
+│  │                             │   │
 │  │                             │   │
 │  │ Hace 2 horas                │   │
 │  └─────────────────────────────┘   │
@@ -745,459 +742,21 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 
 ---
 
-## 3. App Brigada (Móvil Nativo)
+## 3. Dashboard Municipal (Web)
 
 ### 3.1 Flujo principal
-
-```
-[Login] → [Dashboard] → [Reportes Asignados] → [Detalle] → [Actualizar Estado]
-           ↓                                       ↓
-       [Ruta del día]                    [Agregar Evidencia]
-                                                  ↓
-                                          [Marcar Resuelto]
-```
-
----
-
-### 3.2 Wireframe 13: Login Brigada
-
-```
-┌─────────────────────────────────────┐
-│                                     │
-│        [LOGO MUNICIPIO]             │
-│                                     │
-│      SIRCCD - App Brigadas          │
-│                                     │
-│   ┌─────────────────────────────┐  │
-│   │ 👤 Usuario                  │  │
-│   └─────────────────────────────┘  │
-│                                     │
-│   ┌─────────────────────────────┐  │
-│   │ 🔒 Contraseña               │  │
-│   └─────────────────────────────┘  │
-│                                     │
-│   ┌─────────────────────────────┐  │
-│   │ 🏢 Brigada                  │  │
-│   │    Brigada Norte ▼          │  │
-│   └─────────────────────────────┘  │
-│                                     │
-│   ☑️ Recordar sesión                │
-│                                     │
-│   ┌─────────────────────────────┐  │
-│   │     [Iniciar sesión]        │  │
-│   └─────────────────────────────┘  │
-│                                     │
-│   ¿Problemas para ingresar?         │
-│   Contacta a tu supervisor          │
-│                                     │
-└─────────────────────────────────────┘
-```
-
-**Nota:** Login solo con credenciales institucionales (sin registro público).
-
----
-
-### 3.3 Wireframe 14: Dashboard Brigada
-
-```
-┌─────────────────────────────────────┐
-│ [☰ Menu]  Brigada Norte  [📡 Online]│
-├─────────────────────────────────────┤
-│                                     │
-│  Buenos días, Carlos 👷             │
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │ Reportes asignados hoy        │ │
-│  │                               │ │
-│  │   🔴 2  Críticos              │ │
-│  │   🟠 5  Altos                 │ │
-│  │   🟡 3  Medios                │ │
-│  │                               │ │
-│  │   Total: 10 reportes          │ │
-│  └───────────────────────────────┘ │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 🗺️ VER RUTA DEL DÍA         │   │
-│  │   (10 reportes, 12.5 km)    │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  Próximo reporte urgente            │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 🔴 Socavón - Av. Reforma    │   │
-│  │                             │   │
-│  │ Crítico • #2026-001345      │   │
-│  │ 📍 1.2 km de tu ubicación   │   │
-│  │                             │   │
-│  │ [Iniciar navegación →]      │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  Progreso de hoy                    │
-│  ▓▓▓▓▓▓▓░░░░░░░░░░░░ 3/10          │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 📊 Estadísticas del mes     │   │
-│  │ 45 reportes • 42 resueltos  │   │
-│  │ 93% tasa de resolución      │   │
-│  └─────────────────────────────┘   │
-│                                     │
-└─────────────────────────────────────┘
-│ [🏠 Inicio] [📋 Reportes] [👤 Perfil]│
-└─────────────────────────────────────┘
-```
-
-**Componentes:**
-- Indicador de conexión (Online/Offline)
-- Resumen de reportes por prioridad
-- Botón CTA para ruta optimizada
-- Card del próximo reporte urgente
-- Barra de progreso diario
-- Estadísticas de rendimiento
-
----
-
-### 3.4 Wireframe 15: Lista de Reportes Asignados
-
-```
-┌─────────────────────────────────────┐
-│ [← Volver]  Reportes asignados      │
-├─────────────────────────────────────┤
-│                                     │
-│  Ordenar: [Prioridad ▼] [Filtros]  │
-│                                     │
-│  ── Urgente ──                      │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 🔴 Socavón - Av. Reforma    │   │
-│  │                             │   │
-│  │ Crítico • En progreso       │   │
-│  │ #2026-001345                │   │
-│  │                             │   │
-│  │ 📍 1.2 km • ⏱️ Asignado hoy │   │
-│  │                             │   │
-│  │ [Navegar] [Ver detalles]    │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 🔴 Alcantarilla - Centro    │   │
-│  │                             │   │
-│  │ Crítico • Pendiente         │   │
-│  │ #2026-001340                │   │
-│  │                             │   │
-│  │ 📍 2.8 km • ⏱️ Hace 2 horas │   │
-│  │                             │   │
-│  │ [Navegar] [Ver detalles]    │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ── Alta prioridad ──               │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 🟠 Bache - Av. Juárez       │   │
-│  │                             │   │
-│  │ Alto • En progreso          │   │
-│  │ #2026-001234                │   │
-│  │                             │   │
-│  │ 📍 3.5 km • ⏱️ Ayer         │   │
-│  │                             │   │
-│  │ [Navegar] [Ver detalles]    │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  [Ver todos (10)]                   │
-│                                     │
-└─────────────────────────────────────┘
-```
-
-**Funcionalidades:**
-- Agrupación por prioridad
-- Ordenamiento (prioridad, distancia, fecha)
-- Botón rápido de navegación
-- Indicador de distancia y tiempo desde asignación
-
----
-
-### 3.5 Wireframe 16: Detalle de Reporte (Brigada)
-
-```
-┌─────────────────────────────────────┐
-│ [← Volver]  #2026-001345  [⋮ Más]  │
-├─────────────────────────────────────┤
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │ [Imagen del reporte]          │ │
-│  │        (galería)              │ │
-│  └───────────────────────────────┘ │
-│                                     │
-│  🔴 Socavón - Av. Reforma           │
-│  Crítico • En progreso              │
-│                                     │
-│  ── Estado actual ──                │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 🟡 En progreso              │   │
-│  │                             │   │
-│  │ Asignado hace 2 horas       │   │
-│  │ Brigada Norte (tu equipo)   │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ [Cambiar estado ▼]          │   │
-│  │ • Iniciar trabajo           │   │
-│  │ • Marcar como resuelto      │   │
-│  │ • Requiere materiales       │   │
-│  │ • Escalate                  │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ── Ubicación ──                    │
-│                                     │
-│  📍 Av. Reforma #456, Zona Norte    │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ [Mapa con pin]              │   │
-│  │                             │   │
-│  │ 📍 Ubicación del daño       │   │
-│  │ 📍 Tu ubicación (1.2 km)    │   │
-│  │                             │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 🧭 Abrir en Google Maps     │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ── Descripción ──                  │
-│                                     │
-│  Socavón de aprox. 80cm de diámetro │
-│  y 40cm de profundidad que afecta   │
-│  el carril derecho...               │
-│  [Leer más]                         │
-│                                     │
-│  ── Materiales estimados ──         │
-│  • Asfalto: 1 ton                   │
-│  • Rodillo compactador              │
-│  • Señalización temporal            │
-│                                     │
-│  ── Evidencia ──                    │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 📷 Agregar foto del trabajo │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 📝 Agregar observaciones    │   │
-│  └─────────────────────────────┘   │
-│                                     │
-└─────────────────────────────────────┘
-```
-
-**Funcionalidades:**
-- Galería de imágenes del reporte original
-- Selector de estado con opciones predefinidas
-- Mapa con ubicación del daño y brigada
-- Botón para abrir navegación externa
-- Formulario para agregar evidencia del trabajo
-- Estimación automática de materiales (ML)
-
----
-
-### 3.6 Wireframe 17: Actualizar Estado - Marcar Resuelto
-
-```
-┌─────────────────────────────────────┐
-│ [← Cancelar]  Marcar como resuelto  │
-├─────────────────────────────────────┤
-│                                     │
-│  Reporte #2026-001345               │
-│  Socavón - Av. Reforma              │
-│                                     │
-│  Para marcar como resuelto, agrega  │
-│  evidencia del trabajo completado.  │
-│                                     │
-│  Fotos del trabajo (obligatorio)    │
-│                                     │
-│  ┌───┬───┬───┬───┐                 │
-│  │[+]│   │   │   │                 │
-│  │   │   │   │   │                 │
-│  └───┴───┴───┴───┘                 │
-│  Antes, durante y después           │
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │ 📷 Tomar fotos (0/3 mín)      │ │
-│  └───────────────────────────────┘ │
-│                                     │
-│  Observaciones técnicas             │
-│  ┌─────────────────────────────┐   │
-│  │ Se reparó socavón usando    │   │
-│  │ 1 ton de asfalto. Compactado│   │
-│  │ adecuadamente...            │   │
-│  │                    (150/500)│   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  Materiales utilizados              │
-│  ☑️ Asfalto (1 ton)                 │
-│  ☑️ Rodillo compactador             │
-│  ☑️ Señalización temporal           │
-│                                     │
-│  Personal asignado                  │
-│  ┌─────────────────────────────┐   │
-│  │ Carlos M. (Operador)        │   │
-│  │ Juan P. (Ayudante)          │   │
-│  │ [+ Agregar]                 │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  Tiempo de trabajo                  │
-│  ┌────┬────┐                        │
-│  │ 2h │ 30m│                        │
-│  └────┴────┘                        │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │   [✓ Marcar como resuelto]  │   │
-│  └─────────────────────────────┘   │
-│                                     │
-└─────────────────────────────────────┘
-```
-
-**Validaciones:**
-- Mínimo 3 fotos (antes/durante/después)
-- Observaciones obligatorias (mín 50 caracteres)
-- Materiales y personal registrados
-
----
-
-### 3.7 Wireframe 18: Ruta del Día (Optimizada)
-
-```
-┌─────────────────────────────────────┐
-│ [← Volver]  Ruta del día            │
-├─────────────────────────────────────┤
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │                               │ │
-│  │   [Mapa con ruta trazada]     │ │
-│  │                               │ │
-│  │   📍1 → 📍2 → 📍3 → ... →📍10 │ │
-│  │                               │ │
-│  │   Distancia total: 12.5 km    │ │
-│  │   Tiempo estimado: 4h 30m     │ │
-│  │                               │ │
-│  └───────────────────────────────┘ │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 🚀 Iniciar ruta completa    │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  Paradas (10)                       │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 1️⃣ Socavón - Av. Reforma    │   │
-│  │    🔴 Crítico • 1.2 km      │   │
-│  │    Est: 45 min              │   │
-│  │    [Navegar]                │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 2️⃣ Alcantarilla - Centro    │   │
-│  │    🔴 Crítico • +1.5 km     │   │
-│  │    Est: 30 min              │   │
-│  │    [Navegar]                │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 3️⃣ Bache - Av. Juárez       │   │
-│  │    🟠 Alto • +2.1 km        │   │
-│  │    Est: 20 min              │   │
-│  │    [Navegar]                │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  [Ver todos (10)]                   │
-│                                     │
-│  ⚙️ Optimizar por: [Prioridad ▼]   │
-│                                     │
-└─────────────────────────────────────┘
-```
-
-**Funcionalidades:**
-- Algoritmo de optimización de ruta (TSP)
-- Visualización de secuencia en mapa
-- Estimaciones de tiempo por parada
-- Navegación turn-by-turn integrada
-- Reordenamiento manual (arrastre)
-
----
-
-### 3.8 Wireframe 19: Perfil Brigada
-
-```
-┌─────────────────────────────────────┐
-│ [← Volver]  Perfil                  │
-├─────────────────────────────────────┤
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │        👷                     │ │
-│  │   Carlos Martínez             │ │
-│  │   Operador Nivel 2            │ │
-│  │   Brigada Norte               │ │
-│  └───────────────────────────────┘ │
-│                                     │
-│  ── Estadísticas del mes ──         │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 45 Reportes atendidos       │   │
-│  │ 42 Resueltos                │   │
-│  │ 3  En progreso              │   │
-│  │                             │   │
-│  │ 93% Tasa de resolución      │   │
-│  │ 4.2 Calificación promedio   │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ── Configuración ──                │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 🔔 Notificaciones           │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 📱 Modo offline             │   │
-│  │    [Toggle ON]              │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 🗺️ Navegación preferida     │   │
-│  │    Google Maps ▼            │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ── Brigada ──                      │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 👥 Miembros (5)             │   │
-│  │ 📞 Supervisor: M. García    │   │
-│  │ 🚚 Vehículo: Pickup #23     │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ 🔴 Cerrar sesión            │   │
-│  └─────────────────────────────┘   │
-│                                     │
-└─────────────────────────────────────┘
-```
-
----
-
-## 4. Dashboard Municipal (Web)
-
-### 4.1 Flujo principal
 
 ```
 [Login] → [Dashboard] → [Mapa] / [Tabla] / [Métricas]
            ↓
        [Gestión de Reportes] → [Validar] / [Asignar] / [Cerrar]
            ↓
-       [Gestión de Brigadas]
-           ↓
        [Configuración del Sistema]
 ```
 
 ---
 
-### 4.2 Wireframe 20: Login Municipal
+### 3.2 Wireframe 20: Login Municipal
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -1236,14 +795,14 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 
 ---
 
-### 4.3 Wireframe 21: Dashboard Principal (Operador)
+### 3.3 Wireframe 21: Dashboard Principal (Operador)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ [LOGO] SIRCCD                        Operador M. García  [🔔 5] [⚙️] [👤] │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│ [Dashboard] [Mapa] [Reportes] [Brigadas] [Métricas] [Configuración]        │
+│ [Dashboard] [Mapa] [Reportes] [Métricas] [Configuración]        │
 │                                                                             │
 │ ┌─────────────────────────────────────────────────────────────────────────┐│
 │ │ Resumen del día - Martes 14 de Enero, 2026                             ││
@@ -1255,29 +814,18 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 │ │ └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘      ││
 │ └─────────────────────────────────────────────────────────────────────────┘│
 │                                                                             │
-│ ┌────────────────────────────────┐ ┌────────────────────────────────────┐ │
-│ │ Reportes pendientes de validar │ │ Brigadas activas                   │ │
-│ │                                │ │                                    │ │
-│ │ ┌────────────────────────────┐ │ │ ┌────────────────────────────────┐│ │
-│ │ │🔴 #2026-001456             │ │ │ │🟢 Brigada Norte (5 reportes)   ││ │
-│ │ │Socavón - Av. Reforma       │ │ │ │   📍 En ruta                   ││ │
-│ │ │Hace 15 min                 │ │ │ │   👷 C. Martínez               ││ │
-│ │ │[Validar] [Rechazar]        │ │ │ └────────────────────────────────┘│ │
-│ │ └────────────────────────────┘ │ │                                    │ │
-│ │                                │ │ ┌────────────────────────────────┐│ │
-│ │ ┌────────────────────────────┐ │ │ │🟢 Brigada Sur (3 reportes)     ││ │
-│ │ │🟠 #2026-001455             │ │ │ │   📍 En sitio                  ││ │
-│ │ │Bache - Calle 5             │ │ │ │   👷 A. López                  ││ │
-│ │ │Hace 1 hora                 │ │ │ └────────────────────────────────┘│ │
-│ │ │[Validar] [Rechazar]        │ │ │                                    │ │
-│ │ └────────────────────────────┘ │ │ ┌────────────────────────────────┐│ │
-│ │                                │ │ │⚫ Brigada Centro (0 reportes)   ││ │
-│ │ [Ver todos (12)]               │ │ │   📍 Base                       ││ │
-│ │                                │ │ │   👷 R. Sánchez                ││ │
-│ └────────────────────────────────┘ │ └────────────────────────────────┘│ │
-│                                    │                                    │ │
-│                                    │ [Ver todas las brigadas]           │ │
-│                                    └────────────────────────────────────┘ │
+│ ┌─────────────────────────────────────────────────────────────────────────┐│
+│ │ Reportes pendientes de validar                                         ││
+│ │                                                                         ││
+│ │ ┌────────────────────────────┐  ┌────────────────────────────┐          ││
+│ │ │🔴 #2026-001456             │  │🟠 #2026-001455             │          ││
+│ │ │Socavón - Av. Reforma       │  │Bache - Calle 5             │          ││
+│ │ │Hace 15 min                 │  │Hace 1 hora                 │          ││
+│ │ │[Validar] [Rechazar]        │  │[Validar] [Rechazar]        │          ││
+│ │ └────────────────────────────┘  └────────────────────────────┘          ││
+│ │                                                                         ││
+│ │ [Ver todos (12)]                                                        ││
+│ └─────────────────────────────────────────────────────────────────────────┘│
 │                                                                             │
 │ ┌─────────────────────────────────────────────────────────────────────────┐│
 │ │ Gráfica: Reportes por día (últimos 7 días)                             ││
@@ -1300,19 +848,19 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 **Componentes:**
 - Header con navegación principal
 - Cards de KPIs (métricas clave)
-- Widgets de reportes pendientes y brigadas
+- Widgets de reportes pendientes
 - Gráficas de tendencias
 - Acciones rápidas por widget
 
 ---
 
-### 4.4 Wireframe 22: Vista de Mapa (Municipal)
+### 3.4 Wireframe 22: Vista de Mapa (Municipal)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ [LOGO] SIRCCD                                    [🔔 5] [⚙️] [👤] M. García │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ [Dashboard] [Mapa] [Reportes] [Brigadas] [Métricas] [Configuración]        │
+│ [Dashboard] [Mapa] [Reportes] [Métricas] [Configuración]        │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │ ┌───────────────────────────────┐ ┌───────────────────────────────────────┐│
@@ -1324,14 +872,11 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 │ │                               │ │        🟠 Pin                         ││
 │ │ Estado:                       │ │   🟡 Pin    🟢 Pin                    ││
 │ │ ☑️ Nuevo  ☑️ Validado          │ │                                       ││
-│ │ ☑️ Asignado  ☑️ En progreso    │ │        👷 Brigada Norte               ││
-│ │ ☐ Resuelto  ☐ Cerrado         │ │                                       ││
-│ │                               │ │   [+] [-] [Layers] [My Location]     ││
+│ │ ☑️ Asignado  ☑️ En progreso    │ │                                       ││
+│ │ ☐ Resuelto  ☐ Cerrado         │ │   [+] [-] [Layers] [My Location]     ││
+│ │                               │ │                                       ││
 │ │ Fecha:                        │ │                                       ││
 │ │ Últimas 24h ▼                 │ │                                       ││
-│ │                               │ │                                       ││
-│ │ Brigada:                      │ │                                       ││
-│ │ Todas ▼                       │ │                                       ││
 │ │                               │ │                                       ││
 │ │ [Aplicar filtros]             │ │                                       ││
 │ │ [Limpiar]                     │ │                                       ││
@@ -1342,7 +887,6 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 │ │ 🟡 Media                      │ │                                       ││
 │ │ 🟢 Baja                       │ │                                       ││
 │ │ 🔵 Mínima                     │ │                                       ││
-│ │ 👷 Brigada activa             │ │                                       ││
 │ └───────────────────────────────┘ └───────────────────────────────────────┘│
 │                                                                             │
 │ ┌─────────────────────────────────────────────────────────────────────────┐│
@@ -1361,21 +905,20 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 ```
 
 **Funcionalidades:**
-- Filtros múltiples (prioridad, estado, fecha, brigada)
+- Filtros múltiples (prioridad, estado, fecha)
 - Mapa con clustering dinámico
-- Visualización de brigadas en tiempo real
 - Panel inferior con lista de reportes visible
 - Click en pin → popup con acciones rápidas
 
 ---
 
-### 4.5 Wireframe 23: Tabla de Reportes (Municipal)
+### 3.5 Wireframe 23: Tabla de Reportes (Municipal)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ [LOGO] SIRCCD                                    [🔔 5] [⚙️] [👤] M. García │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ [Dashboard] [Mapa] [Reportes] [Brigadas] [Métricas] [Configuración]        │
+│ [Dashboard] [Mapa] [Reportes] [Métricas] [Configuración]        │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │ Gestión de Reportes                                                        │
@@ -1383,19 +926,19 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 │ ┌─────────────────────────────────────────────────────────────────────────┐│
 │ │ [Buscar por folio, ubicación, descripción...]            [🔍]           ││
 │ │                                                                         ││
-│ │ Filtros: [Prioridad ▼] [Estado ▼] [Categoría ▼] [Brigada ▼] [Fecha ▼] ││
+│ │ Filtros: [Prioridad ▼] [Estado ▼] [Categoría ▼] [Fecha ▼]             ││
 │ │                                                                         ││
 │ │ [Aplicar filtros] [Limpiar] [Exportar CSV] [Exportar PDF]              ││
 │ └─────────────────────────────────────────────────────────────────────────┘│
 │                                                                             │
 │ ┌─────────────────────────────────────────────────────────────────────────┐│
-│ │ Acciones múltiples: [Asignar a brigada ▼] [Cambiar prioridad ▼]        ││
+│ │ Acciones múltiples: [Asignar ▼] [Cambiar prioridad ▼]                 ││
 │ │ [Cerrar seleccionados] [Exportar selección]                             ││
 │ └─────────────────────────────────────────────────────────────────────────┘│
 │                                                                             │
 │ ┌─────────────────────────────────────────────────────────────────────────┐│
 │ │                                                                         ││
-│ │ ☐ Folio     Ubicación          Categoría  Prior. Estado    Brigada  ... ││
+│ │ ☐ Folio     Ubicación          Categoría  Prior. Estado    Asignado ... ││
 │ │ ────────────────────────────────────────────────────────────────────── ││
 │ │ ☐ #001456   Av. Reforma #456   Socavón    🔴    Validado   Norte    [>]││
 │ │             Zona Norte                    Crít.                        ││
@@ -1450,7 +993,7 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 
 ---
 
-### 4.6 Wireframe 24: Detalle de Reporte (Operador Municipal)
+### 3.6 Wireframe 24: Detalle de Reporte (Operador Municipal)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -1463,7 +1006,7 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 │ │ Información general                │ │ Acciones rápidas                 ││
 │ │                                    │ │                                  ││
 │ │ Estado: 🟡 Validado                │ │ ┌──────────────────────────────┐ ││
-│ │ Prioridad: 🔴 Crítica (95/100)     │ │ │ Asignar a brigada            │ ││
+│ │ Prioridad: 🔴 Crítica (95/100)     │ │ │ Asignar                      │ ││
 │ │ Categoría: Socavón                 │ │ └──────────────────────────────┘ ││
 │ │                                    │ │                                  ││
 │ │ Reportado: 14 ene 2026, 08:30      │ │ ┌──────────────────────────────┐ ││
@@ -1473,9 +1016,8 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 │ │ Validado: 14 ene 2026, 09:00       │ │ ┌──────────────────────────────┐ ││
 │ │ Por: M. García (tú)                │ │ │ Rechazar reporte             │ ││
 │ │                                    │ │ └──────────────────────────────┘ ││
-│ │ Brigada: Norte                     │ │                                  ││
 │ │ Asignado: Carlos Martínez          │ │ ┌──────────────────────────────┐ ││
-│ │ Estado brigada: 🚗 En ruta         │ │ │ Exportar PDF                 │ ││
+│ │ Estado: 🚗 En ruta                 │ │ │ Exportar PDF                 │ ││
 │ │                                    │ │ └──────────────────────────────┘ ││
 │ └────────────────────────────────────┘ │                                  ││
 │                                        │ ┌──────────────────────────────┐ ││
@@ -1489,7 +1031,7 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 │ │ │ [Mapa con pin]                 │ │                                    │
 │ │ │                                │ │                                    │
 │ │ │ 📍 Ubicación del daño          │ │                                    │
-│ │ │ 👷 Brigada (a 1.2 km)          │ │                                    │
+│ │ │ 👷 Equipo asignado (1.2 km)    │ │                                    │
 │ │ │                                │ │                                    │
 │ │ │ [Abrir en Google Maps]         │ │                                    │
 │ │ └────────────────────────────────┘ │                                    │
@@ -1579,101 +1121,13 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 
 ---
 
-### 4.7 Wireframe 25: Asignar Brigada (Modal)
+### 3.8 Wireframe 26: Panel de Métricas y Analytics
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ [LOGO] SIRCCD                                    [🔔 5] [⚙️] [👤] M. García │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ [← Volver a lista]  Reporte #2026-001456                                   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│     ┌───────────────────────────────────────────────────────────────┐      │
-│     │ [X] Asignar brigada a reporte                                 │      │
-│     ├───────────────────────────────────────────────────────────────┤      │
-│     │                                                               │      │
-│     │ Reporte: #2026-001456 - Socavón en Av. Reforma               │      │
-│     │ Prioridad: 🔴 Crítica (95/100)                                │      │
-│     │ Ubicación: Av. Reforma #456, Zona Norte                       │      │
-│     │                                                               │      │
-│     │ ─────────────────────────────────────────────────────────────│      │
-│     │                                                               │      │
-│     │ Brigadas disponibles:                                         │      │
-│     │                                                               │      │
-│     │ ┌─────────────────────────────────────────────────────────┐  │      │
-│     │ │ ⚪ Brigada Norte                                         │  │      │
-│     │ │    📍 Base central (1.2 km del reporte)                 │  │      │
-│     │ │    👷 Carlos Martínez (Operador Nv.2) + 2 ayudantes     │  │      │
-│     │ │    📋 5 reportes asignados (2 críticos, 3 altos)        │  │      │
-│     │ │    🚚 Pickup #23 (Con rodillo)                          │  │      │
-│     │ │    ⏱️ Disponibilidad: En 2 horas (ETA ruta actual)      │  │      │
-│     │ │    ⭐ Tasa resolución: 93% (45/48 último mes)           │  │      │
-│     │ │                                                         │  │      │
-│     │ │    ✅ Recomendada (mejor match por ubicación y equipo)  │  │      │
-│     │ └─────────────────────────────────────────────────────────┘  │      │
-│     │                                                               │      │
-│     │ ┌─────────────────────────────────────────────────────────┐  │      │
-│     │ │ ⚪ Brigada Sur                                           │  │      │
-│     │ │    📍 Zona Sur (8.5 km del reporte)                     │  │      │
-│     │ │    👷 Ana López (Operador Nv.1) + 1 ayudante            │  │      │
-│     │ │    📋 3 reportes asignados (1 crítico, 2 medios)        │  │      │
-│     │ │    🚚 Van #12 (Sin rodillo)                             │  │      │
-│     │ │    ⏱️ Disponibilidad: En 4 horas                        │  │      │
-│     │ │    ⭐ Tasa resolución: 87% (32/37 último mes)           │  │      │
-│     │ └─────────────────────────────────────────────────────────┘  │      │
-│     │                                                               │      │
-│     │ ┌─────────────────────────────────────────────────────────┐  │      │
-│     │ │ ⚪ Brigada Centro                                        │  │      │
-│     │ │    📍 Base central (0 km - en base)                     │  │      │
-│     │ │    👷 Roberto Sánchez (Operador Nv.3) + 3 ayudantes     │  │      │
-│     │ │    📋 0 reportes asignados                              │  │      │
-│     │ │    🚚 Camión #45 (Con todo el equipo)                   │  │      │
-│     │ │    ⏱️ Disponibilidad: Inmediata                         │  │      │
-│     │ │    ⭐ Tasa resolución: 96% (52/54 último mes)           │  │      │
-│     │ └─────────────────────────────────────────────────────────┘  │      │
-│     │                                                               │      │
-│     │ ─────────────────────────────────────────────────────────────│      │
-│     │                                                               │      │
-│     │ Prioridad de asignación:                                      │      │
-│     │ ⚪ Normal (según disponibilidad)                              │      │
-│     │ ⚪ Urgente (notificar inmediatamente)                         │      │
-│     │                                                               │      │
-│     │ Instrucciones especiales (opcional):                          │      │
-│     │ ┌───────────────────────────────────────────────────────┐    │      │
-│     │ │ Coordinar con Tránsito para cierre parcial de vía...  │    │      │
-│     │ │                                              (0/500)  │    │      │
-│     │ └───────────────────────────────────────────────────────┘    │      │
-│     │                                                               │      │
-│     │ ┌─────────────────────────┐  ┌──────────────────────────┐    │      │
-│     │ │      Cancelar           │  │   Asignar brigada        │    │      │
-│     │ └─────────────────────────┘  └──────────────────────────┘    │      │
-│     │                                                               │      │
-│     └───────────────────────────────────────────────────────────────┘      │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-**Funcionalidades:**
-- Lista de brigadas con información detallada:
-  - Ubicación y distancia al reporte
-  - Capacidad y equipamiento
-  - Carga de trabajo actual
-  - Disponibilidad estimada
-  - Estadísticas de rendimiento
-- Recomendación automática (algoritmo de matching)
-- Prioridad de notificación
-- Campo de instrucciones especiales
-- Validación antes de asignar
-
----
-
-### 4.8 Wireframe 26: Panel de Métricas y Analytics
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ [LOGO] SIRCCD                                    [🔔 5] [⚙️] [👤] M. García │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ [Dashboard] [Mapa] [Reportes] [Brigadas] [Métricas] [Configuración]        │
+│ [Dashboard] [Mapa] [Reportes] [Métricas] [Configuración]        │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │ Métricas y Analytics                                                        │
@@ -1726,9 +1180,9 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 │ └────────────────────────────────────┘ └──────────────────────────────────┘│
 │                                                                             │
 │ ┌─────────────────────────────────────────────────────────────────────────┐│
-│ │ Rendimiento por brigada                                                 ││
+│ │ Rendimiento operativo                                                   ││
 │ │                                                                         ││
-│ │ Brigada      Asignados  Resueltos  En prog.  Tasa res.  Tiempo prom.   ││
+│ │ Equipo        Asignados  Resueltos  En prog.  Tasa res.  Tiempo prom.  ││
 │ │ ────────────────────────────────────────────────────────────────────── ││
 │ │ Norte            156        148         8       95%         2.8h       ││
 │ │ Sur              134        116        18       87%         3.5h       ││
@@ -1777,7 +1231,7 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 - KPIs con comparaciones temporales
 - Múltiples gráficas (líneas, dona, barras, mapa de calor)
 - Filtrado por período personalizado
-- Tabla de rendimiento por brigada
+- Tabla de rendimiento operativo
 - Mapa de calor geoespacial
 - Análisis de horarios pico
 - Métricas de satisfacción
@@ -1785,116 +1239,13 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 
 ---
 
-### 4.9 Wireframe 27: Gestión de Brigadas
+### 3.9 Wireframe 27: Configuración del Sistema
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ [LOGO] SIRCCD                                    [🔔 5] [⚙️] [👤] M. García │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ [Dashboard] [Mapa] [Reportes] [Brigadas] [Métricas] [Configuración]        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│ Gestión de Brigadas                                                         │
-│                                                                             │
-│ ┌─────────────────────────────────────────────────────────────────────────┐│
-│ │ [+ Nueva brigada]                          [Exportar listado]           ││
-│ └─────────────────────────────────────────────────────────────────────────┘│
-│                                                                             │
-│ ┌─────────────────────────────────────────────────────────────────────────┐│
-│ │ 🟢 Brigada Norte                                        [Editar] [...]  ││
-│ │                                                                         ││
-│ │ ┌────────────────────────────────────┐ ┌──────────────────────────────┐││
-│ │ │ Información general                │ │ Estado actual                ││
-│ │ │                                    │ │                              ││
-│ │ │ 👷 Líder: Carlos Martínez          │ │ 📍 En ruta                   ││
-│ │ │    Operador Nivel 2                │ │ 📋 5 reportes asignados      ││
-│ │ │    📞 555-1001                     │ │ 🔴 2 críticos                ││
-│ │ │    📧 cmartinez@municipio.gob.mx   │ │ 🟠 3 altos                   ││
-│ │ │                                    │ │                              ││
-│ │ │ 👷 Equipo (4 miembros):            │ │ ⏱️ Próxima disponibilidad:   ││
-│ │ │    • Juan Pérez (Ayudante)         │ │    En 2 horas                ││
-│ │ │    • Luis García (Ayudante)        │ │                              ││
-│ │ │    • Ana Torres (Técnico)          │ │ 🚚 Vehículo: Pickup #23      ││
-│ │ │                                    │ │    📍 Av. Reforma (1.2km)    ││
-│ │ └────────────────────────────────────┘ │                              ││
-│ │                                        │ [Ver en mapa]                ││
-│ │ ┌────────────────────────────────────┐ └──────────────────────────────┘││
-│ │ │ Equipamiento                       │                                ││
-│ │ │                                    │                                ││
-│ │ │ ✅ Rodillo compactador             │                                ││
-│ │ │ ✅ Mezcla asfáltica (2 ton)        │                                ││
-│ │ │ ✅ Herramientas manuales           │                                ││
-│ │ │ ✅ Señalización temporal           │                                ││
-│ │ │ ✅ EPP completo                    │                                ││
-│ │ │ ❌ Compresor neumático             │                                ││
-│ │ │                                    │                                ││
-│ │ │ [Actualizar inventario]            │                                ││
-│ │ └────────────────────────────────────┘                                ││
-│ │                                                                         ││
-│ │ ┌─────────────────────────────────────────────────────────────────┐    ││
-│ │ │ Estadísticas del mes                                            │    ││
-│ │ │                                                                 │    ││
-│ │ │ Reportes: 156 asignados • 148 resueltos • 8 en progreso        │    ││
-│ │ │ Tasa resolución: 95% • Tiempo promedio: 2.8h                   │    ││
-│ │ │ Calificación: 4.5 / 5.0 ⭐⭐⭐⭐⭐                                │    ││
-│ │ │                                                                 │    ││
-│ │ │ [Ver historial completo]                                        │    ││
-│ │ └─────────────────────────────────────────────────────────────────┘    ││
-│ └─────────────────────────────────────────────────────────────────────────┘│
-│                                                                             │
-│ ┌─────────────────────────────────────────────────────────────────────────┐│
-│ │ 🟢 Brigada Sur                                          [Editar] [...]  ││
-│ │                                                                         ││
-│ │ ┌────────────────────────────────────┐ ┌──────────────────────────────┐││
-│ │ │ 👷 Líder: Ana López                │ │ 📍 En sitio                  ││
-│ │ │    Operador Nivel 1                │ │ 📋 3 reportes asignados      ││
-│ │ │    📞 555-1002                     │ │ 🔴 1 crítico                 ││
-│ │ │                                    │ │ 🟡 2 medios                  ││
-│ │ │ 👷 Equipo (2 miembros)             │ │                              ││
-│ │ │                                    │ │ 🚚 Vehículo: Van #12         ││
-│ │ └────────────────────────────────────┘ └──────────────────────────────┘││
-│ │                                                                         ││
-│ │ Estadísticas: 134 asignados • 116 resueltos • Tasa: 87% • Cal: 4.2/5.0 ││
-│ └─────────────────────────────────────────────────────────────────────────┘│
-│                                                                             │
-│ ┌─────────────────────────────────────────────────────────────────────────┐│
-│ │ ⚫ Brigada Centro                                        [Editar] [...]  ││
-│ │                                                                         ││
-│ │ ┌────────────────────────────────────┐ ┌──────────────────────────────┐││
-│ │ │ 👷 Líder: Roberto Sánchez          │ │ 📍 En base                   ││
-│ │ │    Operador Nivel 3                │ │ 📋 0 reportes asignados      ││
-│ │ │    📞 555-1003                     │ │                              ││
-│ │ │                                    │ │ ⏱️ Disponible inmediatamente ││
-│ │ │ 👷 Equipo (5 miembros)             │ │                              ││
-│ │ │                                    │ │ 🚚 Vehículo: Camión #45      ││
-│ │ └────────────────────────────────────┘ └──────────────────────────────┘││
-│ │                                                                         ││
-│ │ Estadísticas: 189 asignados • 181 resueltos • Tasa: 96% • Cal: 4.7/5.0 ││
-│ └─────────────────────────────────────────────────────────────────────────┘│
-│                                                                             │
-│ [Ver todas las brigadas (8)]                                               │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-**Funcionalidades:**
-- Vista expandible/colapsable por brigada
-- Estado en tiempo real
-- Gestión de equipo y equipamiento
-- Métricas de rendimiento individuales
-- Ubicación en mapa
-- CRUD completo de brigadas
-- Exportación de listados
-
----
-
-### 4.10 Wireframe 28: Configuración del Sistema
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ [LOGO] SIRCCD                                    [🔔 5] [⚙️] [👤] M. García │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ [Dashboard] [Mapa] [Reportes] [Brigadas] [Métricas] [Configuración]        │
+│ [Dashboard] [Mapa] [Reportes] [Métricas] [Configuración]        │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │ Configuración del Sistema                                                   │
@@ -1996,13 +1347,13 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 
 ---
 
-### 4.11 Wireframe 29: Configuración - Categorías
+### 3.11 Wireframe 29: Configuración - Categorías
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ [LOGO] SIRCCD                                    [🔔 5] [⚙️] [👤] M. García │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ [Dashboard] [Mapa] [Reportes] [Brigadas] [Métricas] [Configuración]        │
+│ [Dashboard] [Mapa] [Reportes] [Métricas] [Configuración]        │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │ Configuración del Sistema                                                   │
@@ -2057,9 +1408,9 @@ Diseñar wireframes de baja y media fidelidad para las tres interfaces principal
 
 ---
 
-## 5. Especificaciones Técnicas
+## 4. Especificaciones Técnicas
 
-### 5.1 Responsive Design - Breakpoints
+### 4.1 Responsive Design - Breakpoints
 
 ```
 Mobile (Portrait):  320px - 479px
@@ -2076,7 +1427,7 @@ Large Desktop:      1920px+
 - **Tablet**: Navegación en tabs, grid 2 columnas, sidebars colapsables
 - **Desktop**: Navegación horizontal, grid 3-4 columnas, sidebars fijos
 
-### 5.2 Biblioteca de Componentes
+### 4.2 Biblioteca de Componentes
 
 #### Componentes base (reutilizables):
 
@@ -2087,7 +1438,7 @@ Large Desktop:      1920px+
 
 2. **Cards**
    - ReportCard (vista lista/grid)
-   - BrigadeCard (dashboard)
+   - WorkOrderCard (dashboard)
    - MetricCard (KPIs)
    - Sombras: elevation-1 (2px), elevation-2 (4px), elevation-3 (8px)
 
@@ -2126,9 +1477,9 @@ Large Desktop:      1920px+
    - Popup, InfoWindow
    - DrawingTools (para delimitación de zonas)
 
-### 5.3 Patrones de Navegación
+### 4.3 Patrones de Navegación
 
-#### App Ciudadano y Brigada:
+#### App Ciudadano y Operador:
 - **Bottom Navigation** (4-5 items principales)
 - **Swipe gestures** para cambiar entre tabs
 - **Pull to refresh** en listas
@@ -2142,7 +1493,7 @@ Large Desktop:      1920px+
 - **Command palette** (Cmd/Ctrl + K) para búsqueda rápida
 - **Keyboard shortcuts** para acciones comunes
 
-### 5.4 Comportamiento Offline
+### 4.4 Comportamiento Offline
 
 **App Ciudadano:**
 - Caché de reportes recientes (últimos 50)
@@ -2150,7 +1501,7 @@ Large Desktop:      1920px+
 - Sincronización automática al recuperar conexión
 - Indicador visual de estado de sincronización
 
-**App Brigada:**
+**App Operador:**
 - Caché de reportes asignados (todos)
 - Actualización de estado offline
 - Caché de mapas (áreas frecuentes)
@@ -2161,7 +1512,7 @@ Large Desktop:      1920px+
 - Caché de últimas 24h de datos
 - Indicador de "datos desactualizados"
 
-### 5.5 Accesibilidad (WCAG 2.1 AA)
+### 4.5 Accesibilidad (WCAG 2.1 AA)
 
 - **Contraste mínimo**: 4.5:1 para texto normal, 3:1 para texto grande
 - **Navegación por teclado**: Tab order lógico, focus visible
@@ -2171,7 +1522,7 @@ Large Desktop:      1920px+
 - **Zoom**: Soporta hasta 200% sin pérdida de funcionalidad
 - **Modo alto contraste**: Paleta alternativa
 
-### 5.6 Performance
+### 4.6 Performance
 
 **Métricas objetivo:**
 - **LCP** (Largest Contentful Paint): < 2.5s
@@ -2187,7 +1538,7 @@ Large Desktop:      1920px+
 - Memoización de componentes pesados
 - Service workers para caché
 
-### 5.7 Animaciones y Transiciones
+### 4.7 Animaciones y Transiciones
 
 ```css
 /* Velocidades estándar */
@@ -2219,7 +1570,7 @@ Large Desktop:      1920px+
 1. **Configuración inicial:**
    - Crear nuevo proyecto: "SIRCCD - Wireframes"
    - Configurar frames por plataforma:
-     - iPhone 14 Pro (430×932) para App Ciudadano/Brigada
+     - iPhone 14 Pro (430×932) para App Ciudadano/Operador
      - Desktop HD (1920×1080) para Dashboard Municipal
    - Configurar grid: 8px base unit
 
@@ -2238,7 +1589,7 @@ Large Desktop:      1920px+
    
    - **Components** (crear biblioteca reutilizable):
      - Buttons (con variantes: primary/secondary, sizes)
-     - Cards (ReportCard, BrigadeCard, MetricCard)
+     - Cards (ReportCard, WorkOrderCard, MetricCard)
      - Forms (Input, Select, Checkbox, etc.)
      - Navigation (TopBar, BottomNav, Tabs)
 
@@ -2369,14 +1720,13 @@ Large Desktop:      1920px+
 14. Lista de reportes
 15. Notificaciones
 
-**App Brigada (8 wireframes):**
+**App Operador (6 wireframes):**
 16. Login
 17. Dashboard
 18. Lista de reportes asignados
 19. Detalle de reporte
 20. Actualizar estado (marcar resuelto)
 21. Ruta del día optimizada
-22. Perfil brigada
 
 **Dashboard Municipal (10 wireframes):**
 23. Login
@@ -2384,11 +1734,9 @@ Large Desktop:      1920px+
 25. Vista de mapa
 26. Tabla de reportes
 27. Detalle de reporte (operador)
-28. Asignar brigada (modal)
-29. Panel de métricas/analytics
-30. Gestión de brigadas
-31. Configuración - Score
-32. Configuración - Categorías
+28. Panel de métricas/analytics
+29. Configuración - Score
+30. Configuración - Categorías
 
 **Total: 30+ wireframes completos**
 
@@ -2403,7 +1751,7 @@ Large Desktop:      1920px+
 2. **Fase de Desarrollo Frontend (6-8 semanas):**
    - Implementar design system (componentes base)
    - Desarrollo de App Ciudadano (React Native/Flutter)
-   - Desarrollo de App Brigada (React Native/Flutter)
+   - Desarrollo de App Operador (React Native/Flutter)
    - Desarrollo de Dashboard Municipal (React/Vue)
 
 3. **Fase de Integración (2-3 semanas):**
@@ -2420,7 +1768,7 @@ Large Desktop:      1920px+
 
 5. **Piloto y Lanzamiento (1-2 semanas):**
    - Despliegue en ambiente de staging
-   - Piloto con brigada seleccionada
+   - Piloto con equipo seleccionado
    - Ajustes finales
    - Lanzamiento a producción
 

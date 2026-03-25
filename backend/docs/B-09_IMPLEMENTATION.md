@@ -76,7 +76,6 @@ Authorization: Bearer {token}
 - `severity` (string): Severidad (`baja`, `media`, `alta`)
 - `city` (string): Ciudad (búsqueda parcial, case-insensitive)
 - `province` (string): Provincia
-- `brigade_id` (int): ID de brigada asignada
 - `date_from` (datetime): Fecha inicio (ISO 8601)
 - `date_to` (datetime): Fecha fin (ISO 8601)
 - `include_closed` (bool): Incluir cerrados (default: `false`)
@@ -116,8 +115,6 @@ Authorization: Bearer {token}
         "province": "Distrito Nacional",
         "latitude": 18.4861,
         "longitude": -69.9312,
-        "assigned_brigade_id": 3,
-        "assigned_brigade_name": "Brigada Centro",
         "reported_by_id": 15,
         "reported_by_name": "usuario123",
         "is_verified": false,
@@ -144,10 +141,6 @@ curl -X GET "http://localhost:8000/api/v1/export/incidents/geojson?include_close
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -o incidentes_activos.geojson
 
-# Exportar incidentes asignados a brigada específica
-curl -X GET "http://localhost:8000/api/v1/export/incidents/geojson?status=assigned&status=in_progress&brigade_id=3" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -o brigada_3_trabajos.geojson
 ```
 
 ---
@@ -179,8 +172,6 @@ Authorization: Bearer {token}
 | `address` | Dirección |
 | `city` | Ciudad |
 | `province` | Provincia |
-| `assigned_brigade_id` | ID de brigada |
-| `assigned_brigade_name` | Nombre de brigada |
 | `reported_by_name` | Usuario reportante |
 | `is_verified` | Verificado (bool) |
 | `verified_by_name` | Usuario verificador |
@@ -195,9 +186,9 @@ Authorization: Bearer {token}
 **Ejemplo de contenido**:
 
 ```csv
-id,report_id,status,priority,priority_score,damage_type,severity,latitude,longitude,address,city,province,assigned_brigade_id,assigned_brigade_name,reported_by_name,is_verified,verified_by_name,created_at,assigned_at,started_at,completed_at,verified_at,resolution_time_hours,estimated_repair_hours
-1,42,assigned,critica,85.5,bache,alta,18.4861,-69.9312,Av. Winston Churchill #1234,Santo Domingo,Distrito Nacional,3,Brigada Centro,usuario123,False,,2024-12-10T08:30:00,2024-12-10T09:00:00,,,,,4.0
-2,43,completed,alta,72.3,grieta,media,18.4705,-69.9380,Calle El Conde #567,Santo Domingo,Distrito Nacional,1,Brigada Este,ciudadano456,True,supervisor1,2024-12-09T14:20:00,2024-12-09T15:00:00,2024-12-09T16:00:00,2024-12-10T10:30:00,2024-12-10T11:00:00,19.17,6.0
+id,report_id,status,priority,priority_score,damage_type,severity,latitude,longitude,address,city,province,reported_by_name,is_verified,verified_by_name,created_at,assigned_at,started_at,completed_at,verified_at,resolution_time_hours,estimated_repair_hours
+1,42,assigned,critica,85.5,bache,alta,18.4861,-69.9312,Av. Winston Churchill #1234,Santo Domingo,Distrito Nacional,usuario123,False,,2024-12-10T08:30:00,2024-12-10T09:00:00,,,,,4.0
+2,43,completed,alta,72.3,grieta,media,18.4705,-69.9380,Calle El Conde #567,Santo Domingo,Distrito Nacional,ciudadano456,True,supervisor1,2024-12-09T14:20:00,2024-12-09T15:00:00,2024-12-09T16:00:00,2024-12-10T10:30:00,2024-12-10T11:00:00,19.17,6.0
 ```
 
 **Ejemplo de uso (curl)**:
@@ -350,7 +341,7 @@ class ExportService:
         # 1. Construir query con filtros
         # 2. Ejecutar query
         # 3. Extraer coordenadas con ST_X, ST_Y
-        # 4. Obtener datos relacionados (brigadas, usuarios)
+        # 4. Obtener datos relacionados (usuarios)
         # 5. Construir features GeoJSON
         # 6. Retornar FeatureCollection con metadata
     
@@ -398,7 +389,7 @@ class ExportService:
 
 **Optimizaciones**:
 - Query única por exportación (no N+1 queries)
-- Lazy loading de relaciones (brigades, users)
+- Lazy loading de relaciones (users)
 - String concatenation para CSV (sin archivos temporales)
 - Límite de 10,000 registros para evitar timeouts
 
@@ -466,7 +457,7 @@ L.geoJSON(geojson, {
 
 ### 2. Análisis en Excel (Power Query)
 
-**Objetivo**: Analizar tiempos de resolución por brigada
+**Objetivo**: Analizar tiempos de resolución
 
 **Pasos**:
 
@@ -484,7 +475,7 @@ L.geoJSON(geojson, {
    - Tipo de datos: Automático
 
 3. Análisis con Tabla Dinámica:
-   - **Filas**: `assigned_brigade_name`
+   - **Filas**: `city`
    - **Valores**: Promedio de `resolution_time_hours`
    - **Filtros**: `is_verified = True`
 
@@ -546,7 +537,7 @@ L.geoJSON(geojson, {
 4. Identificar hotspots:
    - Áreas rojas: alta concentración de incidentes prioritarios
    - Exportar polígonos de hotspots
-   - Sugerir asignación de recursos (brigadas) a esas zonas
+   - Sugerir asignación de recursos a esas zonas
 
 ---
 
@@ -561,7 +552,6 @@ L.geoJSON(geojson, {
 **Roles permitidos**:
 - `ADMIN`: Acceso completo a todas las exportaciones
 - `SUPERVISOR`: Acceso a exportaciones de su jurisdicción (ciudad/provincia)
-- `BRIGADA`: Acceso solo a incidentes asignados a su brigada
 - `CIUDADANO`: Sin acceso (endpoints no públicos)
 
 ### Validaciones
@@ -577,7 +567,6 @@ L.geoJSON(geojson, {
 3. **Validación de filtros**:
    - `date_to >= date_from`
    - Enums válidos (status, priority, damage_type, severity)
-   - `brigade_id > 0`
 
 ### Rate Limiting (futuro)
 

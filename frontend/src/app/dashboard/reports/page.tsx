@@ -36,6 +36,11 @@ interface ReportItem {
   severity: string;
   confidence: number;
   image_url: string;
+  annotated_image_url: string | null;
+  model_precision: number | null;
+  model_recall: number | null;
+  model_map50: number | null;
+  detections_json: string | null;
   status: string;
   description: string | null;
   created_at: string;
@@ -97,6 +102,7 @@ function ReportDetailModal({
   const [rejectionReason, setRejectionReason] = useState('');
   const [showReject, setShowReject] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imgTab, setImgTab] = useState<'original' | 'annotated'>('original');
   const { t } = useTranslation();
 
   const handleApprove = async () => {
@@ -134,6 +140,17 @@ function ReportDetailModal({
   const imgSrc = report.image_url.startsWith('http')
     ? report.image_url
     : `${mediaBase}${report.image_url}`;
+  const annotatedSrc = report.annotated_image_url
+    ? (report.annotated_image_url.startsWith('http')
+        ? report.annotated_image_url
+        : `${mediaBase}${report.annotated_image_url}`)
+    : null;
+
+  // Parse bounding boxes from detections_json for bbox count
+  let bboxCount = 0;
+  if (report.detections_json) {
+    try { bboxCount = JSON.parse(report.detections_json).num_detections ?? 0; } catch { /* */ }
+  }
 
   return (
     <div
@@ -158,12 +175,86 @@ function ReportDetailModal({
             </div>
           )}
 
-          {/* Image */}
-          <img
-            src={imgSrc}
-            alt={`Reporte ${report.id}`}
-            className="w-full rounded-lg object-cover max-h-72"
-          />
+          {/* Image panel with tabs */}
+          <div className="rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 bg-white">
+              <button
+                onClick={() => setImgTab('original')}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  imgTab === 'original'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Foto original
+              </button>
+              <button
+                onClick={() => setImgTab('annotated')}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  imgTab === 'annotated'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Detección ML
+                {bboxCount > 0 && (
+                  <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                    {bboxCount}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Image */}
+            {imgTab === 'original' ? (
+              <img
+                src={imgSrc}
+                alt={`Reporte ${report.id} - original`}
+                className="w-full object-contain max-h-96 bg-gray-50"
+              />
+            ) : annotatedSrc ? (
+              <img
+                src={annotatedSrc}
+                alt={`Reporte ${report.id} - detección`}
+                className="w-full object-contain max-h-96 bg-gray-50"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-48 text-gray-400 text-sm gap-2">
+                <span>Imagen anotada no disponible</span>
+                <span className="text-xs text-gray-400">(generada en reportes nuevos)</span>
+              </div>
+            )}
+          </div>
+
+          {/* ML Metrics */}
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Métricas del modelo</p>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="bg-white rounded-lg py-2 px-1 border border-gray-100">
+                <p className="text-base font-bold text-gray-900">{(report.confidence * 100).toFixed(0)}%</p>
+                <p className="text-xs text-gray-500 mt-0.5">Confianza</p>
+              </div>
+              <div className="bg-white rounded-lg py-2 px-1 border border-gray-100">
+                <p className="text-base font-bold text-blue-700">
+                  {report.model_precision != null ? (report.model_precision * 100).toFixed(1) + '%' : '—'}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">Precisión</p>
+              </div>
+              <div className="bg-white rounded-lg py-2 px-1 border border-gray-100">
+                <p className="text-base font-bold text-blue-700">
+                  {report.model_recall != null ? (report.model_recall * 100).toFixed(1) + '%' : '—'}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">Recall</p>
+              </div>
+              <div className="bg-white rounded-lg py-2 px-1 border border-gray-100">
+                <p className="text-base font-bold text-blue-700">
+                  {report.model_map50 != null ? (report.model_map50 * 100).toFixed(1) + '%' : '—'}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">mAP50</p>
+              </div>
+            </div>
+          </div>
 
           {/* Info grid */}
           <div className="grid grid-cols-2 gap-3 text-sm">
@@ -186,10 +277,6 @@ function ReportDetailModal({
             <div>
               <span className="text-gray-500">{t('reports.detail.damageType')}</span>
               <p className="font-medium text-gray-900 capitalize">{report.damage_type}</p>
-            </div>
-            <div>
-              <span className="text-gray-500">{t('reports.detail.mlConfidence')}</span>
-              <p className="font-medium text-gray-900">{(report.confidence * 100).toFixed(0)}%</p>
             </div>
             <div className="col-span-2">
               <span className="text-gray-500">{t('reports.detail.address')}</span>

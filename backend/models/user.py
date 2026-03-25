@@ -14,7 +14,6 @@ class UserRole(str, enum.Enum):
     """Roles de usuario"""
     ADMIN = "admin"
     CIUDADANO = "ciudadano"
-    BRIGADA = "brigada"
     SUPERVISOR = "supervisor"
 
 
@@ -51,7 +50,6 @@ class User(Base):
     # Relaciones
     reports = relationship("Report", back_populates="user", cascade="all, delete-orphan")
     incidents = relationship("Incident", back_populates="reported_by_user", foreign_keys="Incident.reported_by")
-    brigade_assignments = relationship("Brigade", back_populates="members", secondary="brigade_members")
     
     def __repr__(self):
         return f"<User {self.username} ({self.role})>"

@@ -5,7 +5,6 @@ Tests para:
 - Listado y filtrado de incidentes
 - Obtener detalle de incidente
 - Actualización de estado
-- Asignación de brigadas
 - Cálculo de prioridad
 - Estadísticas
 """
@@ -286,16 +285,16 @@ class TestUpdateIncidentStatus:
     def test_update_status_to_resolved(
         self,
         client: TestClient,
-        auth_headers_brigade: dict,
+        auth_headers_admin: dict,
         pending_incident: Incident
     ):
-        """Test: Brigada puede resolver incidente"""
+        """Test: Admin puede resolver incidente"""
         response = client.patch(
             f"/api/v1/incidents/{pending_incident.id}/status",
             json={"status": "resolved", "resolution_notes": "Bache reparado"},
-            headers=auth_headers_brigade
+            headers=auth_headers_admin
         )
-        
+
         # Debe ser exitoso o endpoint no implementado
         assert response.status_code in [
             status.HTTP_200_OK,
@@ -312,53 +311,6 @@ class TestUpdateIncidentStatus:
         response = client.patch(
             f"/api/v1/incidents/{pending_incident.id}/status",
             json={"status": "resolved"},
-            headers=auth_headers_citizen
-        )
-        
-        assert response.status_code in [
-            status.HTTP_403_FORBIDDEN,
-            status.HTTP_404_NOT_FOUND
-        ]
-
-
-# ==========================================
-# Tests de Asignación de Brigadas
-# ==========================================
-
-@pytest.mark.unit
-@pytest.mark.incidents
-class TestAssignBrigade:
-    """Tests de asignación de brigadas a incidentes"""
-    
-    def test_assign_brigade_to_incident_as_admin(
-        self,
-        client: TestClient,
-        auth_headers_admin: dict,
-        pending_incident: Incident
-    ):
-        """Test: Admin puede asignar brigada a incidente"""
-        response = client.post(
-            f"/api/v1/incidents/{pending_incident.id}/assign",
-            json={"brigade_id": 1},
-            headers=auth_headers_admin
-        )
-        
-        # Debe ser exitoso o endpoint no implementado
-        assert response.status_code in [
-            status.HTTP_200_OK,
-            status.HTTP_404_NOT_FOUND
-        ]
-    
-    def test_citizen_cannot_assign_brigade(
-        self,
-        client: TestClient,
-        auth_headers_citizen: dict,
-        pending_incident: Incident
-    ):
-        """Test: Ciudadano no puede asignar brigada"""
-        response = client.post(
-            f"/api/v1/incidents/{pending_incident.id}/assign",
-            json={"brigade_id": 1},
             headers=auth_headers_citizen
         )
         

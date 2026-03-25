@@ -192,34 +192,11 @@ async def require_supervisor(
     return current_user
 
 
-async def require_brigada(
-    current_user: Annotated[User, Depends(get_current_active_user)]
-) -> User:
-    """
-    Dependencia que requiere rol BRIGADA o superior (SUPERVISOR, ADMIN).
-    
-    Args:
-        current_user: Usuario autenticado
-        
-    Returns:
-        Usuario con rol BRIGADA, SUPERVISOR o ADMIN
-        
-    Raises:
-        HTTPException 403: Si el usuario no es brigada o superior
-    """
-    if current_user.role not in [UserRole.BRIGADA, UserRole.SUPERVISOR, UserRole.ADMIN]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Se requiere rol de brigada, supervisor o administrador"
-        )
-    return current_user
-
-
 # Tipos anotados para uso conveniente en endpoints
 
+DbSession = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 ActiveUser = Annotated[User, Depends(get_current_active_user)]
 VerifiedUser = Annotated[User, Depends(get_current_verified_user)]
 AdminUser = Annotated[User, Depends(require_admin)]
 SupervisorUser = Annotated[User, Depends(require_supervisor)]
-BrigadaUser = Annotated[User, Depends(require_brigada)]

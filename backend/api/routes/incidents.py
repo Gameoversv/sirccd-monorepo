@@ -6,7 +6,6 @@ Endpoints para:
 - Obtener detalle de incidente
 - Actualizar estado de incidente
 - Recalcular prioridad
-- Asignar brigada
 - Obtener estadísticas
 """
 
@@ -22,14 +21,12 @@ from db.session import get_db
 from api.deps import get_current_active_user
 from models.user import User
 from models.incident import Incident, IncidentStatus, PriorityLevel
-from models.brigade import Brigade
 from schemas.incident import (
     IncidentStatusEnum,
     PriorityLevelEnum,
     DamageTypeEnum,
     SeverityLevelEnum,
     UpdateIncidentStatusRequest,
-    AssignBrigadeRequest,
     RecalculatePriorityResponse,
     IncidentBriefResponse,
     IncidentDetailResponse,
@@ -49,7 +46,6 @@ def list_incidents(
     priority: Optional[List[PriorityLevelEnum]] = Query(None, description="Filtrar por prioridades"),
     damage_type: Optional[DamageTypeEnum] = Query(None, description="Filtrar por tipo de daño"),
     severity: Optional[SeverityLevelEnum] = Query(None, description="Filtrar por severidad"),
-    brigade_id: Optional[int] = Query(None, description="Filtrar por brigada asignada"),
     city: Optional[str] = Query(None, max_length=100, description="Filtrar por ciudad"),
     is_verified: Optional[bool] = Query(None, description="Filtrar por verificación"),
     
@@ -71,7 +67,6 @@ def list_incidents(
     - Prioridad (múltiples)
     - Tipo de daño
     - Severidad
-    - Brigada asignada
     - Ciudad
     - Estado de verificación
     
@@ -99,9 +94,6 @@ def list_incidents(
     if severity:
         from models.report import SeverityLevel
         filters.append(Incident.severity == SeverityLevel(severity.value))
-    
-    if brigade_id is not None:
-        filters.append(Incident.assigned_brigade_id == brigade_id)
     
     if city:
         filters.append(Incident.city.ilike(f"%{city}%"))
@@ -153,7 +145,6 @@ def list_incidents(
             "longitude": lon,
             "address": incident.address,
             "city": incident.city,
-            "assigned_brigade_id": incident.assigned_brigade_id,
             "created_at": incident.created_at,
             "updated_at": incident.updated_at
         }
@@ -208,8 +199,6 @@ def get_incident(
         "priority": incident.priority,
         "priority_score": incident.priority_score,
         "status": incident.status,
-        "assigned_brigade_id": incident.assigned_brigade_id,
-        "assigned_at": incident.assigned_at,
         "estimated_repair_hours": incident.estimated_repair_hours,
         "started_at": incident.started_at,
         "completed_at": incident.completed_at,
@@ -238,9 +227,8 @@ def update_incident_status(
     Actualiza el estado de un incidente con validación de transiciones
     
     Transiciones válidas:
-    - OPEN → ASSIGNED, CLOSED
-    - ASSIGNED → IN_PROGRESS, OPEN
-    - IN_PROGRESS → RESOLVED, ASSIGNED
+    - OPEN → IN_PROGRESS, CLOSED
+    - IN_PROGRESS → RESOLVED, OPEN
     - RESOLVED → VERIFIED, IN_PROGRESS
     - VERIFIED → CLOSED, RESOLVED
     - CLOSED → (estado final)
@@ -347,54 +335,6 @@ def recalculate_priority(
         )
 
 
-@router.post("/{incident_id}/assign-brigade", response_model=IncidentDetailResponse)
-def assign_brigade(
-    incident_id: int,
-    request: AssignBrigadeRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """
-    Asigna una brigada a un incidente y cambia su estado a ASSIGNED
-    
-    También permite especificar las horas estimadas de reparación
-    """
-    # Verificar que el incidente existe
-    incident = db.query(Incident).filter(Incident.id == incident_id).first()
-    if not incident:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Incidente {incident_id} no encontrado"
-        )
-    
-    # Verificar que la brigada existe
-    brigade = db.query(Brigade).filter(Brigade.id == request.brigade_id).first()
-    if not brigade:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Brigada {request.brigade_id} no encontrada"
-        )
-    
-    # Actualizar asignación
-    incident.assigned_brigade_id = request.brigade_id
-    incident.assigned_at = datetime.utcnow()
-    
-    if request.estimated_hours:
-        incident.estimated_repair_hours = request.estimated_hours
-    
-    # Cambiar estado a ASSIGNED (si está en OPEN)
-    if incident.status == IncidentStatus.OPEN:
-        incident.status = IncidentStatus.ASSIGNED
-    
-    incident.updated_at = datetime.utcnow()
-    
-    db.commit()
-    db.refresh(incident)
-    
-    # Retornar detalle actualizado
-    return get_incident(incident_id, db, current_user)
-
-
 @router.get("/stats/overview", response_model=IncidentStatsResponse)
 def get_incident_stats(
     db: Session = Depends(get_db),
@@ -467,7 +407,6 @@ def get_incident_stats(
     # Activos vs Resueltos
     active_count = (
         by_status.get("open", 0) +
-        by_status.get("assigned", 0) +
         by_status.get("in_progress", 0)
     )
     resolved_count = (
@@ -476,24 +415,8 @@ def get_incident_stats(
         by_status.get("closed", 0)
     )
     
-    # TTR: tiempo promedio desde created_at hasta assigned_at
-    assigned_incidents = db.query(Incident).filter(
-        and_(
-            Incident.assigned_at.isnot(None),
-            Incident.created_at.isnot(None)
-        )
-    ).all()
-    
-    if assigned_incidents:
-        ttr_hours_list = [
-            (inc.assigned_at - inc.created_at).total_seconds() / 3600
-            for inc in assigned_incidents
-            if inc.assigned_at >= inc.created_at
-        ]
-        avg_ttr_hours = round(sum(ttr_hours_list) / len(ttr_hours_list), 2) if ttr_hours_list else None
-    else:
-        avg_ttr_hours = None
-    
+    avg_ttr_hours = None
+
     # SLA compliance: % de incidentes completados dentro de 48 horas
     SLA_HOURS = 48
     completed_for_sla = db.query(Incident).filter(
@@ -526,3 +449,78 @@ def get_incident_stats(
         avg_ttr_hours=avg_ttr_hours,
         sla_compliance_pct=sla_compliance_pct
     )
+
+
+# ============================================
+# Heatmap — P-01
+# ============================================
+
+SEVERITY_WEIGHT = {"baja": 0.3, "media": 0.6, "alta": 1.0}
+
+@router.get("/heatmap")
+def get_heatmap_data(
+    weight_by: str = Query(
+        "frequency",
+        regex="^(frequency|severity|age)$",
+        description="Criterio de peso: frequency, severity o age",
+    ),
+    status: Optional[List[IncidentStatusEnum]] = Query(None),
+    damage_type: Optional[DamageTypeEnum] = Query(None),
+    severity: Optional[SeverityLevelEnum] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Devuelve puntos [lat, lng, intensity] para la capa de calor.
+
+    weight_by:
+      - frequency: todas las intensidades iguales (1.0)
+      - severity:  baja=0.3, media=0.6, alta=1.0
+      - age:       más antiguo → más intenso (normalizado 0.2-1.0)
+    """
+    query = db.query(Incident)
+
+    filters_list = []
+    if status:
+        status_values = [IncidentStatus(s.value) for s in status]
+        filters_list.append(Incident.status.in_(status_values))
+    if damage_type:
+        from models.report import DamageType
+        filters_list.append(Incident.damage_type == DamageType(damage_type.value))
+    if severity:
+        from models.report import SeverityLevel as SL
+        filters_list.append(Incident.severity == SL(severity.value))
+    if filters_list:
+        query = query.filter(and_(*filters_list))
+
+    incidents = query.all()
+
+    if not incidents:
+        return {"points": [], "weight_by": weight_by, "count": 0}
+
+    now = datetime.utcnow()
+
+    # Pre-compute age range for normalisation
+    if weight_by == "age":
+        ages = [(now - inc.created_at).total_seconds() for inc in incidents]
+        max_age = max(ages) if ages else 1
+        max_age = max_age if max_age > 0 else 1
+
+    points = []
+    for idx, inc in enumerate(incidents):
+        lat = db.scalar(ST_Y(inc.location))
+        lon = db.scalar(ST_X(inc.location))
+        if lat is None or lon is None:
+            continue
+
+        if weight_by == "severity":
+            intensity = SEVERITY_WEIGHT.get(inc.severity.value if hasattr(inc.severity, 'value') else inc.severity, 0.5)
+        elif weight_by == "age":
+            age_secs = (now - inc.created_at).total_seconds()
+            intensity = 0.2 + 0.8 * (age_secs / max_age)
+        else:
+            intensity = 1.0
+
+        points.append([round(lat, 6), round(lon, 6), round(intensity, 3)])
+
+    return {"points": points, "weight_by": weight_by, "count": len(points)}

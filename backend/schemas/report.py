@@ -4,7 +4,8 @@ Schemas Pydantic para Reportes
 
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, Field, field_validator, ConfigDict, model_validator
+import json as _json
 from enum import Enum
 
 
@@ -149,6 +150,12 @@ class ReportResponse(BaseModel):
     
     # Detecciones (bounding boxes)
     detections_json: Optional[str] = Field(None, description="JSON con las detecciones")
+
+    # Campos derivados de detections_json (calculados por validador)
+    annotated_image_url: Optional[str] = Field(None, description="URL imagen con bounding boxes")
+    model_precision: Optional[float] = Field(None, description="Precisión del modelo en validación")
+    model_recall: Optional[float] = Field(None, description="Recall del modelo en validación")
+    model_map50: Optional[float] = Field(None, description="mAP50 del modelo en validación")
     
     # Estado
     status: ReportStatusEnum = Field(..., description="Estado actual del reporte")
@@ -159,6 +166,23 @@ class ReportResponse(BaseModel):
     created_at: datetime = Field(..., description="Fecha de creación")
     updated_at: datetime = Field(..., description="Última actualización")
     reviewed_at: Optional[datetime] = Field(None, description="Fecha de revisión")
+
+    @model_validator(mode='after')
+    def _extract_detection_fields(self):
+        if self.detections_json:
+            try:
+                det = _json.loads(self.detections_json)
+                if self.annotated_image_url is None:
+                    self.annotated_image_url = det.get('annotated_image_url')
+                if self.model_precision is None:
+                    self.model_precision = det.get('model_precision')
+                if self.model_recall is None:
+                    self.model_recall = det.get('model_recall')
+                if self.model_map50 is None:
+                    self.model_map50 = det.get('model_map50')
+            except Exception:
+                pass
+        return self
     
     model_config = ConfigDict(from_attributes=True)
 

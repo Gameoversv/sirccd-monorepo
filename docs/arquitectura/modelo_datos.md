@@ -9,7 +9,6 @@ El modelo soporta:
 - Reportes ciudadanos con geolocalización
 - Deduplicación de reportes
 - Agrupación en incidentes
-- Gestión operativa de brigadas
 - Órdenes de trabajo con evidencia antes/después
 - Métricas y eventos del sistema
 
@@ -30,13 +29,7 @@ erDiagram
   REPORT ||--o{ REPORT_DEDUP : "candidato"
 
   MUNICIPALITY ||--o{ INCIDENT : "contiene"
-  MUNICIPALITY ||--o{ BRIGADE : "opera_en"
-
-  BRIGADE ||--o{ BRIGADE_MEMBER : "incluye"
-  USER_ACCOUNT ||--o{ BRIGADE_MEMBER : "pertenece"
-
   INCIDENT ||--o{ WORK_ORDER : "genera"
-  BRIGADE ||--o{ WORK_ORDER : "atiende"
   WORK_ORDER ||--o{ WORK_ORDER_IMAGE : "evidencia_after"
 
   USER_ACCOUNT ||--o{ METRIC_EVENT : "actor"
@@ -58,22 +51,6 @@ erDiagram
     text name
     text code
     timestamptz created_at
-  }
-
-  BRIGADE {
-    uuid id PK
-    uuid municipality_id FK
-    text name
-    text status
-    geography base_location
-    timestamptz created_at
-  }
-
-  BRIGADE_MEMBER {
-    uuid brigade_id FK
-    uuid user_id FK
-    text member_role
-    timestamptz joined_at
   }
 
   INCIDENT {
@@ -133,7 +110,6 @@ erDiagram
   WORK_ORDER {
     uuid id PK
     uuid incident_id FK
-    uuid brigade_id FK
     uuid assigned_by_user_id FK
     work_order_status status
     timestamptz assigned_at
@@ -189,7 +165,7 @@ Gestiona cuentas de usuario del sistema.
 | `email` | TEXT | Email único (índice) |
 | `display_name` | TEXT | Nombre para mostrar |
 | `phone` | TEXT | Teléfono opcional |
-| `role` | ENUM | `ciudadano`, `brigada`, `administrador`, `supervisor` |
+| `role` | ENUM | `ciudadano`, `administrador`, `supervisor` |
 | `is_active` | BOOLEAN | Estado de la cuenta |
 | `created_at` | TIMESTAMPTZ | Fecha de registro |
 
@@ -214,40 +190,7 @@ Entidades municipales que operan el sistema.
 
 ---
 
-### 3. BRIGADE (Brigadas)
-
-Equipos de trabajo municipal para reparaciones.
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | UUID | PK |
-| `municipality_id` | UUID | FK → MUNICIPALITY |
-| `name` | TEXT | Nombre de la brigada |
-| `status` | TEXT | `disponible`, `ocupada`, `inactiva` |
-| `base_location` | GEOGRAPHY(POINT) | 🌍 Ubicación base (PostGIS) |
-| `created_at` | TIMESTAMPTZ | Fecha de creación |
-
-**Índice espacial:**
-- `idx_brigade_location` GIST en `base_location`
-
----
-
-### 4. BRIGADE_MEMBER (Miembros de Brigada)
-
-Tabla asociativa entre usuarios y brigadas.
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `brigade_id` | UUID | FK → BRIGADE (PK compuesta) |
-| `user_id` | UUID | FK → USER_ACCOUNT (PK compuesta) |
-| `member_role` | TEXT | `jefe`, `operario`, `supervisor` |
-| `joined_at` | TIMESTAMPTZ | Fecha de incorporación |
-
-**PK compuesta:** (`brigade_id`, `user_id`)
-
----
-
-### 5. REPORT (Reportes)
+### 3. REPORT (Reportes)
 
 Reportes ciudadanos de daños viales.
 
@@ -281,7 +224,7 @@ Reportes ciudadanos de daños viales.
 
 ---
 
-### 6. REPORT_IMAGE (Imágenes de Reportes)
+### 4. REPORT_IMAGE (Imágenes de Reportes)
 
 Almacena imágenes asociadas a reportes (antes/durante).
 
@@ -304,7 +247,7 @@ Almacena imágenes asociadas a reportes (antes/durante).
 
 ---
 
-### 7. REPORT_DEDUP (Deduplicación)
+### 5. REPORT_DEDUP (Deduplicación)
 
 Registra análisis de deduplicación entre reportes.
 
@@ -326,7 +269,7 @@ Registra análisis de deduplicación entre reportes.
 
 ---
 
-### 8. INCIDENT (Incidentes)
+### 6. INCIDENT (Incidentes)
 
 Agrupación de reportes validados que representan un mismo daño.
 
@@ -350,15 +293,14 @@ Agrupación de reportes validados que representan un mismo daño.
 
 ---
 
-### 9. WORK_ORDER (Órdenes de Trabajo)
+### 7. WORK_ORDER (Órdenes de Trabajo)
 
-Asignaciones operativas a brigadas.
+Asignaciones operativas de trabajo.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | `id` | UUID | PK |
 | `incident_id` | UUID | FK → INCIDENT |
-| `brigade_id` | UUID | FK → BRIGADE |
 | `assigned_by_user_id` | UUID | FK → USER_ACCOUNT |
 | `status` | ENUM | `asignada`, `iniciada`, `completada`, `cancelada` |
 | `assigned_at` | TIMESTAMPTZ | Fecha de asignación |
@@ -367,13 +309,12 @@ Asignaciones operativas a brigadas.
 | `notes` | TEXT | Observaciones |
 
 **Índices:**
-- `idx_workorder_brigade` en `brigade_id`
 - `idx_workorder_incident` en `incident_id`
 - `idx_workorder_status` en `status`
 
 ---
 
-### 10. WORK_ORDER_IMAGE (Evidencia de Resolución)
+### 8. WORK_ORDER_IMAGE (Evidencia de Resolución)
 
 Imágenes "después" de completar reparaciones.
 
@@ -389,7 +330,7 @@ Imágenes "después" de completar reparaciones.
 
 ---
 
-### 11. METRIC_EVENT (Eventos del Sistema)
+### 9. METRIC_EVENT (Eventos del Sistema)
 
 Log de eventos para auditoría y métricas.
 
@@ -409,7 +350,7 @@ Log de eventos para auditoría y métricas.
 
 ---
 
-### 12. DAILY_METRICS (Métricas Agregadas)
+### 10. DAILY_METRICS (Métricas Agregadas)
 
 Resumen diario de KPIs por municipio.
 
@@ -441,7 +382,7 @@ CREATE EXTENSION IF NOT EXISTS postgis_topology;
 
 | Tipo | Uso | Ejemplo |
 |------|-----|---------|
-| `GEOGRAPHY(POINT, 4326)` | Ubicaciones GPS (lat/lng) | Reportes, incidentes, brigadas |
+| `GEOGRAPHY(POINT, 4326)` | Ubicaciones GPS (lat/lng) | Reportes, incidentes |
 | `GEOGRAPHY(POLYGON, 4326)` | Zonas municipales | Límites administrativos |
 
 **SRID 4326:** Sistema de coordenadas WGS84 (estándar GPS)
@@ -451,7 +392,6 @@ CREATE EXTENSION IF NOT EXISTS postgis_topology;
 ```sql
 CREATE INDEX idx_report_location ON report USING GIST(location);
 CREATE INDEX idx_incident_location ON incident USING GIST(location);
-CREATE INDEX idx_brigade_location ON brigade USING GIST(base_location);
 ```
 
 ### Consultas Espaciales Comunes
@@ -471,16 +411,6 @@ FROM incident i
 JOIN report r ON r.incident_id = i.id
 WHERE ST_DWithin(i.location, ST_MakePoint(-89.218191, 13.692940)::geography, 500)
 GROUP BY i.id;
-```
-
-**Brigada más cercana a incidente:**
-```sql
-SELECT b.id, b.name, ST_Distance(b.base_location, i.location) AS distance_m
-FROM brigade b
-CROSS JOIN incident i
-WHERE i.id = $1 AND b.status = 'disponible'
-ORDER BY distance_m
-LIMIT 1;
 ```
 
 ---
@@ -565,8 +495,6 @@ ALTER TABLE work_order
 ADD CONSTRAINT fk_workorder_incident 
 FOREIGN KEY (incident_id) REFERENCES incident(id) ON DELETE RESTRICT;
 
--- Brigadas activas no pueden eliminarse si tienen work orders pendientes
--- (manejado a nivel aplicación)
 ```
 
 ### Cascadas
@@ -602,14 +530,13 @@ SELECT
   AVG(r.priority_score) AS avg_priority,
   MIN(r.created_at) AS first_report_at,
   MAX(r.created_at) AS last_report_at,
-  wo.brigade_id,
   wo.assigned_at,
   wo.completed_at,
   EXTRACT(EPOCH FROM (wo.completed_at - wo.assigned_at))/3600 AS resolution_hours
 FROM incident i
 LEFT JOIN report r ON r.incident_id = i.id
 LEFT JOIN work_order wo ON wo.incident_id = i.id
-GROUP BY i.id, wo.brigade_id, wo.assigned_at, wo.completed_at;
+GROUP BY i.id, wo.assigned_at, wo.completed_at;
 
 CREATE INDEX idx_mv_incident_stats_type ON mv_incident_stats(incident_type);
 CREATE INDEX idx_mv_incident_stats_status ON mv_incident_stats(status);
@@ -661,10 +588,6 @@ INSERT INTO user_account (id, email, display_name, role, is_active) VALUES
   (gen_random_uuid(), 'admin@sirccd.gob.sv', 'Admin Municipal', 'administrador', true),
   (gen_random_uuid(), 'ciudadano@example.com', 'Juan Pérez', 'ciudadano', true);
 
--- Insertar brigada
-INSERT INTO brigade (id, municipality_id, name, status, base_location) VALUES
-  (gen_random_uuid(), (SELECT id FROM municipality LIMIT 1), 'Brigada Norte 1', 'disponible', 
-   ST_MakePoint(-89.218191, 13.692940)::geography);
 ```
 
 ---

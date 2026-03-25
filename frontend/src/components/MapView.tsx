@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Icon, LatLngExpression } from 'leaflet';
 import { incidentsService } from '@/services';
 import type { IncidentFilters } from '@/types';
-import { Loader2, MapPin, AlertTriangle, Clock } from 'lucide-react';
+import { Loader2, MapPin, AlertTriangle, Clock, Flame, Layers } from 'lucide-react';
+import { HeatmapLayer } from './HeatmapLayer';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in React-Leaflet
@@ -111,6 +112,12 @@ export function MapView({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Heatmap state (P-01)
+  const [heatmapVisible, setHeatmapVisible] = useState(false);
+  const [heatmapPoints, setHeatmapPoints] = useState<[number, number, number][]>([]);
+  const [heatmapWeight, setHeatmapWeight] = useState<'frequency' | 'severity' | 'age'>('frequency');
+  const [heatmapLoading, setHeatmapLoading] = useState(false);
+
   // Build API-level filters (severity, status, dates)
   const apiFilters: IncidentFilters = useMemo(() => {
     const f: IncidentFilters = {};
@@ -143,6 +150,28 @@ export function MapView({
   useEffect(() => {
     onIncidentsLoaded?.(incidents);
   }, [incidents, onIncidentsLoaded]);
+
+  // Fetch heatmap data when toggled on or weight changes (P-01)
+  const loadHeatmap = useCallback(async () => {
+    if (!heatmapVisible) return;
+    try {
+      setHeatmapLoading(true);
+      const svcFilters: { status?: string; damage_type?: string; severity?: string } = {};
+      if (filters.status) svcFilters.status = filters.status;
+      if (filters.damage_class) svcFilters.damage_type = filters.damage_class;
+      if (filters.severity) svcFilters.severity = filters.severity;
+      const data = await incidentsService.getHeatmapData(heatmapWeight, svcFilters);
+      setHeatmapPoints(data.points);
+    } catch {
+      console.error('Error loading heatmap data');
+    } finally {
+      setHeatmapLoading(false);
+    }
+  }, [heatmapVisible, heatmapWeight, filters.status, filters.damage_class, filters.severity]);
+
+  useEffect(() => {
+    loadHeatmap();
+  }, [loadHeatmap]);
 
   const loadIncidents = async () => {
     try {
@@ -230,6 +259,9 @@ export function MapView({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        {/* Heatmap overlay (P-01) */}
+        <HeatmapLayer points={heatmapPoints} visible={heatmapVisible} />
         
         {incidents.map((incident) => {
           const position: LatLngExpression = [incident.latitude, incident.longitude];
@@ -341,6 +373,41 @@ export function MapView({
           );
         })}
       </MapContainer>
+
+      {/* Heatmap controls (P-01) */}
+      <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-3 z-[1000] space-y-2">
+        <button
+          onClick={() => setHeatmapVisible((v) => !v)}
+          className={`flex items-center gap-2 w-full px-3 py-2 text-xs font-medium rounded transition-colors ${
+            heatmapVisible
+              ? 'bg-orange-100 text-orange-700 border border-orange-300'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
+          }`}
+        >
+          <Flame className="w-4 h-4" />
+          {heatmapLoading ? 'Cargando…' : heatmapVisible ? 'Ocultar mapa de calor' : 'Mapa de calor'}
+        </button>
+
+        {heatmapVisible && (
+          <div className="space-y-1">
+            <label className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+              Ponderar por
+            </label>
+            <select
+              value={heatmapWeight}
+              onChange={(e) => setHeatmapWeight(e.target.value as 'frequency' | 'severity' | 'age')}
+              className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400"
+            >
+              <option value="frequency">Frecuencia</option>
+              <option value="severity">Severidad</option>
+              <option value="age">Antigüedad</option>
+            </select>
+            <p className="text-[10px] text-gray-400">
+              {heatmapPoints.length} puntos
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Map legend */}
       <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-lg p-3 z-[1000]">
