@@ -90,7 +90,7 @@ export const incidentsService = {
   /**
    * Recalculate priority score for an incident
    */
-  async recalculatePriority(id: number): Promise<{ incident_id: number; new_priority: string; new_score: number }> {
+  async recalculatePriority(id: number): Promise<{ incident_id: number; new_priority: string; new_score: number; factors?: Record<string, unknown> }> {
     const response = await apiClient.post(`/incidents/${id}/recalculate-priority`);
     return response.data;
   },

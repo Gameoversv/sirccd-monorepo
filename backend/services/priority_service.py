@@ -106,7 +106,26 @@ class PriorityService:
         priority_level = self._score_to_priority_level(score)
         
         return round(score, 2), priority_level
-    
+
+    def calculate_priority_breakdown(self, incident: Incident) -> dict:
+        """Retorna desglose detallado del score de prioridad"""
+        nearby_pois_count = self._count_nearby_pois(incident)
+        nearby_duplicates_count = self._count_nearby_duplicates(incident)
+
+        severity_score = self.SEVERITY_SCORES.get(incident.severity, 50)
+        age_score = self._calculate_age_score(incident.created_at)
+        damage_score = self.DAMAGE_TYPE_SCORES.get(incident.damage_type, 50)
+        location_score = self._calculate_location_score(nearby_pois_count)
+        duplicate_score = self._calculate_duplicate_score(nearby_duplicates_count)
+
+        return {
+            "severity":   {"score": round(severity_score * self.WEIGHT_SEVERITY, 2),   "raw": severity_score,   "weight": self.WEIGHT_SEVERITY,   "detail": str(incident.severity)},
+            "age":        {"score": round(age_score * self.WEIGHT_AGE, 2),              "raw": age_score,        "weight": self.WEIGHT_AGE,        "detail": f"{nearby_pois_count} POIs cercanos" if False else "antigüedad"},
+            "damage":     {"score": round(damage_score * self.WEIGHT_DAMAGE_TYPE, 2),   "raw": damage_score,     "weight": self.WEIGHT_DAMAGE_TYPE, "detail": str(incident.damage_type)},
+            "location":   {"score": round(location_score * self.WEIGHT_LOCATION, 2),   "raw": location_score,   "weight": self.WEIGHT_LOCATION,   "detail": f"{nearby_pois_count} POIs en 500m"},
+            "duplicates": {"score": round(duplicate_score * self.WEIGHT_DUPLICATES, 2), "raw": duplicate_score, "weight": self.WEIGHT_DUPLICATES,  "detail": f"{nearby_duplicates_count} reportes similares"},
+        }
+
     def recalculate_priority(self, incident_id: int) -> Incident:
         """
         Recalcula y actualiza la prioridad de un incidente

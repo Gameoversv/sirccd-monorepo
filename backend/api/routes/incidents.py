@@ -34,6 +34,13 @@ from schemas.incident import (
     IncidentStatsResponse
 )
 from services.priority_service import get_priority_service
+from core.config import settings
+
+
+def _public_url(url: str | None) -> str | None:
+    if url and "minio:9000" in url:
+        return url.replace("minio:9000", "localhost:9000")
+    return url
 
 
 router = APIRouter()
@@ -206,8 +213,8 @@ def get_incident(
         "is_verified": incident.is_verified,
         "verified_by": incident.verified_by,
         "verification_notes": incident.verification_notes,
-        "before_image_url": incident.before_image_url,
-        "after_image_url": incident.after_image_url,
+        "before_image_url": _public_url(incident.before_image_url),
+        "after_image_url": _public_url(incident.after_image_url),
         "notes": incident.notes,
         "created_at": incident.created_at,
         "updated_at": incident.updated_at
@@ -302,16 +309,7 @@ def recalculate_priority(
         # Determinar si hubo cambio
         changed = (old_priority != new_priority) or (old_score != new_score)
         
-        # Información de factores (para transparencia)
-        factors = {
-            "severity_weight": priority_service.WEIGHT_SEVERITY,
-            "age_weight": priority_service.WEIGHT_AGE,
-            "damage_type_weight": priority_service.WEIGHT_DAMAGE_TYPE,
-            "location_weight": priority_service.WEIGHT_LOCATION,
-            "duplicates_weight": priority_service.WEIGHT_DUPLICATES,
-            "severity_score": priority_service.SEVERITY_SCORES.get(incident.severity, 50),
-            "damage_type_score": priority_service.DAMAGE_TYPE_SCORES.get(incident.damage_type, 50),
-        }
+        factors = priority_service.calculate_priority_breakdown(updated_incident)
         
         return RecalculatePriorityResponse(
             incident_id=incident_id,

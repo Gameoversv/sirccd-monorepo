@@ -1,0 +1,404 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68812199999999,
+          19.438453
+        ]
+      },
+      "properties": {
+        "name": "Bomberos Tropigas",
+        "address": "C8Q6+9QJ, Calle Penetración, Santiago de los Caballeros",
+        "place_id": "ChIJm3DDHKLPsY4R0cXqC_qG6nk",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6980994,
+          19.4374316
+        ]
+      },
+      "properties": {
+        "name": "Estacion de Bomberos Coronel Fausto Guzman",
+        "address": "C8P2+XQC, Santiago de los Caballeros",
+        "place_id": "ChIJ23IaMUHPsY4RQlpgImLJVrA",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7046732,
+          19.4554454
+        ]
+      },
+      "properties": {
+        "name": "Estacion de Bomberos 30 de Marzo",
+        "address": "F74W+54G, Avenida 27 de Febrero, Santiago de los Caballeros",
+        "place_id": "ChIJ__-_KFjPsY4RVxs1lhlIPGM",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7046908,
+          19.4555752
+        ]
+      },
+      "properties": {
+        "name": "Cuerpo de Bomberos Municipal de Santiago",
+        "address": "Avenida 27 de Febrero &, Santiago de los Caballeros",
+        "place_id": "ChIJJ6D8KFjPsY4RVLYDdplgfzo",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.66520919999999,
+          19.4670125
+        ]
+      },
+      "properties": {
+        "name": "Cuartel de bomberos",
+        "address": "Avenida 27 de Febrero 219, Santiago de los Caballeros",
+        "place_id": "ChIJGd3KRn3FsY4Rvl6FJr-F1XY",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6582655,
+          19.4856566
+        ]
+      },
+      "properties": {
+        "name": "Estación De Bomberos Gurabo",
+        "address": "F8PR+7M9, Santiago de los Caballeros",
+        "place_id": "ChIJ_8Un7w_FsY4RQRCcnQxFVvE",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6577444,
+          19.4089275
+        ]
+      },
+      "properties": {
+        "name": "Estación de bomberos carribean industrial park",
+        "address": "CARIBBEAN INDUSTRIAL PARK, AVE HISPANOAMERICANA, BUILDING B, 5, Santiago de los Caballeros",
+        "place_id": "ChIJLyj5vP3PsY4RnbAymCbV3LQ",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.73260309999999,
+          19.4760343
+        ]
+      },
+      "properties": {
+        "name": "Subestación de bomberos Zona Franca",
+        "address": "F7G8+9XJ, Santiago de los Caballeros",
+        "place_id": "ChIJ-fej9EXHsY4RLLw-wUUpER4",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7510819,
+          19.4812387
+        ]
+      },
+      "properties": {
+        "name": "Cuerpo de Bomberos Agustín Tavarez",
+        "address": "F6JX+FHV, Santiago de los Caballeros",
+        "place_id": "ChIJOWay6jnGsY4RNbiT7nUJKGs",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6383124,
+          19.3902644
+        ]
+      },
+      "properties": {
+        "name": "Bomberos De Puñal",
+        "address": "99R6+4M4, Santiago de los Caballeros",
+        "place_id": "ChIJt-87dQzPsY4RBKX5CqEtB2A",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6114557,
+          19.4832309
+        ]
+      },
+      "properties": {
+        "name": "Cuerpo de Bomberos Tamboril",
+        "address": "F9MQ+7CV, Calle Salvador Estrella Sadhalá, Tamboril",
+        "place_id": "ChIJnwEFQdDasY4R-t7Dj_Ddbig",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.77164929999999,
+          19.4515059
+        ]
+      },
+      "properties": {
+        "name": "Cuerpo de Bomberos de Hato Del Yaque",
+        "address": "F62H+J85, Hato del Yaque",
+        "place_id": "ChIJe5N0kmTIsY4R1b_JeYeyQDo",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.59690499999999,
+          19.4291404
+        ]
+      },
+      "properties": {
+        "name": "Cuerpo De Bomberos Licey Al Medio",
+        "address": "Licey Dominican Republic",
+        "place_id": "ChIJK7i0pWzQsY4RjYNns5qpVFk",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.760367,
+          19.5086069
+        ]
+      },
+      "properties": {
+        "name": "Cuerpo de Bomberos zona franca pisano (privado)",
+        "address": "G65Q+CVR",
+        "place_id": "ChIJ38XTZDXHsY4RFeNP1bWJJJw",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7409931,
+          19.539488
+        ]
+      },
+      "properties": {
+        "name": "Cuerpo de Bomberos Palmar Arriba (villa Gonzales)",
+        "address": "G7Q5+QJR, Palmar Arriba",
+        "place_id": "ChIJK3zYiMfGsY4RP7AJftorKVM",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.8151573,
+          19.472602
+        ]
+      },
+      "properties": {
+        "name": "Estacion De Bomberos Eduardo L. Jimenez",
+        "address": "Estacion De Bomberos, La Canela",
+        "place_id": "ChIJw-SEAAG4sY4Rfgt0tR3jFVM",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.8151871,
+          19.4726229
+        ]
+      },
+      "properties": {
+        "name": "Cuerpo de Bomberos La Canela (Santiago)",
+        "address": "Estacion De Bomberos, La Canela",
+        "place_id": "ChIJsaCdAAG4sY4ReqylJRA5fZk",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.78638649999999,
+          19.5391077
+        ]
+      },
+      "properties": {
+        "name": "Fire brigade",
+        "address": "G6Q7+JCX, Calle Manuel Boitel, Villa González",
+        "place_id": "ChIJLdolFD_HsY4RliJr1t52rmY",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.5422148,
+          19.4565911
+        ]
+      },
+      "properties": {
+        "name": "Bomberos de San Víctor",
+        "address": "FF45+J4M, Avenida 27 de Febrero, San Víctor",
+        "place_id": "ChIJqYuXZ9LbsY4RUqZO4Rn2sWw",
+        "types": [
+          "fire_station",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "fire_station"
+      }
+    }
+  ]
+}

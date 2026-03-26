@@ -1,0 +1,1331 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6867019,
+          19.4610659
+        ]
+      },
+      "properties": {
+        "name": "Radiodiagnóstico Santiago",
+        "address": "Avenida Salvador Estrella Sadhalá 1, 51000, Santiago de los Caballeros",
+        "place_id": "ChIJbW0VrY7FsY4Ri_WB9oiXWMw",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6999112,
+          19.4519081
+        ]
+      },
+      "properties": {
+        "name": "Oftalmolora",
+        "address": "Calle Cuba esquina Restauración, Plaza Condominio Corominas. 7ma planta módulo 708, Calle Cuba, Santiago de los Caballeros",
+        "place_id": "ChIJuf0sT1nPsY4R2fOjkF3Fyg0",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.678009,
+          19.4523406
+        ]
+      },
+      "properties": {
+        "name": "GuapasRD",
+        "address": "Plaza Mares Boulevard Módulo 21, Licenciado Genaro Perez, Santiago de los Caballeros",
+        "place_id": "ChIJ0b6aqX3PsY4RtTeUNG3EOnA",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6790871,
+          19.4577398
+        ]
+      },
+      "properties": {
+        "name": "Dermatoesthetic",
+        "address": "Caonabo Almonte, 3, Santiago de los Caballeros",
+        "place_id": "ChIJz_IbsYfFsY4RU5lx2rH5YLY",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6873368,
+          19.4579198
+        ]
+      },
+      "properties": {
+        "name": "Bucalia, Odontología Integral",
+        "address": "módulo 212, Plaza Palermo, Avenida Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJqf1ZKYrFsY4RuW9teO5FmU4",
+        "types": [
+          "dentist",
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6876755,
+          19.4424819
+        ]
+      },
+      "properties": {
+        "name": "BioSilohuette",
+        "address": "Avenida Salvador Estrella Sadhalá 7, Santiago de los Caballeros",
+        "place_id": "ChIJTd0Cz2jPsY4RHe_8l2tQSQ4",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6899409,
+          19.4575861
+        ]
+      },
+      "properties": {
+        "name": "Centro Urológico Del Cibao",
+        "address": "Plaza Bromelias, 51000, Santiago de los Caballeros",
+        "place_id": "ChIJrUiNiorFsY4RrJODr2Rg3TY",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6801536,
+          19.4593692
+        ]
+      },
+      "properties": {
+        "name": "Dr. Fernando Francis",
+        "address": "Clínica Unión Médica Del Cibao, Torre C, Avenida Juan Pablo Duarte 176, Suit 546, Santiago de los Caballeros",
+        "place_id": "ChIJO4xdFobFsY4RUxsf-CYq_b4",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6808148,
+          19.4604185
+        ]
+      },
+      "properties": {
+        "name": "CV Group Cardioendoneurovascular",
+        "address": "F869+5M7, Calle E. León Jimenez, Santiago de los Caballeros",
+        "place_id": "ChIJdZx4AobFsY4RyCUECKz5fHU",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6763345,
+          19.4591753
+        ]
+      },
+      "properties": {
+        "name": "UNIRT. Unidad de Investigación Reproductiva y sus Tratamientos",
+        "address": "Calle México #29, Santiago de los Caballeros",
+        "place_id": "ChIJaSYTuYbFsY4RZL5b8iFe4zY",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.69393699999999,
+          19.457359
+        ]
+      },
+      "properties": {
+        "name": "medipath",
+        "address": "Medipath, # 7, Calle Onésimo Jiménez # 4, Santiago de los Caballeros",
+        "place_id": "ChIJC9cxRfXFsY4RGW2e_hwHsx8",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.69028899999999,
+          19.462526
+        ]
+      },
+      "properties": {
+        "name": "Centro Odontologico Metropolitano Dr. Basilio Madera",
+        "address": "Los Jardines Metropolitanos, Calle E. ekman, esq. Rep. del Líbano, No. 23A, Santiago de los Caballeros",
+        "place_id": "ChIJl_3mh4zFsY4RAGu3f03jGmI",
+        "types": [
+          "dentist",
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6892271,
+          19.4635419
+        ]
+      },
+      "properties": {
+        "name": "Consultorio Dr. Alonso Genao",
+        "address": "F876+C86, Roberto Pastoriza, Santiago de los Caballeros",
+        "place_id": "ChIJVT6cRIzFsY4RLhkG6UWsOz4",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.699899,
+          19.4529702
+        ]
+      },
+      "properties": {
+        "name": "Centro De Radio Terapia Del Cibao",
+        "address": "F832+52Q, Calle Independencia, Santiago de los Caballeros",
+        "place_id": "ChIJfdwpR1nPsY4RkjJda-xMwkY",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.69214219999999,
+          19.4641784
+        ]
+      },
+      "properties": {
+        "name": "Chroma Grupo Dental",
+        "address": "F875+M4H, Licenciado Agustin Acevedo, Santiago de los Caballeros",
+        "place_id": "ChIJn6D824zFsY4RazCTSiehdqw",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6963842,
+          19.4631952
+        ]
+      },
+      "properties": {
+        "name": "Centro Dental ODONTOCEN",
+        "address": "Frente a la Policía Nacional, Avenida Bartolomé Colón 96, 2do nivel, Santiago de los Caballeros",
+        "place_id": "ChIJ91fDnfPFsY4Rn_Mbs9QyZrg",
+        "types": [
+          "dentist",
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7065569,
+          19.452981
+        ]
+      },
+      "properties": {
+        "name": "SONORAD",
+        "address": "Calle Restauración 146, Santiago de los Caballeros",
+        "place_id": "ChIJcSBGOFfPsY4RJGDgADlseac",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6605558,
+          19.4352721
+        ]
+      },
+      "properties": {
+        "name": "Dr Miguel Contreras Gastroenterólogo",
+        "address": "Hospital Metropolitano Santiago, Consultorio 423, Autopista Duarte Km 5 1/2, Santiago de los Caballeros",
+        "place_id": "ChIJW9s0eZnPsY4RbcNLTFzrGu4",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6596879,
+          19.4664814
+        ]
+      },
+      "properties": {
+        "name": "Endocrinología Y Nutrición Dr. Figuereo",
+        "address": "Avenida 27 de Febrero 52, Santiago de los Caballeros",
+        "place_id": "ChIJRSHbUXDFsY4RqnSa6Pebn7s",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6612128,
+          19.4703389
+        ]
+      },
+      "properties": {
+        "name": "Centro de Atención Psicológica y Enseñanza Especializada (CAPEE)",
+        "address": "Calle 11 #18, Santiago de los Caballeros",
+        "place_id": "ChIJT7lAw3PFsY4R_J9w8_EaWLw",
+        "types": [
+          "doctor",
+          "point_of_interest",
+          "health",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.65158079999999,
+          19.4164142
+        ]
+      },
+      "properties": {
+        "name": "Centro Geriátrico Dra. Moreu",
+        "address": "Al lado del Rey de la Sopa, Calle de los Acosta s/n, Santiago de los Caballeros",
+        "place_id": "ChIJe0MEtbDPsY4RGuB5bEn1Ep8",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7783226,
+          19.5313206
+        ]
+      },
+      "properties": {
+        "name": "FERQUIDO",
+        "address": "G6JC+GMF, Autopista Joaquín Balaguer",
+        "place_id": "ChIJN8lApxfHsY4RUrsXYITD1HQ",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6947917,
+          19.455687
+        ]
+      },
+      "properties": {
+        "name": "Cirugía Bariátrica Dominicana",
+        "address": "Avenida Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJJ3wzE4HFsY4RGjIYTTV5miQ",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6947917,
+          19.455687
+        ]
+      },
+      "properties": {
+        "name": "Dr. Antonio Olivo",
+        "address": "Avenida Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJJ3wzE4HFsY4RAB8GOSa52eE",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6947917,
+          19.455687
+        ]
+      },
+      "properties": {
+        "name": "Dra. Reina Checo",
+        "address": "Avenida Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJJ3wzE4HFsY4R09pBaT4n6Z4",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7000809,
+          19.4522969
+        ]
+      },
+      "properties": {
+        "name": "Dr. Victor Pou",
+        "address": "Calle Restauración 57, Santiago de los Caballeros",
+        "place_id": "ChIJtWCiRFnPsY4RWOcJz_UeIhE",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7000809,
+          19.4522969
+        ]
+      },
+      "properties": {
+        "name": "Dr. Nelson Rubio",
+        "address": "Calle Restauración 57, Santiago de los Caballeros",
+        "place_id": "ChIJtWCiRFnPsY4Rzh29RdCHOAw",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7000809,
+          19.4522969
+        ]
+      },
+      "properties": {
+        "name": "Dr. Edward Alonzo | Médico Cirujano / Maxilofacial",
+        "address": "Calle Restauración 57, Santiago de los Caballeros",
+        "place_id": "ChIJtWCiRFnPsY4RjVjy_6O7zSE",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68054920000002,
+          19.4508578
+        ]
+      },
+      "properties": {
+        "name": "D'margarita",
+        "address": "Dominican Republic",
+        "place_id": "ChIJrcVFyHzPsY4Rrbxhc5r72qs",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.688208,
+          19.4457818
+        ]
+      },
+      "properties": {
+        "name": "SALUTE CONSULTORIO MEDICO DENTAL",
+        "address": "Plaza Estrella, Avenida Estrella Sadhalá, Santiago de los Caballeros",
+        "place_id": "ChIJD9M0HtbOsY4R25fPAoUVteA",
+        "types": [
+          "dentist",
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6804825,
+          19.45671669999999
+        ]
+      },
+      "properties": {
+        "name": "BELLASER",
+        "address": "Calle Puerto Rico 51000, Santiago de los Caballeros",
+        "place_id": "ChIJXyVLNwDFsY4Rd6pvzGaGxrQ",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68413579999999,
+          19.45749619999999
+        ]
+      },
+      "properties": {
+        "name": "Consultorio Medico Dr. Fernando A. Rodriguez, cirujano.",
+        "address": "casi esq, Avenida Juan Pablo Duarte, 2do. Nivel, Santiago de los Caballeros",
+        "place_id": "ChIJS7Le31PFsY4RxLLs8zCGpco",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68419899999999,
+          19.4575276
+        ]
+      },
+      "properties": {
+        "name": "Materno Fetal Dr. Francisco Alberto Hernández",
+        "address": "casi esq, Avenida Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJU0mEYf_FsY4RBJ6rFue2bFY",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6832664,
+          19.4578609
+        ]
+      },
+      "properties": {
+        "name": "Dr. Jorge Hernandez Cirujano General y Laparoscopista",
+        "address": "Edificio Profesional Materno Infantil, Calle Bisonó Toribio, Santiago de los Caballeros",
+        "place_id": "ChIJl2uVWQvFsY4RhS55HjB2lzM",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6831776,
+          19.4578952
+        ]
+      },
+      "properties": {
+        "name": "Mastólogo-Ginecólogo, Dr. Joel Diaz Santana",
+        "address": "Calle Bisonó Toribio, Santiago de los Caballeros",
+        "place_id": "ChIJIfEzxjnFsY4RGjcs-TC6CXA",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6842281,
+          19.4580057
+        ]
+      },
+      "properties": {
+        "name": "Cirugía Bariátrica y General en Republica Dominicada - Dr. Sandy Moncion García",
+        "address": "Centro De Especialidades, Plaza, casi esq, Avenida Juan Pablo Duarte A20, 1er nivel, Santiago de los Caballeros",
+        "place_id": "ChIJR-NqDXTFsY4RDT3fusmgM2A",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6842281,
+          19.4580057
+        ]
+      },
+      "properties": {
+        "name": "Dr Hugo Maria Peralta",
+        "address": "Bella Terra Mall , 1 er Piso Suite A40, Santiago de los Caballeros",
+        "place_id": "ChIJFX8O8N_FsY4RfD8VcczMx0U",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6842281,
+          19.4580057
+        ]
+      },
+      "properties": {
+        "name": "Dr. Flabio Morel Aybar",
+        "address": "Modulo B16, casi esq, Plaza, Avenida Juan Pablo Duarte, 2do nivel, Santiago de los Caballeros",
+        "place_id": "ChIJATYy_N7FsY4RvXFp16mNkBM",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6842281,
+          19.4580057
+        ]
+      },
+      "properties": {
+        "name": "Dra Katherine Reynoso Maxilofacial",
+        "address": "Instituo Materno Infantil Santiago, casi esq, Avenida Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJXX6D523FsY4RR32mQZIpy10",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6842281,
+          19.4580057
+        ]
+      },
+      "properties": {
+        "name": "Dra. Biany Santos Pujols, Neuróloga - Salud Neurointegral",
+        "address": "casi esq, Avenida Juan Pablo Duarte, Plaza, Suite 305, Santiago de los Caballeros",
+        "place_id": "ChIJTSVb7JfFsY4RTMf5z72QKGs",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6842281,
+          19.4580057
+        ]
+      },
+      "properties": {
+        "name": "Dra. Yinet Diloné",
+        "address": "Consultorio C-18, casi esq, Av. Juan Pablo Duarte, casi esquina Estrella Sadhalá Plaza, 3er Nivel, Santiago de los Caballeros",
+        "place_id": "ChIJsUTwtBjFsY4Rgm-VdqTwB7s",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6842281,
+          19.4580057
+        ]
+      },
+      "properties": {
+        "name": "OTOCENTERRD - Dr Joan Hernandez Centro de Otorrinolaringologia",
+        "address": "Av. juan pablo duarte, Plaza bella terra mall, 1er nivel modulo A018, Santiago de los Caballeros",
+        "place_id": "ChIJt72agVbFsY4RJo7k2XEQVAg",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6842281,
+          19.4580057
+        ]
+      },
+      "properties": {
+        "name": "Dra. Isabel Morel",
+        "address": "Centro de Medicina Avanzada Tercer Nivel, casi esq, Av Juan Pablo Duarte Plaza, Suite 330, Santiago de los Caballeros",
+        "place_id": "ChIJkcP2_gXFsY4RqWAIASjVJUo",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68387899999999,
+          19.458144
+        ]
+      },
+      "properties": {
+        "name": "DR. TEODORO GRULLON.",
+        "address": "casi esq, Avenida Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJU6_bY9DFsY4RPFQt7ToFPwc",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68432109999999,
+          19.458105
+        ]
+      },
+      "properties": {
+        "name": "Dra. Roanny Báez Fernandez | Unidad del Dolor",
+        "address": "C5 Tercer Nivel, casi esq, Avenida Juan Pablo Duarte, Suite 340, Santiago de los Caballeros",
+        "place_id": "ChIJgzT6807FsY4ROzzN4cjDT74",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68432109999999,
+          19.458105
+        ]
+      },
+      "properties": {
+        "name": "Dr Yusef Marrero Sarkis - Cirujano Plastico.",
+        "address": "casi esq, Avenida Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJVSMVkQPFsY4RdRhd3PbqKpM",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6838897,
+          19.4582005
+        ]
+      },
+      "properties": {
+        "name": "Carmen Rodríguez (Gastroenteróloga-Endoscopista)",
+        "address": "casi esq, Avenida Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJeQ4-wULFsY4RSihGt0BgvOA",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68407239999999,
+          19.4582184
+        ]
+      },
+      "properties": {
+        "name": "Dra Amadys Maldonado",
+        "address": "51000 Av. Juan Pablo Duarte, Plaza Bella Terra Mall 2do Nivel, Modulo B, 019, Santiago de los Caballeros",
+        "place_id": "ChIJLU6J17vFsY4ReCi0X94y6Yc",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68321929999999,
+          19.4582947
+        ]
+      },
+      "properties": {
+        "name": "Laboratorio Histopatología Castellanos Delgado",
+        "address": "Instituto de Materno Infantil, Santiago de los Caballeros",
+        "place_id": "ChIJaeZrKprFsY4R1zfE_hIr1tg",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6845522,
+          19.4423862
+        ]
+      },
+      "properties": {
+        "name": "Departamento Salud PUCMM",
+        "address": "Edificio, Padre Arroyo, Santiago de los Caballeros",
+        "place_id": "ChIJLYE1UajPsY4RZTRWLKyDbhY",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6841788,
+          19.4582998
+        ]
+      },
+      "properties": {
+        "name": "Criolipolisis Dominicana",
+        "address": "módulo C058, casi esq, Avenida Juan Pablo Duarte, Plaza, Santiago de los Caballeros",
+        "place_id": "ChIJVwTS7pnFsY4RJb8eF-aiCYQ",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6842885,
+          19.4583122
+        ]
+      },
+      "properties": {
+        "name": "Consultorio Dr: aracelis rondo.",
+        "address": "casi esq, Avenida Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJcyQiPADFsY4RF0duYbD4gcY",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6839048,
+          19.4583975
+        ]
+      },
+      "properties": {
+        "name": "Dr.Miguel Alfau",
+        "address": "Av.Juan Pablo Duarte, Bella Terra Mall. Materno Infantil Centro de medicina avanzada, Módulo 336, Santiago de los Caballeros",
+        "place_id": "ChIJJyslymjFsY4R0P6gH0EpG9Q",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68398020000001,
+          19.4584873
+        ]
+      },
+      "properties": {
+        "name": "Dra. Chesnarda De La Cruz",
+        "address": "F858+C95, Santiago de los Caballeros",
+        "place_id": "ChIJX6gAC4HFsY4RdBHERXPPGDs",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.683872,
+          19.4584972
+        ]
+      },
+      "properties": {
+        "name": "COA",
+        "address": "51000, Santiago de los Caballeros",
+        "place_id": "ChIJtzvr_ojFsY4R6qd2ubF_FOw",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68413029999999,
+          19.4584896
+        ]
+      },
+      "properties": {
+        "name": "Dra.Clarelym Cáceres Bloise- Gastroenterólogo en Santiago de los Caballeros",
+        "address": "Instituto Materno Infantil y Especialidades Bella Terra Mall, Segundo Nivel, Suite B009, Santiago de los Caballeros",
+        "place_id": "ChIJGVj9OaHFsY4RqVhd6N9SYL8",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6873095,
+          19.4578032
+        ]
+      },
+      "properties": {
+        "name": "SAHDALA DENTAL",
+        "address": "Plaza Palermo, Avenida Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJ1Xrlpr3FsY4R8mYwv73F8wM",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.67401679999999,
+          19.4509874
+        ]
+      },
+      "properties": {
+        "name": "Lujan Dental Clinic SRL",
+        "address": "Calle Radhamés Gómez Pepín 42, Santiago de los Caballeros",
+        "place_id": "ChIJV81y1G7PsY4R4f0bstrK8D0",
+        "types": [
+          "dentist",
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6803986,
+          19.4584924
+        ]
+      },
+      "properties": {
+        "name": "Centro Clínico de Investigación en Gineco-Obstetricia (CCIGO)",
+        "address": "Calle Puerto Rico 6, Santiago de los Caballeros",
+        "place_id": "ChIJEU0g61rFsY4R-rBhaES0IeI",
+        "types": [
+          "hospital",
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6741622,
+          19.4521335
+        ]
+      },
+      "properties": {
+        "name": "Ser y Bienestar: Tu espacio psicológico",
+        "address": "F82G+V84, Calle 11, Santiago de los Caballeros",
+        "place_id": "ChIJD0D8ZX7PsY4Ri7E8QZJtYIk",
+        "types": [
+          "doctor",
+          "health",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "clinic"
+      }
+    }
+  ]
+}

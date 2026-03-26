@@ -59,24 +59,50 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function PriorityBar({ score }: { score: number | null }) {
-  const { t } = useTranslation();
+type BreakdownFactor = { score: number; raw: number; weight: number; detail: string };
+type PriorityBreakdown = Record<string, BreakdownFactor>;
+
+const FACTOR_LABELS: Record<string, string> = {
+  severity:   'Severidad',
+  age:        'Antigüedad',
+  damage:     'Tipo de daño',
+  location:   'Ubicación',
+  duplicates: 'Duplicados',
+};
+
+function PriorityBar({ score, breakdown }: { score: number | null; breakdown?: PriorityBreakdown | null }) {
   const pct = Math.min(100, Math.max(0, score ?? 0));
   const color =
     pct >= 80 ? 'bg-red-500' : pct >= 60 ? 'bg-orange-400' : pct >= 40 ? 'bg-amber-400' : 'bg-blue-400';
 
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>{t('incidents.detail.priorityScore')}</span>
-        <span className="font-mono font-semibold text-gray-900">{pct.toFixed(1)} / 100</span>
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span>Score de prioridad</span>
+          <span className="font-mono font-semibold text-gray-900">{pct.toFixed(1)} / 100</span>
+        </div>
+        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+        </div>
       </div>
-      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${color}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      {breakdown && (
+        <div className="space-y-1.5 pt-1 border-t border-gray-100">
+          {Object.entries(breakdown).map(([key, f]) => (
+            <div key={key} className="flex items-center gap-2 text-xs">
+              <span className="w-20 text-gray-500 flex-shrink-0">{FACTOR_LABELS[key] ?? key}</span>
+              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary-400 rounded-full"
+                  style={{ width: `${Math.min(100, (f.score / (f.weight * 100)) * 100)}%` }}
+                />
+              </div>
+              <span className="font-mono text-gray-700 w-8 text-right">{f.score.toFixed(1)}</span>
+              <span className="text-gray-400 truncate max-w-[90px]" title={f.detail}>{f.detail}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -92,6 +118,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
+  const [priorityBreakdown, setPriorityBreakdown] = useState<PriorityBreakdown | null>(null);
 
   const canUpdateStatus =
     user?.role === UserRole.SUPERVISOR ||
@@ -129,7 +156,8 @@ export default function IncidentDetailPage({ params }: PageProps) {
   const handleRecalculate = async () => {
     setIsRecalculating(true);
     try {
-      await incidentsService.recalculatePriority(incidentId);
+      const result = await incidentsService.recalculatePriority(incidentId);
+      if (result?.factors) setPriorityBreakdown(result.factors as PriorityBreakdown);
       toast.success(`${t('incidents.detail.priorityRecalculated')}`);
       fetchIncident();
     } catch {
@@ -374,7 +402,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
                 </span>
               </div>
               {/* Bar */}
-              <PriorityBar score={incident.priority_score} />
+              <PriorityBar score={incident.priority_score} breakdown={priorityBreakdown} />
             </div>
           </div>
 
@@ -386,7 +414,6 @@ export default function IncidentDetailPage({ params }: PageProps) {
             </div>
             <div className="px-5 py-2">
               <InfoRow label={t('incidents.detail.reported')} value={formatDate(incident.created_at)} />
-              <InfoRow label={t('incidents.detail.assigned')} value={formatDate(incident.assigned_at)} />
               <InfoRow label={t('incidents.detail.started')} value={formatDate(incident.started_at)} />
               <InfoRow label={t('incidents.detail.completed')} value={formatDate(incident.completed_at)} />
               <InfoRow label={t('incidents.detail.verified')} value={formatDate(incident.verified_at)} />

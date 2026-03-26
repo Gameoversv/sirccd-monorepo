@@ -1,0 +1,1266 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.69301829999999,
+          19.4328645
+        ]
+      },
+      "properties": {
+        "name": "UTESA",
+        "address": "Avenida Salvador Estrella Sadhalá esq, Santiago de los Caballeros",
+        "place_id": "ChIJ1yStVRXPsY4R0ohA_xhV50E",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6753052,
+          19.4614279
+        ]
+      },
+      "properties": {
+        "name": "CENTENARIA",
+        "address": "Calle Yoryi Morel 15, Santiago de los Caballeros",
+        "place_id": "ChIJmb2ACoTFsY4RKBQ5KJ9d3Ss",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.71695749999999,
+          19.4803063
+        ]
+      },
+      "properties": {
+        "name": "UDELAS Veraguas",
+        "address": "la, Avenida Cuesta Colorada",
+        "place_id": "ChIJW8Lt9iGLr44R10Zj5MbBsAg",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6968857,
+          19.4488758
+        ]
+      },
+      "properties": {
+        "name": "Instituto Superior de Formación Docente Emilio Prud'Homme",
+        "address": "Calle R. Tolentino 51, Santiago de los Caballeros",
+        "place_id": "ChIJl8pIWlzPsY4RbquluVerR2E",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6843785,
+          19.4436005
+        ]
+      },
+      "properties": {
+        "name": "Pontificia Universidad Católica Madre y Maestra (PUCMM)",
+        "address": "Autopista Duarte Km 1 1/2, Santiago de los Caballeros",
+        "place_id": "ChIJ-1CQkmTPsY4RmpNKa1qRM08",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6783363,
+          19.4440066
+        ]
+      },
+      "properties": {
+        "name": "Puerta 3 (PUCMM)",
+        "address": "C8VC+JM3, Santiago de los Caballeros",
+        "place_id": "ChIJ5bejh3rPsY4RE4GYvQaYNaw",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68478759999999,
+          19.442309
+        ]
+      },
+      "properties": {
+        "name": "Edificio Padre Arroyo",
+        "address": "Padre Arroyo, Santiago de los Caballeros",
+        "place_id": "ChIJ-cmVCm_PsY4Ro3Frzvxvync",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7004056,
+          19.4505808
+        ]
+      },
+      "properties": {
+        "name": "REPSAP International",
+        "address": "F72X+6RQ, Calle Cuba, Santiago de los Caballeros",
+        "place_id": "ChIJTUu351vPsY4RZYJVbQtVPGA",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68960009999999,
+          19.4673949
+        ]
+      },
+      "properties": {
+        "name": "Universidad Dominicana O&M",
+        "address": "F886+X52, Avenida Bartolomé Colón, Santiago de los Caballeros",
+        "place_id": "ChIJ91fDnfPFsY4RX392hOomfek",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.70265119999999,
+          19.4497338
+        ]
+      },
+      "properties": {
+        "name": "Universidad Autónoma de Santo Domingo",
+        "address": "Calle 16 de Agosto 79, Santiago de los Caballeros",
+        "place_id": "ChIJ4ajiTlrPsY4R8OTxqeOoY44",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7459509,
+          19.4471683
+        ]
+      },
+      "properties": {
+        "name": "Aulas Estudiantil",
+        "address": "C7W3+VJ7, Santiago de los Caballeros",
+        "place_id": "ChIJX7GSz5bIsY4RsSZ0AFGLtRg",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6718996,
+          19.4260527
+        ]
+      },
+      "properties": {
+        "name": "Universidad Abierta Para Adultos",
+        "address": "C8GG+PV7, Avenida Hispanoamericana 100, Santiago de los Caballeros",
+        "place_id": "ChIJaRRZzQvPsY4Ryda8XuQg26I",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7451583,
+          19.4507527
+        ]
+      },
+      "properties": {
+        "name": "Universidad ISA",
+        "address": "Avenida Presidente Antonio Guzmán Fernández Km. 5, Santiago de los Caballeros",
+        "place_id": "ChIJ98ThwpLIsY4RJTBq0hGDSe8",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7299386,
+          19.4258067
+        ]
+      },
+      "properties": {
+        "name": "Universidad Autónoma de Santo Domingo (UASD) - Recinto Santiago",
+        "address": "Avenida Olímpica, Santiago de los Caballeros",
+        "place_id": "ChIJn7N7NtDIsY4Rls-QOY0b-Ls",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7040489,
+          19.4796053
+        ]
+      },
+      "properties": {
+        "name": "Evangelical National University",
+        "address": "Av. Estrella Sadhalá No. 202, Avenida Salvador Estrella Sadhalá, Santiago de los Caballeros",
+        "place_id": "ChIJVwAeF-jFsY4RYNNz0G_ruz8",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6832503,
+          19.4483104
+        ]
+      },
+      "properties": {
+        "name": "Puerta 1 (PUCMM)",
+        "address": "C8X8+8MH, Santiago de los Caballeros",
+        "place_id": "ChIJ-4_nkmTPsY4R0Xu3IyY6h4g",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6832379,
+          19.4478322
+        ]
+      },
+      "properties": {
+        "name": "Tanque PUCMM",
+        "address": "Rotonda Puerta 1, PUCMM, Santiago de los Caballeros",
+        "place_id": "ChIJJ6iLYADPsY4RDCS-iDaCXTk",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6844807,
+          19.4478807
+        ]
+      },
+      "properties": {
+        "name": "PUCMM Taller Financiero",
+        "address": "C8X8+562, Santiago de los Caballeros",
+        "place_id": "ChIJj_ddWWTPsY4RB4qm9tlD35I",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6787942,
+          19.4486454
+        ]
+      },
+      "properties": {
+        "name": "Dorvus",
+        "address": "C8XC+FF4, Santiago de los Caballeros",
+        "place_id": "ChIJuSWUOcPPsY4R0kDD1x4l68w",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6830432,
+          19.4426777
+        ]
+      },
+      "properties": {
+        "name": "Universidad",
+        "address": "C8V8+3QG, Santiago de los Caballeros",
+        "place_id": "ChIJVXXIIgDPsY4R_5XGdcUCYcg",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68453099999999,
+          19.4422715
+        ]
+      },
+      "properties": {
+        "name": "Punto 1",
+        "address": "Pontificia Universidad Católica Madre y Maestra, Padre Arroyo, Santiago de los Caballeros",
+        "place_id": "ChIJIbkWXgDPsY4RUgM8eN1iJKc",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6834614,
+          19.4417787
+        ]
+      },
+      "properties": {
+        "name": "Laboratorio de Nanociencias",
+        "address": "C8R8+PJC, Santiago de los Caballeros",
+        "place_id": "ChIJ8016LgDPsY4Rl0gcnb4-LJQ",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68343399999999,
+          19.441563
+        ]
+      },
+      "properties": {
+        "name": "Aulas III",
+        "address": "A3, Santiago de los Caballeros",
+        "place_id": "ChIJr23HllXPsY4RvO6FA6uWUOI",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6870201,
+          19.4422701
+        ]
+      },
+      "properties": {
+        "name": "Puerta 2 (PUCMM)",
+        "address": "C8R7+W55, Avenida Salvador Estrella Sadhalá, Santiago de los Caballeros",
+        "place_id": "ChIJUxNrMm_PsY4R-6KSq8-dF3Y",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68295979999999,
+          19.4410968
+        ]
+      },
+      "properties": {
+        "name": "Laboratorio de Microrredes Eléctricas",
+        "address": "Lab. Generales de Ingeniería, Santiago de los Caballeros",
+        "place_id": "ChIJ_-mpi9nPsY4Rj0Se1ou8IEY",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6828105,
+          19.4410523
+        ]
+      },
+      "properties": {
+        "name": "Estación de otra letra sísmica 3",
+        "address": "C8R8+CVG, Santiago de los Caballeros",
+        "place_id": "ChIJU0vD-pXPsY4Rla3PJd3er9Y",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6836252,
+          19.4410551
+        ]
+      },
+      "properties": {
+        "name": "Parking aula III",
+        "address": "C8R8+VMM, Santiago de los Caballeros",
+        "place_id": "ChIJrzFN5AbPsY4RUdetE30GvkU",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68846549999999,
+          19.45870069999999
+        ]
+      },
+      "properties": {
+        "name": "Universidad de la Tercera Edad (UTE)",
+        "address": "F856+FJM, Autopista Juan Pablo Duarte, Santiago de los Caballeros",
+        "place_id": "ChIJRS3TSYrFsY4RhClhS_qj9LM",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6766197,
+          19.4582642
+        ]
+      },
+      "properties": {
+        "name": "PEDRO'S LOVELY APARTMENT",
+        "address": "F85F+892, Calle México, Santiago de los Caballeros",
+        "place_id": "ChIJM7W9iQXFsY4RxltMWlCNKKc",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6829904,
+          19.4400408
+        ]
+      },
+      "properties": {
+        "name": "Taller De Instalaciones Electricas",
+        "address": "C8R8+2R6, PUCMM, Santiago de los Caballeros",
+        "place_id": "ChIJ__8_Gm_PsY4R_8SvQYFtKtk",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6830434,
+          19.4399655
+        ]
+      },
+      "properties": {
+        "name": "TE laboratorio informática 1",
+        "address": "C8R8+2R6, Santiago de los Caballeros",
+        "place_id": "ChIJJbDFbwDPsY4RIKAp9QproPs",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68191999999999,
+          19.4396174
+        ]
+      },
+      "properties": {
+        "name": "Centro de Investigación de Biología Molecular Dr. Salomón Jorge",
+        "address": "Colegio Juan XXIII, Santiago de los Caballeros",
+        "place_id": "ChIJ0-nYeQDPsY4RYXNfExFFzME",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68164039999999,
+          19.4395853
+        ]
+      },
+      "properties": {
+        "name": "Edificio Juan XXIII",
+        "address": "Colegio Juan XXIII, Santiago de los Caballeros",
+        "place_id": "ChIJI_hGIm7PsY4R1vZfQvc4xU0",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.694639,
+          19.4530293
+        ]
+      },
+      "properties": {
+        "name": "Escuela de Graduados UTESA",
+        "address": "Avenida Las Carreras, Santiago de los Caballeros",
+        "place_id": "ChIJi2EX4RnPsY4R8b5FIBVG8mE",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6809297,
+          19.4643959
+        ]
+      },
+      "properties": {
+        "name": "Intellikids",
+        "address": "Doctor Grullón R.O. 28, Santiago de los Caballeros",
+        "place_id": "ChIJ-TquVwDFsY4RbMY4tE9J3sg",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.698613,
+          19.45342729999999
+        ]
+      },
+      "properties": {
+        "name": "Fundasababe",
+        "address": "Calle Sabana Larga 122, Santiago de los Caballeros",
+        "place_id": "ChIJk6PS_6nPsY4Ril40jt2mi_0",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6664156,
+          19.447838
+        ]
+      },
+      "properties": {
+        "name": "Lya Makeup Academy - Santiago",
+        "address": "C8XM+4CP, Santiago de los Caballeros",
+        "place_id": "ChIJZ8AZGIHPsY4RROTwOFIVTBE",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7004958,
+          19.448686
+        ]
+      },
+      "properties": {
+        "name": "Mi escuela",
+        "address": "Calle Cuba 34, Santiago de los Caballeros",
+        "place_id": "ChIJBy7caV3PsY4RIJyHOJXYJkM",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.701793,
+          19.4500739
+        ]
+      },
+      "properties": {
+        "name": "EL NUEVO DIARIO",
+        "address": "F72X+27G, Calle General Cabrera, Santiago de los Caballeros",
+        "place_id": "ChIJ93LRS8bPsY4R0vE0zCANAi0",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6805431,
+          19.4678765
+        ]
+      },
+      "properties": {
+        "name": "Cincinnatus Institute of Craftsmanship, Inc.",
+        "address": "Calle Erick Eckman 7, Santiago de los Caballeros",
+        "place_id": "ChIJYz5FhYzFsY4R1C_6rmMKrwQ",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.70178560000001,
+          19.4524875
+        ]
+      },
+      "properties": {
+        "name": "Flace Center",
+        "address": "F72X+X7W, Esquina Independencia, Santiago de los Caballeros",
+        "place_id": "ChIJDdi3C1nPsY4RwgBnnyEoHjw",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7014904,
+          19.4567209
+        ]
+      },
+      "properties": {
+        "name": "Instituto de Contadores Públicos Autorizados de la República Dominicana, Ofc. Regional Norte.",
+        "address": "F74X+MCJ, Santiago de los Caballeros",
+        "place_id": "ChIJFVaQhVjPsY4R1XKhlkelGJE",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6923075,
+          19.4338707
+        ]
+      },
+      "properties": {
+        "name": "Edificio C UTESA",
+        "address": "Edificio Ciencias de las Ingenierias, Santiago de los Caballeros",
+        "place_id": "ChIJq1YbrmrPsY4R7p9fj7-j6YY",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.70288289999999,
+          19.4499124
+        ]
+      },
+      "properties": {
+        "name": "Facultad de medicina UASD",
+        "address": "San Luis 11, Santiago de los Caballeros",
+        "place_id": "ChIJi-bpQ37PsY4RgDCixYUG3Dc",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6929073,
+          19.4330428
+        ]
+      },
+      "properties": {
+        "name": "Edificio A de UTESA",
+        "address": "Edificio A, Santiago de los Caballeros",
+        "place_id": "ChIJqSytVxXPsY4R5GHaFpBsNQ4",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6932198,
+          19.4325154
+        ]
+      },
+      "properties": {
+        "name": "Centro De Estudiantes UTESA",
+        "address": "C8M4+2P2, Avenida Salvador Estrella Sadhalá, Santiago de los Caballeros",
+        "place_id": "ChIJSQzNVxXPsY4RRUDFrQU6K20",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6931358,
+          19.4324266
+        ]
+      },
+      "properties": {
+        "name": "Admisión y Registro UTESA",
+        "address": "Administracion y Registro, Avenida Salvador Estrella Sadhalá, Santiago de los Caballeros",
+        "place_id": "ChIJmRh_RADPsY4RRFZmhZZuovM",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.693173,
+          19.4324308
+        ]
+      },
+      "properties": {
+        "name": "Edificio de Servicios Estudiantiles de UTESA",
+        "address": "C8J4+XPG, Santiago de los Caballeros",
+        "place_id": "ChIJAx684T_PsY4RrEz2HYnV0Go",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6894324,
+          19.4696229
+        ]
+      },
+      "properties": {
+        "name": "Graduate School of UTESA",
+        "address": "Avenida Salvador Estrella Sadhalá, Santiago de los Caballeros",
+        "place_id": "ChIJ7wXeUZLFsY4Rd79ogsNPNCQ",
+        "types": [
+          "university",
+          "school",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.68340429999999,
+          19.4298488
+        ]
+      },
+      "properties": {
+        "name": "Infodonsu",
+        "address": "C8H8+WJQ, Santiago de los Caballeros",
+        "place_id": "ChIJsUSXX5zPsY4RyWIu9e4P-_g",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.69372360000001,
+          19.43228
+        ]
+      },
+      "properties": {
+        "name": "Utesa Puerta Circunvalación",
+        "address": "C8J4+WG6, Avenida Mirador del Yaque, Santiago de los Caballeros",
+        "place_id": "ChIJ21epwj_PsY4RfrZJOcEUmFM",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6895966,
+          19.4699789
+        ]
+      },
+      "properties": {
+        "name": "Exae",
+        "address": "F896+X5R, Avenida Salvador Estrella Sadhalá, Santiago de los Caballeros",
+        "place_id": "ChIJnUPgU5LFsY4RzzERe87wLvw",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6734628,
+          19.426133
+        ]
+      },
+      "properties": {
+        "name": "Edificio B Escuelas de idiomas y negocios UAPA",
+        "address": "Parada 24 - Ruta CA, Avenida Hispanoamericana 100, Santiago de los Caballeros",
+        "place_id": "ChIJW7QX5IrPsY4RYBplVS1-U_M",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6740423,
+          19.425486
+        ]
+      },
+      "properties": {
+        "name": "UAPA, Edificio de Enfermería.",
+        "address": "C8GG+59W, Santiago de los Caballeros",
+        "place_id": "ChIJITvEPX_PsY4RGIq9GotYQ50",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6721282,
+          19.4256871
+        ]
+      },
+      "properties": {
+        "name": "Incapre uapa",
+        "address": "Parada 23 - Ruta CA - 2X 138Kv Y, Avenida Hispanoamericana, Santiago de los Caballeros",
+        "place_id": "ChIJ7W6MbWjPsY4RLb-1H9m-rhw",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.7105183,
+          19.4400841
+        ]
+      },
+      "properties": {
+        "name": "Escuela Juan Ovidio Paulino",
+        "address": "Juan Ovidio Paulino, J. Vidal Pichardo, Santiago de los Caballeros",
+        "place_id": "ChIJ7x1rXknPsY4RPIMiOjmfXcI",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6930568,
+          19.4791963
+        ]
+      },
+      "properties": {
+        "name": "Residencial Palmeras D' Leones I, II y III",
+        "address": "F8H4+MQG, Santiago de los Caballeros",
+        "place_id": "ChIJaRZEi9nFsY4RdDMIkt6jba4",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6639455,
+          19.4749822
+        ]
+      },
+      "properties": {
+        "name": "Innovatech Solutions ML",
+        "address": "Calle 10 Díaz Proyecto 6, Santiago de los Caballeros",
+        "place_id": "ChIJuYbzWX7FsY4RXDq8mvknWEE",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.6671736,
+          19.4214516
+        ]
+      },
+      "properties": {
+        "name": "Universidad uapa",
+        "address": "Jose Martí 14, Santiago de los Caballeros",
+        "place_id": "ChIJ85pXFwDPsY4R-KRLTBuWhmM",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -70.659592,
+          19.474436
+        ]
+      },
+      "properties": {
+        "name": "Casa de Tita",
+        "address": "F8FR+M4Q, Santiago de los Caballeros",
+        "place_id": "ChIJy2IAOQDFsY4Rzp5LYfxc8Ug",
+        "types": [
+          "university",
+          "point_of_interest",
+          "establishment"
+        ],
+        "poi_type": "university"
+      }
+    }
+  ]
+}
