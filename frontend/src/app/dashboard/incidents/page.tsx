@@ -16,7 +16,12 @@ import { IncidentsTable } from '@/components/IncidentsTable';
 const MapView = dynamic(() => import('@/components/MapView').then(m => m.MapView), { ssr: false });
 import { incidentsService } from '@/services';
 import { useIncidentsStore } from '@/store';
-import type { IncidentFilters, IncidentStatus, SeverityLevel } from '@/types';
+import type {
+  IncidentFilters,
+  IncidentStatus,
+  SeverityLevel,
+  POILayerFilters,
+} from '@/types';
 
 type ViewMode = 'split' | 'table' | 'map';
 
@@ -47,6 +52,17 @@ export default function IncidentsPage() {
   const [sortField, setSortField] = useState<string>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(true);
+  const [poiLayerFilters, setPoiLayerFilters] = useState<POILayerFilters>({
+    showPOIs: false,
+    showRiskBuffers: false,
+    bufferRadiusMeters: 120,
+    categories: {
+      school: true,
+      hospital: true,
+      fire_station: true,
+      community_center: true,
+    },
+  });
 
   // Filters without priority_ fields for API
   const apiFilters: IncidentFilters = useMemo(() => {
@@ -229,6 +245,8 @@ export default function IncidentsPage() {
             onChange={setFilters}
             onClear={clearFilters}
             total={total}
+            poiLayerFilters={poiLayerFilters}
+            onPoiLayerFiltersChange={setPoiLayerFilters}
           />
         )}
 
@@ -243,6 +261,7 @@ export default function IncidentsPage() {
               <MapView
                 height={view === 'map' ? '600px' : '350px'}
                 filters={filters}
+                poiLayerFilters={poiLayerFilters}
               />
             </div>
           )}

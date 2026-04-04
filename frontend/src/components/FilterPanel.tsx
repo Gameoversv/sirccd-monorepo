@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import {
   Filter,
-  X,
   ChevronDown,
   ChevronUp,
   RotateCcw,
@@ -11,8 +10,15 @@ import {
   Activity,
   Calendar,
   Gauge,
+  Layers,
 } from 'lucide-react';
-import type { IncidentFilters, SeverityLevel, IncidentStatus } from '@/types';
+import type {
+  IncidentFilters,
+  SeverityLevel,
+  IncidentStatus,
+  POILayerFilters,
+  POILayerCategory,
+} from '@/types';
 import { SeverityLevel as SeverityEnum, IncidentStatus as StatusEnum } from '@/types';
 import { getSeverityLabel, getStatusLabel, getSeverityColor, getStatusColor } from '@/utils';
 
@@ -22,6 +28,8 @@ interface FilterPanelProps {
   onClear: () => void;
   total?: number;
   layout?: 'horizontal' | 'sidebar';
+  poiLayerFilters?: POILayerFilters;
+  onPoiLayerFiltersChange?: (filters: POILayerFilters) => void;
 }
 
 interface SectionProps {
@@ -70,18 +78,43 @@ const STATUSES: IncidentStatus[] = [
   StatusEnum.CERRADO,
 ];
 
+const POI_CATEGORY_LABELS: Record<POILayerCategory, string> = {
+  school: 'Escuelas',
+  hospital: 'Hospitales',
+  fire_station: 'Bomberos',
+  community_center: 'Centros comunitarios',
+};
+
 export function FilterPanel({
   filters,
   onChange,
   onClear,
   total,
   layout = 'sidebar',
+  poiLayerFilters,
+  onPoiLayerFiltersChange,
 }: FilterPanelProps) {
   const activeCount = Object.values(filters).filter(
     (v) => v !== undefined && v !== null && v !== ''
   ).length;
 
   const isHorizontal = layout === 'horizontal';
+
+  const updatePoiLayerFilters = (changes: Partial<POILayerFilters>) => {
+    if (!poiLayerFilters || !onPoiLayerFiltersChange) return;
+    onPoiLayerFiltersChange({ ...poiLayerFilters, ...changes });
+  };
+
+  const updatePoiCategory = (category: POILayerCategory, enabled: boolean) => {
+    if (!poiLayerFilters || !onPoiLayerFiltersChange) return;
+    onPoiLayerFiltersChange({
+      ...poiLayerFilters,
+      categories: {
+        ...poiLayerFilters.categories,
+        [category]: enabled,
+      },
+    });
+  };
 
   return (
     <div
@@ -264,7 +297,82 @@ export function FilterPanel({
           </div>
         </FilterSection>
 
-        {/* Date Range */}
+        {/* POI and pedestrian risk layers */}
+        <FilterSection
+          title="Capas POI y riesgo peatonal"
+          icon={<Layers className="h-4 w-4 text-indigo-500" />}
+          defaultOpen={false}
+        >
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={poiLayerFilters?.showPOIs ?? false}
+                onChange={(e) => {
+                  const enabled = e.target.checked;
+                  updatePoiLayerFilters({
+                    showPOIs: enabled,
+                    showRiskBuffers: enabled ? (poiLayerFilters?.showRiskBuffers ?? false) : false,
+                  });
+                }}
+                className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              />
+              Mostrar capa de POIs
+            </label>
+
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={poiLayerFilters?.showRiskBuffers ?? false}
+                disabled={!(poiLayerFilters?.showPOIs ?? false)}
+                onChange={(e) => updatePoiLayerFilters({ showRiskBuffers: e.target.checked })}
+                className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 disabled:opacity-50"
+              />
+              Mostrar zonas de riesgo peatonal
+            </label>
+
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Categorías POI</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {(Object.keys(POI_CATEGORY_LABELS) as POILayerCategory[]).map((category) => (
+                  <label
+                    key={category}
+                    className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={poiLayerFilters?.categories?.[category] ?? false}
+                      disabled={!(poiLayerFilters?.showPOIs ?? false)}
+                      onChange={(e) => updatePoiCategory(category, e.target.checked)}
+                      className="h-3.5 w-3.5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 disabled:opacity-50"
+                    />
+                    {POI_CATEGORY_LABELS[category]}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                <span>Radio buffer</span>
+                <span>{poiLayerFilters?.bufferRadiusMeters ?? 120} m</span>
+              </div>
+              <input
+                type="range"
+                min={50}
+                max={200}
+                step={10}
+                value={poiLayerFilters?.bufferRadiusMeters ?? 120}
+                disabled={!(poiLayerFilters?.showPOIs ?? false)}
+                onChange={(e) =>
+                  updatePoiLayerFilters({ bufferRadiusMeters: Number(e.target.value) })
+                }
+                className="w-full accent-primary-600 disabled:opacity-50"
+              />
+            </div>
+          </div>
+        </FilterSection>
+
         <FilterSection
           title="Rango de Fechas"
           icon={<Calendar className="h-4 w-4 text-gray-500" />}

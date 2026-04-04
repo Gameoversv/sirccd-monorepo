@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from api.routes import health, auth, reports, deduplication, incidents, export, users
+from api.routes import health, auth, reports, deduplication, incidents, export, users, pois
 from core.config import settings
 from core.metrics import PrometheusMiddleware
 
@@ -39,6 +39,7 @@ app.include_router(auth.router, prefix=settings.API_V1_STR, tags=["Autenticació
 app.include_router(reports.router, prefix=settings.API_V1_STR, tags=["Reportes"])
 app.include_router(deduplication.router, prefix=settings.API_V1_STR, tags=["Deduplicación"])
 app.include_router(incidents.router, prefix=f"{settings.API_V1_STR}/incidents", tags=["Incidentes"])
+app.include_router(pois.router, prefix=f"{settings.API_V1_STR}/pois", tags=["POIs"])
 app.include_router(export.router, prefix=f"{settings.API_V1_STR}/export", tags=["Exportaciones"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["Usuarios"])
 

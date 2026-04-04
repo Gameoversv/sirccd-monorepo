@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, CircleMarker } from 'react-leaflet';
 import { Icon, LatLngExpression } from 'leaflet';
-import { incidentsService } from '@/services';
-import type { IncidentFilters } from '@/types';
-import { Loader2, MapPin, AlertTriangle, Clock, Flame, Layers } from 'lucide-react';
+import { incidentsService, poisService } from '@/services';
+import type { IncidentFilters, POILayerFilters, POILayerCategory, POILayerItem } from '@/types';
+import { Loader2, MapPin, AlertTriangle, Clock, Flame } from 'lucide-react';
 import { HeatmapLayer } from './HeatmapLayer';
 import 'leaflet/dist/leaflet.css';
 
@@ -38,8 +38,35 @@ interface MapViewProps {
   center?: LatLngExpression;
   zoom?: number;
   filters?: IncidentFilters;
+  poiLayerFilters?: POILayerFilters;
   onIncidentsLoaded?: (incidents: IncidentMarker[]) => void;
 }
+
+const DEFAULT_POI_LAYER_FILTERS: POILayerFilters = {
+  showPOIs: false,
+  showRiskBuffers: false,
+  bufferRadiusMeters: 120,
+  categories: {
+    school: true,
+    hospital: true,
+    fire_station: true,
+    community_center: true,
+  },
+};
+
+const POI_CATEGORY_COLORS: Record<POILayerCategory, string> = {
+  school: '#2563eb',
+  hospital: '#dc2626',
+  fire_station: '#ea580c',
+  community_center: '#7c3aed',
+};
+
+const POI_CATEGORY_LABELS: Record<POILayerCategory, string> = {
+  school: 'Escuelas',
+  hospital: 'Hospitales',
+  fire_station: 'Bomberos',
+  community_center: 'Centros comunitarios',
+};
 
 // Component to recenter map when center prop changes
 function MapUpdater({ center }: { center: LatLngExpression }) {
@@ -106,8 +133,10 @@ export function MapView({
   center = [19.4517, -70.6970], // Santiago de los Caballeros, RD default
   zoom = 13,
   filters = {},
+  poiLayerFilters,
   onIncidentsLoaded,
 }: MapViewProps) {
+  const resolvedPoiLayerFilters = poiLayerFilters ?? DEFAULT_POI_LAYER_FILTERS;
   const [allIncidents, setAllIncidents] = useState<IncidentMarker[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +146,18 @@ export function MapView({
   const [heatmapPoints, setHeatmapPoints] = useState<[number, number, number][]>([]);
   const [heatmapWeight, setHeatmapWeight] = useState<'frequency' | 'severity' | 'age'>('frequency');
   const [heatmapLoading, setHeatmapLoading] = useState(false);
+
+  // POI layers (P-02)
+  const [poiItems, setPoiItems] = useState<POILayerItem[]>([]);
+  const [poiLoading, setPoiLoading] = useState(false);
+
+  const activePoiCategories = useMemo(() => {
+    return (Object.entries(resolvedPoiLayerFilters.categories) as Array<[POILayerCategory, boolean]>)
+      .filter(([, enabled]) => enabled)
+      .map(([category]) => category);
+  }, [resolvedPoiLayerFilters.categories]);
+
+  const poiLayerEnabled = resolvedPoiLayerFilters.showPOIs && activePoiCategories.length > 0;
 
   // Build API-level filters (severity, status, dates)
   const apiFilters: IncidentFilters = useMemo(() => {
@@ -172,6 +213,31 @@ export function MapView({
   useEffect(() => {
     loadHeatmap();
   }, [loadHeatmap]);
+
+  const loadPoiLayers = useCallback(async () => {
+    if (!poiLayerEnabled) {
+      setPoiItems([]);
+      return;
+    }
+
+    try {
+      setPoiLoading(true);
+      const response = await poisService.getPOILayers({
+        categories: activePoiCategories,
+        limit: 1500,
+      });
+      setPoiItems(response.pois || []);
+    } catch {
+      console.error('Error loading POI layers');
+      setPoiItems([]);
+    } finally {
+      setPoiLoading(false);
+    }
+  }, [poiLayerEnabled, activePoiCategories]);
+
+  useEffect(() => {
+    loadPoiLayers();
+  }, [loadPoiLayers]);
 
   const loadIncidents = async () => {
     try {
@@ -262,6 +328,54 @@ export function MapView({
 
         {/* Heatmap overlay (P-01) */}
         <HeatmapLayer points={heatmapPoints} visible={heatmapVisible} />
+
+        {/* Pedestrian risk buffers around POIs (P-02) */}
+        {poiLayerEnabled && resolvedPoiLayerFilters.showRiskBuffers &&
+          poiItems.map((poi) => (
+            <Circle
+              key={`buffer-${poi.id}`}
+              center={[poi.latitude, poi.longitude]}
+              radius={resolvedPoiLayerFilters.bufferRadiusMeters}
+              pathOptions={{
+                color: POI_CATEGORY_COLORS[poi.category],
+                fillColor: POI_CATEGORY_COLORS[poi.category],
+                fillOpacity: 0.08,
+                weight: 1,
+                dashArray: '4 4',
+              }}
+            />
+          ))}
+
+        {/* POI markers (P-02) */}
+        {poiLayerEnabled &&
+          poiItems.map((poi) => (
+            <CircleMarker
+              key={`poi-${poi.id}`}
+              center={[poi.latitude, poi.longitude]}
+              radius={6}
+              pathOptions={{
+                color: '#ffffff',
+                fillColor: POI_CATEGORY_COLORS[poi.category],
+                fillOpacity: 0.95,
+                weight: 1.5,
+              }}
+            >
+              <Popup>
+                <div className="min-w-[230px] p-1.5">
+                  <h3 className="text-sm font-semibold text-gray-900">{poi.name}</h3>
+                  <p className="text-xs text-gray-500 mt-1">{POI_CATEGORY_LABELS[poi.category]}</p>
+                  {(poi.address || poi.city) && (
+                    <p className="text-xs text-gray-600 mt-2">
+                      {[poi.address, poi.city].filter(Boolean).join(' · ')}
+                    </p>
+                  )}
+                  <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500">
+                    Buffer peatonal: {resolvedPoiLayerFilters.bufferRadiusMeters} m
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
         
         {incidents.map((incident) => {
           const position: LatLngExpression = [incident.latitude, incident.longitude];
@@ -407,6 +521,17 @@ export function MapView({
             </p>
           </div>
         )}
+
+        {poiLayerEnabled && (
+          <div className="pt-2 border-t border-gray-200">
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide">POIs</p>
+            <p className="text-[10px] text-gray-400">
+              {poiLoading
+                ? 'Cargando capa…'
+                : `${poiItems.length} puntos · buffer ${resolvedPoiLayerFilters.bufferRadiusMeters} m`}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Map legend */}
@@ -435,6 +560,28 @@ export function MapView({
             <span className="font-semibold text-gray-700">{incidents.length}</span> incidentes
           </p>
         </div>
+
+        {poiLayerEnabled && (
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <h4 className="text-xs font-semibold text-gray-700 mb-2">POIs y riesgo peatonal</h4>
+            <div className="space-y-1.5">
+              {activePoiCategories.map((category) => (
+                <div key={category} className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full border border-white shadow-sm"
+                    style={{ backgroundColor: POI_CATEGORY_COLORS[category] }}
+                  />
+                  <span className="text-xs text-gray-600">{POI_CATEGORY_LABELS[category]}</span>
+                </div>
+              ))}
+            </div>
+            {resolvedPoiLayerFilters.showRiskBuffers && (
+              <p className="text-[10px] text-gray-500 mt-2">
+                Buffers activos: {resolvedPoiLayerFilters.bufferRadiusMeters} m
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -211,6 +211,42 @@ export interface MapFilter {
   severities: SeverityLevel[];
 }
 
+// POI Layers (P-02)
+export type POILayerCategory =
+  | 'school'
+  | 'hospital'
+  | 'fire_station'
+  | 'community_center';
+
+export interface POILayerItem {
+  id: number;
+  name: string;
+  category: POILayerCategory;
+  source_category: string;
+  latitude: number;
+  longitude: number;
+  address?: string;
+  city?: string;
+  priority_weight: number;
+  recommended_buffer_m: number;
+}
+
+export interface POILayerResponse {
+  total: number;
+  pois: POILayerItem[];
+  categories: POILayerCategory[];
+  min_buffer_m: number;
+  default_buffer_m: number;
+  max_buffer_m: number;
+}
+
+export interface POILayerFilters {
+  showPOIs: boolean;
+  showRiskBuffers: boolean;
+  bufferRadiusMeters: number;
+  categories: Record<POILayerCategory, boolean>;
+}
+
 // Export formats
 export interface ExportOptions {
   format: 'csv' | 'geojson';
