@@ -171,7 +171,7 @@ def list_incidents(
     )
 
 
-@router.get("/{incident_id}", response_model=IncidentDetailResponse)
+@router.get("/{incident_id:int}", response_model=IncidentDetailResponse)
 def get_incident(
     incident_id: int,
     db: Session = Depends(get_db),
@@ -223,7 +223,7 @@ def get_incident(
     return IncidentDetailResponse(**incident_dict)
 
 
-@router.patch("/{incident_id}/status", response_model=IncidentDetailResponse)
+@router.patch("/{incident_id:int}/status", response_model=IncidentDetailResponse)
 def update_incident_status(
     incident_id: int,
     request: UpdateIncidentStatusRequest,
@@ -268,7 +268,7 @@ def update_incident_status(
         )
 
 
-@router.post("/{incident_id}/recalculate-priority", response_model=RecalculatePriorityResponse)
+@router.post("/{incident_id:int}/recalculate-priority", response_model=RecalculatePriorityResponse)
 def recalculate_priority(
     incident_id: int,
     db: Session = Depends(get_db),
