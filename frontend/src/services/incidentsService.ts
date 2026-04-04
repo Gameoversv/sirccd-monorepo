@@ -78,11 +78,10 @@ export const incidentsService = {
       ),
     });
 
+    const format = options.format === 'csv' ? 'csv' : 'geojson';
     const response = await apiClient.get(
-      `/export/incidents?${params.toString()}`,
-      {
-        responseType: 'blob',
-      }
+      `/export/incidents/${format}?${params.toString()}`,
+      { responseType: 'blob' }
     );
     return response.data;
   },

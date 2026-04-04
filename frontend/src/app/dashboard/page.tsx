@@ -257,14 +257,6 @@ export default function DashboardPage() {
           loading={loading}
         />
         <KPICard
-          title={t('dashboard.kpi.unassigned')}
-          value={stats ? String(stats.pending_assignment) : '—'}
-          subtitle={t('dashboard.kpi.unassignedSubtitle')}
-          icon={AlertTriangle}
-          color="bg-red-500"
-          loading={loading}
-        />
-        <KPICard
           title={t('dashboard.kpi.ttr')}
           value={stats ? `${fmt(stats.avg_ttr_hours)}h` : '—'}
           subtitle={t('dashboard.kpi.ttrSubtitle')}

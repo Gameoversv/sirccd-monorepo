@@ -413,7 +413,18 @@ def get_incident_stats(
         by_status.get("closed", 0)
     )
     
-    avg_ttr_hours = None
+    # TTR: tiempo promedio desde creación hasta completado
+    completed_incidents = db.query(Incident).filter(
+        Incident.completed_at.isnot(None)
+    ).all()
+    if completed_incidents:
+        ttr_values = [
+            (inc.completed_at - inc.created_at).total_seconds() / 3600
+            for inc in completed_incidents
+        ]
+        avg_ttr_hours = round(sum(ttr_values) / len(ttr_values), 1)
+    else:
+        avg_ttr_hours = None
 
     # SLA compliance: % de incidentes completados dentro de 48 horas
     SLA_HOURS = 48

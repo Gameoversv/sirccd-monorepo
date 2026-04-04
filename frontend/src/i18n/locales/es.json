@@ -44,13 +44,11 @@
     "kpi": {
       "total": "Total incidentes",
       "active": "Activos",
-      "activeSubtitle": "open + asignado + proceso",
+      "activeSubtitle": "abierto + en progreso",
       "resolved": "Resueltos",
-      "resolvedSubtitle": "resuelto + verificado + cerrado",
-      "unassigned": "Sin asignar",
-      "unassignedSubtitle": "requieren atención",
+      "resolvedSubtitle": "completado + verificado + cerrado",
       "ttr": "TTR promedio",
-      "ttrSubtitle": "tiempo hasta asignación",
+      "ttrSubtitle": "tiempo hasta resolución",
       "avgScore": "Score promedio",
       "avgScoreSubtitle": "prioridad media"
     },

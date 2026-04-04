@@ -64,7 +64,6 @@ const SEVERITIES: SeverityLevel[] = [
 
 const STATUSES: IncidentStatus[] = [
   StatusEnum.REPORTADO,
-  StatusEnum.ASIGNADO,
   StatusEnum.EN_PROGRESO,
   StatusEnum.COMPLETADO,
   StatusEnum.VERIFICADO,
