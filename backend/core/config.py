@@ -68,12 +68,23 @@ class Settings(BaseSettings):
     CONFIDENCE_THRESHOLD: float = 0.4
     IOU_THRESHOLD: float = 0.4
     
-    # Deduplication Service (B-07)
+    # Deduplication Service (B-07, M-11)
     FAISS_INDEX_PATH: str = "storage/faiss_index.bin"
-    DEDUPLICATION_VISUAL_MODEL: str = "resnet50"  # resnet50, resnet101, mobilenet_v2
+    DEDUPLICATION_VISUAL_MODEL: str = "resnet50"  # resnet50, resnet101, mobilenet_v2, clip-vit-base-patch32
+    DEDUPLICATION_SECONDARY_MODEL: Optional[str] = "clip-vit-base-patch32"
+    DEDUPLICATION_ALLOW_HISTOGRAM_FALLBACK: bool = True
+
+    # Legacy thresholds (kept for backward compatibility)
     VISUAL_SIMILARITY_THRESHOLD: float = 0.15  # L2 distance
     GEO_DISTANCE_THRESHOLD: float = 50.0  # meters
     DEDUP_TIME_WINDOW_DAYS: int = 30  # days
+
+    # Fusion score config (M-11)
+    DEDUPLICATION_SCORE_THRESHOLD: float = 0.72
+    DEDUPLICATION_VISUAL_WEIGHT_PRIMARY: float = 0.45
+    DEDUPLICATION_VISUAL_WEIGHT_SECONDARY: float = 0.25
+    DEDUPLICATION_GEO_WEIGHT: float = 0.20
+    DEDUPLICATION_TEXT_WEIGHT: float = 0.10
     
     # Priority Service (B-08)
     PRIORITY_POI_RADIUS_METERS: int = 500  # Radio para buscar POIs cercanos

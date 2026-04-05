@@ -26,6 +26,7 @@ def _public_url(url: str) -> str:
         return url.replace("minio:", "localhost:", 1)
     return url
 from services.ml_service import ml_service
+from services.deduplication_service import get_deduplication_service
 from services.priority_service import get_priority_service
 
 
@@ -382,6 +383,12 @@ async def create_report(
             if image_local_path:
                 print(f" Ejecutando detección ML inline para reporte {new_report.id}")
                 result = ml_service.detect(image_local_path)
+                dedup_image = None
+                try:
+                    from PIL import Image as _PILImage
+                    dedup_image = _PILImage.open(image_local_path).convert("RGB")
+                except Exception as img_load_err:
+                    print(f" Advertencia: no se pudo cargar imagen para deduplicación: {img_load_err}")
 
                 # Generar imagen anotada con bounding boxes
                 import json as _json, os as _os
@@ -410,6 +417,18 @@ async def create_report(
                 new_report.updated_at = datetime.utcnow()
                 db.commit()
                 db.refresh(new_report)
+
+                if dedup_image is not None:
+                    try:
+                        dedup_service = get_deduplication_service(db)
+                        dedup_service.add_report_to_index(
+                            report=new_report,
+                            image=dedup_image,
+                            description=description,
+                        )
+                    except Exception as dedup_err:
+                        print(f" Advertencia: no se pudo indexar deduplicación para reporte {new_report.id}: {dedup_err}")
+
                 damage_type = result.damage_type
                 severity = result.severity
                 confidence = result.confidence

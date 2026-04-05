@@ -28,16 +28,17 @@ router = APIRouter(prefix="/deduplication", tags=["Deduplicación"])
     summary="Verificar si un reporte es duplicado",
     description="""
     Determina si un nuevo reporte es duplicado de uno existente mediante:
-    - **Similitud visual**: Comparación de embeddings de imágenes usando ResNet50 + FAISS
+    - **Similitud visual multimodelo**: ResNet/CLIP + FAISS
     - **Proximidad geográfica**: Distancia Haversine entre coordenadas
+    - **Similitud textual**: comparación de descripciones (si se envía)
     
-    **Estrategia:**
-    - Se buscan los top-K reportes visualmente más similares
-    - Se filtran por tipo de daño y ventana temporal
-    - Se verifica proximidad geográfica
-    - Se considera duplicado si AMBOS criterios se cumplen:
-      * Distancia visual < umbral (default: 0.15)
-      * Distancia geográfica < umbral (default: 50m)
+        **Estrategia:**
+        - Se buscan los top-K reportes visualmente más similares por modelo
+        - Se filtran por tipo de daño y ventana temporal
+        - Se calcula score fusionado (visual + geo + texto)
+        - Se considera duplicado por:
+            * Reglas legacy (distancia visual y geográfica)
+            * O score fusionado >= umbral configurado
     
     **Uso típico:** 
     Antes de crear un nuevo reporte, verificar si ya existe uno similar para evitar duplicados.
@@ -50,6 +51,7 @@ async def check_duplicate(
     latitude: float = Form(..., description="Latitud WGS84"),
     longitude: float = Form(..., description="Longitud WGS84"),
     damage_type: str = Form(..., description="Tipo de daño (bache, grieta)"),
+    description: Optional[str] = Form(None, description="Descripción textual opcional para score fusionado"),
     visual_threshold: Optional[float] = Form(
         None, 
         description="Umbral de similitud visual (default: 0.15)",
@@ -85,6 +87,7 @@ async def check_duplicate(
             latitude=latitude,
             longitude=longitude,
             damage_type=damage_type,
+            description=description,
             visual_threshold=visual_threshold,
             geo_threshold=geo_threshold
         )
@@ -112,10 +115,11 @@ async def check_duplicate(
     description="""
     Encuentra los reportes más similares a una imagen y ubicación dadas.
     
-    Retorna una lista ordenada por similitud visual que incluye:
+    Retorna una lista ordenada por score fusionado que incluye:
     - ID del reporte
-    - Distancia visual (L2 en espacio de embeddings)
+    - Distancias visuales por modelo
     - Distancia geográfica (metros)
+    - Score fusionado
     - Metadatos del reporte original
     
     **Útil para:**
@@ -131,6 +135,7 @@ async def find_similar_reports(
     latitude: float = Form(..., description="Latitud WGS84"),
     longitude: float = Form(..., description="Longitud WGS84"),
     damage_type: str = Form(..., description="Tipo de daño (bache, grieta)"),
+    description: Optional[str] = Form(None, description="Descripción textual opcional para score fusionado"),
     top_k: int = Form(10, description="Número de resultados", ge=1, le=50),
 ):
     """
@@ -153,19 +158,27 @@ async def find_similar_reports(
             latitude=latitude,
             longitude=longitude,
             damage_type=damage_type,
-            top_k=top_k
+            top_k=top_k,
+            description=description,
         )
         
         # Formatear respuesta
         results = []
-        for report, visual_dist, geo_dist in similar_reports:
+        for candidate in similar_reports:
+            report = candidate.report
             from geoalchemy2.shape import to_shape
             point = to_shape(report.location)
             
             results.append({
                 "report_id": report.id,
-                "visual_distance": visual_dist,
-                "geo_distance": geo_dist,
+                "visual_distance": candidate.visual_distance,
+                "visual_similarity": candidate.visual_similarity,
+                "geo_distance": candidate.geo_distance,
+                "geo_similarity": candidate.geo_similarity,
+                "text_similarity": candidate.text_similarity,
+                "fused_score": candidate.fused_score,
+                "model_distances": candidate.model_distances,
+                "model_similarities": candidate.model_similarities,
                 "damage_type": report.damage_type.value,
                 "severity": report.severity.value,
                 "confidence": report.confidence,

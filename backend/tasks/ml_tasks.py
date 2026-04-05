@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from models.report import Report, ReportStatus
 from services.ml_service import ml_service
+from services.deduplication_service import get_deduplication_service
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,13 @@ def process_report_ml_detection(report_id: int, image_local_path: str) -> dict:
         # Ejecutar detección ML
         logger.info(f" Ejecutando inferencia ML...")
         detection_result = ml_service.detect(image_local_path)
+
+        dedup_image = None
+        try:
+            from PIL import Image as _PILImage
+            dedup_image = _PILImage.open(image_local_path).convert("RGB")
+        except Exception as img_err:
+            logger.warning(f"No se pudo cargar imagen para deduplicación report_id={report_id}: {img_err}")
         
         # Actualizar reporte con resultados
         report.damage_type = detection_result.damage_type
@@ -96,6 +104,17 @@ def process_report_ml_detection(report_id: int, image_local_path: str) -> dict:
         report.status = ReportStatus.PENDING  # Volver a pending para revisión humana
         
         db.commit()
+
+        if dedup_image is not None:
+            try:
+                dedup_service = get_deduplication_service(db)
+                dedup_service.add_report_to_index(
+                    report=report,
+                    image=dedup_image,
+                    description=report.description,
+                )
+            except Exception as dedup_err:
+                logger.warning(f"No se pudo indexar deduplicación report_id={report_id}: {dedup_err}")
         
         logger.info(
             f" [Task] Reporte {report_id} procesado exitosamente: "
