@@ -50,6 +50,10 @@ def list_reports(
 ):
     query = db.query(Report)
 
+    # Ciudadanos solo ven sus propios reportes
+    if current_user.role.value == "ciudadano":
+        query = query.filter(Report.user_id == current_user.id)
+
     if status_filter:
         query = query.filter(Report.status == ReportStatus(status_filter))
     if damage_type:
@@ -147,38 +151,72 @@ def review_report(
     if body.rejection_reason:
         report.rejection_reason = body.rejection_reason
 
-    # If approved → auto-create incident
+    # If approved → buscar incidente cercano (dedup geo) o crear uno nuevo
     incident_id = None
     if body.status == "approved":
-        point = to_shape(report.location)
+        import logging as _logging
+        _log = _logging.getLogger(__name__)
+
         priority_service = get_priority_service(db)
 
-        new_incident = Incident(
-            report_id=report.id,
-            reported_by=report.user_id,
-            location=report.location,
-            address=report.address,
-            city=report.city,
-            province=report.province,
-            damage_type=report.damage_type,
-            severity=report.severity,
-            priority=PriorityLevel.MEDIA,
-            priority_score=0.0,
-            status=IncidentStatus.OPEN,
-            before_image_url=report.image_url,
-            notes=report.description,
-        )
-        db.add(new_incident)
-        db.flush()
-
+        # Dedup geo: buscar incidente abierto/en_progreso dentro de 150m con mismo tipo de daño
+        existing_incident = None
         try:
-            priority_level, score = priority_service.calculate_priority(new_incident)
-            new_incident.priority = priority_level
-            new_incident.priority_score = score
-        except Exception:
-            pass
+            from geoalchemy2.functions import ST_DWithin, ST_SetSRID, ST_MakePoint
+            existing_incident = (
+                db.query(Incident)
+                .filter(
+                    Incident.damage_type == report.damage_type,
+                    Incident.status.in_([IncidentStatus.OPEN, IncidentStatus.IN_PROGRESS]),
+                    ST_DWithin(
+                        Incident.location,
+                        ST_SetSRID(ST_MakePoint(
+                            to_shape(report.location).x,
+                            to_shape(report.location).y,
+                        ), 4326),
+                        0.00135,  # ~150 metros en grados decimales
+                    ),
+                )
+                .order_by(Incident.created_at.asc())
+                .first()
+            )
+        except Exception as geo_err:
+            _log.warning("Error en búsqueda geo de incidente duplicado: %s", geo_err)
 
-        incident_id = new_incident.id
+        if existing_incident:
+            # Asociar reporte al incidente existente en lugar de crear uno nuevo
+            incident_id = existing_incident.id
+            _log.info(
+                "Reporte %s asociado a incidente existente %s (dedup geo, mismo tipo de daño, <150m)",
+                report.id, existing_incident.id,
+            )
+        else:
+            new_incident = Incident(
+                report_id=report.id,
+                reported_by=report.user_id,
+                location=report.location,
+                address=report.address,
+                city=report.city,
+                province=report.province,
+                damage_type=report.damage_type,
+                severity=report.severity,
+                priority=PriorityLevel.MEDIA,
+                priority_score=0.0,
+                status=IncidentStatus.OPEN,
+                before_image_url=report.image_url,
+                notes=report.description,
+            )
+            db.add(new_incident)
+            db.flush()
+
+            try:
+                priority_level, score = priority_service.calculate_priority(new_incident)
+                new_incident.priority = priority_level
+                new_incident.priority_score = score
+            except Exception as prio_err:
+                _log.warning("Error calculando prioridad para incidente %s: %s", new_incident.id, prio_err)
+
+            incident_id = new_incident.id
 
     db.commit()
 

@@ -272,11 +272,10 @@ export enum BackendPriorityLevel {
   CRITICA = 'critica',
 }
 
-// Valid status transitions (backend rules)
+// Valid status transitions (backend rules: open, in_progress, resolved, verified, closed)
 export const STATUS_TRANSITIONS: Record<string, string[]> = {
-  open: ['assigned', 'closed'],
-  assigned: ['in_progress', 'open'],
-  in_progress: ['resolved', 'assigned'],
+  open: ['in_progress', 'closed'],
+  in_progress: ['resolved', 'open'],
   resolved: ['verified', 'in_progress'],
   verified: ['closed', 'resolved'],
   closed: [],

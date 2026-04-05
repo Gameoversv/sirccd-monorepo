@@ -9,6 +9,7 @@ import {
   Download,
   ChevronLeft,
   SlidersHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { FilterPanel } from '@/components/FilterPanel';
@@ -52,6 +53,7 @@ export default function IncidentsPage() {
   const [sortField, setSortField] = useState<string>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(true);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [poiLayerFilters, setPoiLayerFilters] = useState<POILayerFilters>({
     showPOIs: false,
     showRiskBuffers: false,
@@ -149,16 +151,24 @@ export default function IncidentsPage() {
     }
   };
 
-  const handleExport = async () => {
+  const handleExport = async (format: 'csv' | 'geojson' | 'kpi' = 'csv') => {
     try {
-      const blob = await incidentsService.exportIncidents({
-        format: 'csv',
-        filters: apiFilters,
-      });
+      let blob: Blob;
+      let filename: string;
+      const dateStr = new Date().toISOString().split('T')[0];
+
+      if (format === 'kpi') {
+        blob = await incidentsService.exportKpis();
+        filename = `kpis_${dateStr}.csv`;
+      } else {
+        blob = await incidentsService.exportIncidents({ format, filters: apiFilters });
+        filename = `incidentes_${dateStr}.${format === 'geojson' ? 'geojson' : 'csv'}`;
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `incidentes_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
     } catch {
@@ -224,15 +234,36 @@ export default function IncidentsPage() {
             ))}
           </div>
 
-          {/* Export */}
-          <button
-            type="button"
-            onClick={handleExport}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('incidents.export')}</span>
-          </button>
+          {/* Export dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setExportMenuOpen((o) => !o)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('incidents.export')}</span>
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+            {exportMenuOpen && (
+              <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                {[
+                  { label: 'Exportar CSV', format: 'csv' as const },
+                  { label: 'Exportar GeoJSON', format: 'geojson' as const },
+                  { label: 'Exportar KPIs', format: 'kpi' as const },
+                ].map(({ label, format }) => (
+                  <button
+                    key={format}
+                    type="button"
+                    onClick={() => { handleExport(format); setExportMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -87,6 +87,18 @@ export const incidentsService = {
   },
 
   /**
+   * Export KPI metrics as CSV
+   */
+  async exportKpis(groupBy: 'day' | 'week' | 'month' = 'day'): Promise<Blob> {
+    const params = new URLSearchParams({ group_by: groupBy });
+    const response = await apiClient.get(
+      `/export/metrics/kpi?${params.toString()}`,
+      { responseType: 'blob' }
+    );
+    return response.data;
+  },
+
+  /**
    * Recalculate priority score for an incident
    */
   async recalculatePriority(id: number): Promise<{ incident_id: number; new_priority: string; new_score: number; factors?: Record<string, unknown> }> {
