@@ -131,6 +131,8 @@ services:
     volumes:
       - backend_storage:/app/storage
       - backend_logs:/app/logs
+      - torch_cache:/root/.cache/torch
+      - hf_cache:/root/.cache/huggingface
     restart: unless-stopped
     networks:
       - sirccd-network
@@ -157,6 +159,8 @@ volumes:
   minio_data:
   backend_storage:
   backend_logs:
+  torch_cache:
+  hf_cache:
 
 networks:
   sirccd-network:

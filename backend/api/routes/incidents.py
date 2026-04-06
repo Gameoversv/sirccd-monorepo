@@ -10,7 +10,7 @@ Endpoints para:
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_, desc, asc
 from geoalchemy2.functions import ST_X, ST_Y
@@ -34,6 +34,7 @@ from schemas.incident import (
     IncidentStatsResponse
 )
 from services.priority_service import get_priority_service
+from services.storage import storage_service
 from core.config import settings
 
 
@@ -268,6 +269,44 @@ def update_incident_status(
         )
 
 
+@router.patch("/{incident_id:int}/details")
+def update_incident_details(
+    incident_id: int,
+    estimated_repair_hours: Optional[float] = Form(None),
+    after_image: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Actualiza tiempo estimado y/o foto después del incidente"""
+    from api.deps import require_supervisor
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incidente no encontrado")
+    if estimated_repair_hours is not None:
+        incident.estimated_repair_hours = estimated_repair_hours
+    return {"id": incident_id, "estimated_repair_hours": incident.estimated_repair_hours, "after_image_url": _public_url(incident.after_image_url)}
+
+
+@router.post("/{incident_id:int}/after-image")
+async def upload_after_image(
+    incident_id: int,
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Sube la foto 'después' de un incidente"""
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incidente no encontrado")
+    try:
+        image_url, _, _, _ = await storage_service.upload_image(file=image, folder="after", anonymize=False)
+        incident.after_image_url = image_url
+        db.commit()
+        return {"id": incident_id, "after_image_url": _public_url(image_url)}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
 @router.post("/{incident_id:int}/recalculate-priority", response_model=RecalculatePriorityResponse)
 def recalculate_priority(
     incident_id: int,
@@ -331,6 +370,24 @@ def recalculate_priority(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al recalcular prioridad: {str(e)}"
         )
+
+
+@router.get("/{incident_id:int}/priority-breakdown")
+def get_priority_breakdown(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtiene el desglose de prioridad sin recalcular ni guardar en BD"""
+    priority_service = get_priority_service(db)
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Incidente {incident_id} no encontrado")
+    try:
+        factors = priority_service.calculate_priority_breakdown(incident)
+        return {"incident_id": incident_id, "priority": incident.priority, "priority_score": incident.priority_score, "factors": factors}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.get("/stats/overview", response_model=IncidentStatsResponse)

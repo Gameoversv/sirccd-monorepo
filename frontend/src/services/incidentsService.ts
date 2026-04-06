@@ -107,6 +107,22 @@ export const incidentsService = {
   },
 
   /**
+   * Get priority breakdown without recalculating
+   */
+  async getPriorityBreakdown(id: number): Promise<{ incident_id: number; priority: string; priority_score: number; factors?: Record<string, unknown> }> {
+    const response = await apiClient.get(`/incidents/${id}/priority-breakdown`);
+    return response.data;
+  },
+
+  async updateDetails(id: number, estimated_repair_hours: number): Promise<void> {
+    const form = new FormData();
+    form.append('estimated_repair_hours', String(estimated_repair_hours));
+    await apiClient.patch(`/incidents/${id}/details`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  /**
    * Get incident statistics (KPI overview)
    */
   async getStats(): Promise<{

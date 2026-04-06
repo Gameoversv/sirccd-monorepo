@@ -133,6 +133,21 @@ export default function IncidentDetailPage({ params }: PageProps) {
     try {
       const data = await incidentsService.getIncident(incidentId);
       setIncident(data);
+      // If score is 0, recalculate to populate it; otherwise just fetch breakdown
+      try {
+        if (!data.priority_score || data.priority_score === 0) {
+          const result = await incidentsService.recalculatePriority(incidentId);
+          if (result?.factors) setPriorityBreakdown(result.factors as PriorityBreakdown);
+          // Refresh incident to get updated score
+          const updated = await incidentsService.getIncident(incidentId);
+          setIncident(updated);
+        } else {
+          const breakdown = await incidentsService.getPriorityBreakdown(incidentId);
+          if (breakdown?.factors) setPriorityBreakdown(breakdown.factors as PriorityBreakdown);
+        }
+      } catch {
+        // breakdown is optional, fail silently
+      }
     } catch (err: any) {
       setError(err?.detail || t('incidents.detail.loadError'));
     } finally {
@@ -289,12 +304,30 @@ export default function IncidentDetailPage({ params }: PageProps) {
                     </a>
                   </div>
                 ) : (
-                  <div className="h-52 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center">
+                  <label className="h-52 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const form = new FormData();
+                          form.append('image', file);
+                          await incidentsService.uploadAfterImage(incidentId, form);
+                          toast.success('Foto después subida correctamente');
+                          fetchIncident();
+                        } catch {
+                          toast.error('Error al subir la imagen');
+                        }
+                      }}
+                    />
                     <div className="text-center text-gray-400">
                       <ImageIcon className="h-8 w-8 mx-auto" />
-                      <p className="text-xs mt-1">{t('incidents.detail.notAvailable')}</p>
+                      <p className="text-xs mt-1">Subir foto después</p>
                     </div>
-                  </div>
+                  </label>
                 )}
               </div>
             </div>
@@ -334,7 +367,33 @@ export default function IncidentDetailPage({ params }: PageProps) {
               <InfoRow
                 label={t('incidents.detail.estimatedTime')}
                 value={
-                  incident.estimated_repair_hours
+                  canUpdateStatus ? (
+                    <form
+                      className="flex items-center gap-1"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const val = parseFloat((e.currentTarget.elements.namedItem('hrs') as HTMLInputElement).value);
+                        if (!isNaN(val) && val > 0) {
+                          try {
+                            await incidentsService.updateDetails(incidentId, val);
+                            toast.success('Tiempo estimado actualizado');
+                            fetchIncident();
+                          } catch { toast.error('Error al actualizar'); }
+                        }
+                      }}
+                    >
+                      <input
+                        name="hrs"
+                        type="number"
+                        min="0.5"
+                        step="0.5"
+                        defaultValue={incident.estimated_repair_hours ?? ''}
+                        placeholder="horas"
+                        className="w-20 text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                      />
+                      <button type="submit" className="text-xs text-primary-600 hover:underline">Guardar</button>
+                    </form>
+                  ) : incident.estimated_repair_hours
                     ? `${incident.estimated_repair_hours}h`
                     : <span className="text-gray-400 italic">{t('incidents.detail.notEstimated')}</span>
                 }

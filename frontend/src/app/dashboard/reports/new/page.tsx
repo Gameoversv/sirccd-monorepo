@@ -172,7 +172,7 @@ export default function NewReportPage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <div>
             <h2 className="text-base font-semibold text-gray-800">{t('reports.new.addressSection')}</h2>
-            <p className="text-sm text-gray-500 mt-0.5">{t('reports.new.addressHint')}</p>
+            <p className="text-sm text-gray-500 mt-0.5" dangerouslySetInnerHTML={{ __html: t('reports.new.addressHint') }} />
           </div>
 
           <div>

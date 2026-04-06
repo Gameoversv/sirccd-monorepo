@@ -780,3 +780,57 @@ def get_deduplication_service(db: Session) -> DeduplicationService:
     # Siempre refrescar sesión activa para operaciones de lectura/escritura.
     _deduplication_service.db = db
     return _deduplication_service
+
+
+def load_image_from_url(image_url: Optional[str]) -> Optional[Image.Image]:
+    """
+    Carga PIL Image desde URL local (/storage/images/...) o HTTP.
+    Retorna None si falla o URL vacía.
+    """
+    if not image_url:
+        return None
+    try:
+        import io as _io
+        from pathlib import Path as _Path
+
+        if image_url.startswith("/storage/images/"):
+            rel = image_url.replace("/storage/images/", "")
+            backend_dir = _Path(__file__).resolve().parent.parent
+            fpath = backend_dir / "storage" / "images" / rel
+            if fpath.exists():
+                return Image.open(fpath).convert("RGB")
+            return None
+
+        if image_url.startswith("http://") or image_url.startswith("https://"):
+            # Dentro del container Docker, minio:9000 es el hostname correcto (no localhost)
+            url = image_url
+            resp = requests.get(url, timeout=10)
+            resp.raise_for_status()
+            return Image.open(_io.BytesIO(resp.content)).convert("RGB")
+
+    except Exception as exc:
+        logger.warning("load_image_from_url failed for %s: %s", image_url, exc)
+    return None
+
+
+def compute_visual_similarity(
+    image_a: Image.Image,
+    image_b: Image.Image,
+) -> Optional[float]:
+    """
+    Cosine similarity [0, 1] entre dos PIL Images.
+    Usa el embedder del singleton si está disponible, si no instancia uno temporal con fallback.
+    Retorna None si el embedding falla completamente.
+    """
+    global _deduplication_service
+    try:
+        if _deduplication_service is not None:
+            embedder = _deduplication_service.embedders[_deduplication_service.primary_model]
+        else:
+            embedder = VisualEmbedder(model_name="resnet50", allow_histogram_fallback=True)
+        vec_a = embedder.embed(image_a)
+        vec_b = embedder.embed(image_b)
+        return float(_cosine_similarity(vec_a, vec_b))
+    except Exception as exc:
+        logger.warning("compute_visual_similarity failed: %s", exc)
+        return None

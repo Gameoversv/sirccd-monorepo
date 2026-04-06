@@ -59,6 +59,33 @@ async def startup_event():
     except Exception as e:
         print(f"[WARN] No se pudieron cargar métricas del modelo: {e}")
 
+    # Pre-cargar el servicio de deduplicación completo (ResNet50 + CLIP) en background
+    # para evitar que la primera request bloquee descargando modelos
+    try:
+        import threading
+        def _preload_dedup():
+            try:
+                import numpy as np
+                from PIL import Image as _PIL
+                from db.session import SessionLocal
+                from services.deduplication_service import get_deduplication_service
+
+                db = SessionLocal()
+                try:
+                    svc = get_deduplication_service(db)
+                    # Warm up todos los embedders con una imagen dummy
+                    dummy = _PIL.fromarray(np.zeros((64, 64, 3), dtype=np.uint8))
+                    for name, emb in svc.embedders.items():
+                        emb.embed(dummy)
+                        print(f"[START] Modelo {name} pre-cargado en memoria")
+                finally:
+                    db.close()
+            except Exception as ex:
+                print(f"[WARN] Pre-carga dedup falló: {ex}")
+        threading.Thread(target=_preload_dedup, daemon=True).start()
+    except Exception as e:
+        print(f"[WARN] No se pudo iniciar pre-carga del servicio de dedup: {e}")
+
 
 @app.on_event("shutdown")
 async def shutdown_event():

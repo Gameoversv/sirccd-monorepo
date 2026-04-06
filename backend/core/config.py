@@ -79,6 +79,9 @@ class Settings(BaseSettings):
     GEO_DISTANCE_THRESHOLD: float = 50.0  # meters
     DEDUP_TIME_WINDOW_DAYS: int = 30  # days
 
+    # Visual gate for geo+visual dedup (cosine similarity threshold)
+    DEDUP_VISUAL_GATE_THRESHOLD: float = 0.82
+
     # Fusion score config (M-11)
     DEDUPLICATION_SCORE_THRESHOLD: float = 0.72
     DEDUPLICATION_VISUAL_WEIGHT_PRIMARY: float = 0.45

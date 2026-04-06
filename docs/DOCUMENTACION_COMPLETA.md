@@ -880,17 +880,23 @@ CIUDADANO                    SISTEMA                      OPERADOR
     |                           |                            |
 ```
 
-### 8.2 Estados de un Reporte
+### 8.2 Aprobacion y deduplicacion de reportes
+
+Cuando un reporte se aprueba (manual por operador, o automatico si confianza ML >= 0.75):
+
+1. Se ejecuta `_resolve_incident_dedup()`: geo (30m) + visual gate (cosine >= 0.82)
+2. Si hay incidente coincidente → el reporte se asocia al incidente existente
+3. Si no hay coincidencia → se crea un nuevo incidente con ese reporte
+
+### 8.3 Estados de un Reporte
 
 ```
-pending → processing → classified → [duplicate | resolved]
+pending → [approved | rejected]
 ```
 
-- **pending**: Recibido, esperando procesamiento
-- **processing**: Worker ML lo esta procesando
-- **classified**: ML completo, tipo y severidad asignados
-- **duplicate**: Identificado como duplicado, asociado a incidente existente
-- **resolved**: Resuelto
+- **pending**: Recibido, esperando revision
+- **approved**: Aprobado (manual o auto). Incidente creado o actualizado
+- **rejected**: Descartado por operador
 
 ### 8.3 Estados de un Incidente
 
@@ -1198,64 +1204,73 @@ La deduplicacion combina tres senales:
 - Score de similitud coseno entre vectores
 
 #### Signal 2: Proximidad Geografica
-- Calculo de distancia Haversine entre coordenadas
-- Normalizacion a score 0-1 (mas cercano = mayor score)
-- Radio configurable (ej: 100m)
+- Query ST_DWithin (PostGIS) en la columna Geography: radio de 30 metros
+- Candidatos ordenados por fecha de creacion (mas antiguo primero)
 
-#### Signal 3: Similitud Textual
-- Comparacion de descripciones (si disponibles)
-- TF-IDF o embeddings de texto
-- Score normalizado 0-1
+#### Signal 3: Similitud Visual (gate)
+- Cosine similarity entre embeddings ResNet50 de la imagen del reporte y la imagen del incidente candidato
+- Umbral: `DEDUP_VISUAL_GATE_THRESHOLD = 0.82`
+- Sin imagen disponible en reporte o candidato: no se fusiona (no hay geo-only fallback)
 
-### 14.3 Fusion de Scores
+### 14.3 Gate geo+visual en aprobacion
+
+El pipeline activo en produccion es un gate secuencial, **no** un score fusionado:
 
 ```python
-score_final = (w_visual * score_visual) +
-              (w_geo * score_geo) +
-              (w_text * score_text)
+# 1. Filtro geografico (PostGIS)
+candidatos = ST_DWithin(incidentes_abiertos, ubicacion_reporte, 30m)
 
-# Pesos tipicos:
-# w_visual = 0.5
-# w_geo = 0.35
-# w_text = 0.15
-
-# Umbral de duplicado: score_final >= 0.85
+# 2. Gate visual por cada candidato
+for candidato in candidatos:
+    if reporte.imagen is None: return None  # no fusionar
+    if candidato.imagen is None: continue   # saltar sin imagen
+    sim = cosine_similarity(embed(reporte.imagen), embed(candidato.imagen))
+    if sim >= 0.82:
+        return candidato  # fusionar
+return None  # crear nuevo incidente
 ```
 
-### 14.4 Indice FAISS
+### 14.4 Servicio FAISS (exploratorio / API)
 
-- Tipo: IndexFlatIP (Inner Product) o IndexIVFFlat
-- Dimension: 2048 (ResNet50) o 512 (CLIP)
-- Rebuild: Endpoint `/api/deduplication/rebuild` para reconstruir
-- Persistencia: Archivo binario en disco
+Disponible en `/api/v1/deduplication`. Combina tres senales con scores ponderados:
 
-### 14.5 Flujo
+```python
+score_final = (0.45 * score_visual_primario) +
+              (0.25 * score_visual_secundario) +  # CLIP
+              (0.20 * score_geo) +
+              (0.10 * score_texto)
+
+# Umbral: score_final >= DEDUPLICATION_SCORE_THRESHOLD (0.72)
+```
+
+- Indice FAISS IndexFlatIP, dimension 2048 (ResNet50) o 512 (CLIP)
+- Persistencia en `storage/faiss_index.bin` (volumen Docker `backend_storage`)
+- Rebuild via `POST /api/v1/deduplication/index/rebuild` (admin)
+
+### 14.5 Flujo completo en aprobacion
 
 ```
-Nuevo reporte llega
+Operador aprueba reporte  (o confianza ML >= 0.75 → autoaprueba)
     |
     v
-Extraer embedding visual
+_resolve_incident_dedup(db, report, report_image, log)
     |
-    v
-Buscar K vecinos en FAISS (K=10)
+    ├── Sin imagen del reporte → crear nuevo incidente
     |
-    v
-Para cada candidato:
-    ├── Calcular score visual (coseno)
-    ├── Calcular score geografico (Haversine)
-    └── Calcular score textual (si aplica)
+    ├── Sin candidatos geo (30m) → crear nuevo incidente
     |
-    v
-Fusionar scores con pesos
-    |
-    v
-Si max_score >= umbral:
-    → Marcar como duplicado
-    → Asociar al incidente del candidato
-Si max_score < umbral:
-    → Crear nuevo incidente
+    └── Para cada candidato geo:
+            ├── Sin imagen del candidato → saltar
+            ├── sim = cosine(embed(img_reporte), embed(img_candidato))
+            ├── sim >= 0.82 → fusionar con candidato
+            └── sim < 0.82 → saltar
+        Ningun candidato pasa → crear nuevo incidente
 ```
+
+### 14.6 Precarga de modelos
+
+Los embedders ResNet50 y CLIP se precalentam en un hilo de fondo al arrancar el backend.  
+Volumenes Docker: `torch_cache` (`/root/.cache/torch`) y `hf_cache` (`/root/.cache/huggingface`) evitan re-descarga entre reinicios.
 
 ---
 
@@ -1352,9 +1367,14 @@ services:
   postgres:    # BD principal + PostGIS
   redis:       # Cola de tareas
   minio:       # Object storage
-  backend:     # API FastAPI
-  worker:      # Worker RQ
+  minio-init:  # Job unico: crea buckets y permisos publicos
+  backend:     # API FastAPI (precarga embedders ResNet50+CLIP al arranque)
   frontend:    # Dashboard Next.js
+
+volumes:
+  backend_storage:   # Imagenes de reportes e indice FAISS
+  torch_cache:       # Cache PyTorch/torchvision (evita re-descarga)
+  hf_cache:          # Cache HuggingFace (modelos CLIP)
 ```
 
 ### CI/CD (planificado)

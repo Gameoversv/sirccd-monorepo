@@ -246,7 +246,7 @@ export default function IncidentsPage() {
               <ChevronDown className="h-3.5 w-3.5" />
             </button>
             {exportMenuOpen && (
-              <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-[1100]">
                 {[
                   { label: 'Exportar CSV', format: 'csv' as const },
                   { label: 'Exportar GeoJSON', format: 'geojson' as const },

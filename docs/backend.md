@@ -221,6 +221,9 @@ El backend es el nucleo del sistema SIRCCD. Es responsable de:
 | GET | `/api/incidents/{id}` | JWT | operator | Detalle de incidente con lista de reportes asociados |
 | PATCH | `/api/incidents/{id}` | JWT | operator | Actualiza estado, prioridad o asignacion |
 | POST | `/api/incidents/{id}/merge` | JWT | operator | Fusiona reportes en un incidente existente |
+| GET | `/api/incidents/{id}/priority-breakdown` | JWT | operator | Calcula y retorna el desglose de prioridad sin persistir (severidad, frecuencia, POIs, antiguedad) |
+| POST | `/api/incidents/{id}/after-image` | JWT | operator | Sube foto "despues" de reparacion al incidente |
+| PATCH | `/api/incidents/{id}/details` | JWT | operator | Actualiza campos editables: `estimated_repair_hours` |
 
 ### 5.4 Deduplicacion (`/api/deduplication`)
 
@@ -265,9 +268,55 @@ El backend es el nucleo del sistema SIRCCD. Es responsable de:
 
 ## 6. Pipeline de deduplicacion (detalle)
 
-### 6.1 Arquitectura multimodal
+### 6.1 Dos niveles de deduplicacion
 
-La deduplicacion combina tres senales independientes para determinar si dos reportes refieren al mismo dano:
+El sistema tiene dos mecanismos de deduplicacion con propositos distintos:
+
+**A) Gate geo+visual en aprobacion de reportes** (activo en produccion):  
+Se ejecuta sincrónicamente cuando un operador aprueba un reporte (o cuando se autoaprueba por confianza ML >= 0.75). Determina si el reporte debe fusionarse con un incidente existente o crear uno nuevo.
+
+**B) Servicio FAISS multimodal** (disponible via `/api/deduplication`):  
+Pipeline completo que combina embeddings visuales (FAISS), distancia geográfica y similitud textual con scores ponderados. Usado para análisis exploratorio y verificación de duplicados ad-hoc.
+
+### 6.2 Gate geo+visual (flujo de aprobacion)
+
+```
+   Reporte aprobado
+         |
+         v
+   ¿Tiene imagen?
+   No → crear nuevo incidente
+   Si ↓
+         v
+   ST_DWithin(30m) → candidatos geo
+   ¿Sin candidatos? → crear nuevo incidente
+         ↓
+   Para cada candidato:
+         |
+         v
+   ¿Candidato tiene imagen?
+   No → saltar (no fusionar sin evidencia visual)
+   Si ↓
+         v
+   compute_visual_similarity(img_reporte, img_incidente)
+   [ResNet50 embeddings, cosine similarity]
+         |
+         v
+   similitud >= DEDUP_VISUAL_GATE_THRESHOLD (0.82)?
+   Si → fusionar con incidente existente
+   No → probar siguiente candidato
+         |
+   Si ningun candidato pasa → crear nuevo incidente
+```
+
+La funcion `_resolve_incident_dedup()` en `api/routes/reports.py` implementa este flujo.  
+Las imagenes se cargan desde MinIO via `load_image_from_url()` en `services/deduplication_service.py`.
+
+### 6.3 Auto-aprobacion por confianza ML
+
+Cuando Roboflow retorna `confidence >= 0.75` al procesar un reporte, el sistema lo aprueba automaticamente sin intervencion del operador. El gate geo+visual se ejecuta igualmente con la imagen original del reporte.
+
+### 6.4 Servicio FAISS multimodal (DeduplicationService)
 
 ```
                     Imagen del reporte
@@ -290,34 +339,37 @@ La deduplicacion combina tres senales independientes para determinar si dos repo
               └────────────┼────────────┘
                            v
                     Score Fusionado
-                    (pesos: 0.5/0.35/0.15)
+                    (pesos configurables)
                            |
-                    ┌──────v──────┐
-                    │  Umbral     │
-                    │  >= 0.85    │
-                    └──────┬──────┘
-                     |           |
-                 Duplicado   No duplicado
+                    umbral >= DEDUPLICATION_SCORE_THRESHOLD
 ```
 
-### 6.2 Componentes
+### 6.5 Precarga de modelos al arranque
 
-1. **Embeddings visuales**: ResNet50 (2048-dim) o CLIP (512-dim). Se extraen en el worker y se almacenan como binary en el campo `embedding` del reporte.
-2. **Indice FAISS**: IndexFlatIP (inner product) para busqueda exacta de vecinos. Se persiste en disco como archivo binario.
-3. **Score geografico**: distancia Haversine entre coordenadas GPS, normalizada a 0-1 dentro de un radio configurable.
-4. **Score textual**: similitud TF-IDF entre descripciones (cuando disponibles).
-5. **Fusion**: promedio ponderado con pesos configurables (default: visual=0.5, geo=0.35, texto=0.15).
+Al iniciar el backend, `main.py` lanza en un hilo de fondo la precarga de los embedders (ResNet50 y CLIP). Esto evita que la primera solicitud de deduplicacion tarde varios segundos descargando pesos.  
+Los modelos se cachean en volumenes Docker persistentes: `torch_cache` y `hf_cache`.
 
-### 6.3 Parametros configurables
+### 6.6 Parametros configurables
 
 ```env
-FAISS_INDEX_PATH=data/faiss_index.bin
-DEDUP_SIMILARITY_THRESHOLD=0.85
-DEDUP_VISUAL_WEIGHT=0.5
-DEDUP_GEO_WEIGHT=0.35
-DEDUP_TEXT_WEIGHT=0.15
-DEDUP_GEO_RADIUS_METERS=100
-DEDUP_TOP_K=10
+# Gate geo+visual (aprobacion de reportes)
+DEDUP_VISUAL_GATE_THRESHOLD=0.82      # Cosine similarity minima para fusionar
+
+# Servicio FAISS
+FAISS_INDEX_PATH=storage/faiss_index.bin
+DEDUPLICATION_SCORE_THRESHOLD=0.72
+DEDUPLICATION_VISUAL_WEIGHT_PRIMARY=0.45
+DEDUPLICATION_VISUAL_WEIGHT_SECONDARY=0.25
+DEDUPLICATION_GEO_WEIGHT=0.20
+DEDUPLICATION_TEXT_WEIGHT=0.10
+DEDUPLICATION_VISUAL_MODEL=resnet50
+DEDUPLICATION_SECONDARY_MODEL=clip-vit-base-patch32
+DEDUPLICATION_ALLOW_HISTOGRAM_FALLBACK=true
+
+# Legacy (mantener compatibilidad)
+VISUAL_SIMILARITY_THRESHOLD=0.15
+GEO_DISTANCE_THRESHOLD=50.0
+DEDUP_TIME_WINDOW_DAYS=30
 ```
 
 ## 7. Sistema de autorizacion
@@ -347,32 +399,49 @@ DEDUP_TOP_K=10
 
 ```env
 # Base de datos
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/sirccd
-DATABASE_URL_SYNC=postgresql://user:pass@localhost:5432/sirccd
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=sirccd_user
+POSTGRES_PASSWORD=sirccd_password
+POSTGRES_DB=sirccd_db
 
 # Redis
-REDIS_URL=redis://localhost:6379/0
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
 
 # MinIO
 MINIO_ENDPOINT=localhost:9000
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
-MINIO_BUCKET=sirccd-reports
+MINIO_ACCESS_KEY=sirccd_admin
+MINIO_SECRET_KEY=sirccd_password_2026
 MINIO_SECURE=false
+MINIO_BUCKET_IMAGES=sirccd-images
+MINIO_BUCKET_MODELS=sirccd-models
 
 # Auth
 SECRET_KEY=your-secret-key-change-in-production
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-REFRESH_TOKEN_EXPIRE_DAYS=7
 ALGORITHM=HS256
 
-# ML
-ML_MODEL_PATH=models/best.pt
-ML_CONFIDENCE_THRESHOLD=0.5
+# Roboflow Inference
+ROBOFLOW_API_KEY=...
+ROBOFLOW_MODEL_ID=rd-roaddataset/5
+CONFIDENCE_THRESHOLD=0.4
 
-# FAISS / Deduplicacion
-FAISS_INDEX_PATH=data/faiss_index.bin
-DEDUP_SIMILARITY_THRESHOLD=0.85
+# Deduplicacion: gate geo+visual
+DEDUP_VISUAL_GATE_THRESHOLD=0.82
+
+# Deduplicacion: servicio FAISS
+FAISS_INDEX_PATH=storage/faiss_index.bin
+DEDUPLICATION_VISUAL_MODEL=resnet50
+DEDUPLICATION_SECONDARY_MODEL=clip-vit-base-patch32
+DEDUPLICATION_SCORE_THRESHOLD=0.72
+DEDUPLICATION_ALLOW_HISTOGRAM_FALLBACK=true
+
+# Prioridad
+PRIORITY_POI_RADIUS_METERS=500
+PRIORITY_DUPLICATE_RADIUS_METERS=100
+PRIORITY_DUPLICATE_TIME_WINDOW_DAYS=30
 ```
 
 Archivo de referencia: `.env.example`

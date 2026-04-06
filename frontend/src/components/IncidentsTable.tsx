@@ -59,7 +59,7 @@ function getPriorityBadge(priority: string, score?: number) {
       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${cls}`}>
         {priority}
       </span>
-      {score != null && (
+      {score != null && score > 0 && (
         <span className="text-xs text-gray-500 font-mono">{score.toFixed(1)}</span>
       )}
     </div>

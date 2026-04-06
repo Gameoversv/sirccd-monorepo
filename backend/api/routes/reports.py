@@ -33,6 +33,73 @@ from services.priority_service import get_priority_service
 router = APIRouter(prefix="/reportes", tags=["Reportes"])
 
 
+def _resolve_incident_dedup(db, report, report_image, log):
+    """
+    Busca un Incident existente para fusionar con el reporte dado.
+    Usa geo (30m) + visual gate (cosine similarity >= threshold).
+    Fallback a geo-only si las imágenes no están disponibles.
+    Retorna el Incident a fusionar, o None para crear uno nuevo.
+    """
+    from geoalchemy2.functions import ST_DWithin, ST_SetSRID, ST_MakePoint
+    from geoalchemy2.shape import to_shape as _to_shape
+    from services.deduplication_service import compute_visual_similarity, load_image_from_url
+    from core.config import settings
+
+    visual_gate = getattr(settings, "DEDUP_VISUAL_GATE_THRESHOLD", 0.60)
+
+    try:
+        pt = _to_shape(report.location)
+        geo_candidates = (
+            db.query(Incident)
+            .filter(
+                Incident.status.in_([IncidentStatus.OPEN, IncidentStatus.IN_PROGRESS]),
+                ST_DWithin(
+                    Incident.location,
+                    ST_SetSRID(ST_MakePoint(pt.x, pt.y), 4326),
+                    30.0,
+                ),
+            )
+            .order_by(Incident.created_at.asc())
+            .all()
+        )
+    except Exception as geo_err:
+        log.warning("Error geo dedup: %s", geo_err)
+        return None
+
+    if not geo_candidates:
+        return None
+
+    # Sin imagen del reporte nuevo → no podemos verificar visualmente → crear nuevo incidente
+    if report_image is None:
+        log.info("Reporte %s: sin imagen para dedup visual → nuevo incidente", report.id)
+        return None
+
+    for candidate in geo_candidates:
+        incident_img = load_image_from_url(candidate.before_image_url) if candidate.before_image_url else None
+
+        if incident_img is None:
+            # El incidente candidato no tiene imagen → no podemos verificar → saltar candidato
+            log.info("Incidente %s sin imagen, saltando para reporte %s", candidate.id, report.id)
+            continue
+
+        similarity = compute_visual_similarity(report_image, incident_img)
+
+        if similarity is None:
+            # Embedder no disponible → saltar candidato
+            log.warning("Visual check no disponible para reporte %s vs incidente %s, saltando", report.id, candidate.id)
+            continue
+
+        print(f" Dedup visual: reporte {report.id} vs incidente {candidate.id} sim={similarity:.3f} (gate={visual_gate})")
+
+        if similarity >= visual_gate:
+            log.info("Reporte %s → incidente %s (geo+visual, sim=%.3f)", report.id, candidate.id, similarity)
+            return candidate
+        else:
+            log.info("Reporte %s ≠ incidente %s (sim=%.3f < %.3f)", report.id, candidate.id, similarity, visual_gate)
+
+    return None
+
+
 # ── List reports ──────────────────────────────────────────────────────────────
 
 @router.get("", summary="Listar reportes con filtros y paginación")
@@ -159,37 +226,30 @@ def review_report(
 
         priority_service = get_priority_service(db)
 
-        # Dedup geo: buscar incidente abierto/en_progreso dentro de 150m con mismo tipo de daño
-        existing_incident = None
+        # Dedup geo+visual: buscar incidente cercano y verificar similitud visual
+        report_image_for_dedup = None
         try:
-            from geoalchemy2.functions import ST_DWithin, ST_SetSRID, ST_MakePoint
-            existing_incident = (
-                db.query(Incident)
-                .filter(
-                    Incident.damage_type == report.damage_type,
-                    Incident.status.in_([IncidentStatus.OPEN, IncidentStatus.IN_PROGRESS]),
-                    ST_DWithin(
-                        Incident.location,
-                        ST_SetSRID(ST_MakePoint(
-                            to_shape(report.location).x,
-                            to_shape(report.location).y,
-                        ), 4326),
-                        0.00135,  # ~150 metros en grados decimales
-                    ),
-                )
-                .order_by(Incident.created_at.asc())
-                .first()
-            )
-        except Exception as geo_err:
-            _log.warning("Error en búsqueda geo de incidente duplicado: %s", geo_err)
+            from services.deduplication_service import load_image_from_url
+            report_image_for_dedup = load_image_from_url(report.image_url)
+        except Exception:
+            pass
+
+        existing_incident = _resolve_incident_dedup(db, report, report_image_for_dedup, _log)
 
         if existing_incident:
             # Asociar reporte al incidente existente en lugar de crear uno nuevo
             incident_id = existing_incident.id
             _log.info(
-                "Reporte %s asociado a incidente existente %s (dedup geo, mismo tipo de daño, <150m)",
+                "Reporte %s asociado a incidente existente %s (dedup geo, <30m)",
                 report.id, existing_incident.id,
             )
+            # Recalcular prioridad del incidente existente (nuevo reporte puede subir score)
+            try:
+                priority_level, score = priority_service.calculate_priority(existing_incident)
+                existing_incident.priority = priority_level
+                existing_incident.priority_score = score
+            except Exception as prio_err:
+                _log.warning("Error recalculando prioridad para incidente %s: %s", existing_incident.id, prio_err)
         else:
             new_incident = Incident(
                 report_id=report.id,
@@ -386,6 +446,7 @@ async def create_report(
         # 3. Detección ML: siempre ejecutar inline (no hay worker RQ activo)
         job_id = None
         ml_ran_inline = False
+        priority_service = get_priority_service(db)
         try:
             import tempfile, requests as _req
             from pathlib import Path
@@ -425,8 +486,17 @@ async def create_report(
                 try:
                     from PIL import Image as _PILImage
                     dedup_image = _PILImage.open(image_local_path).convert("RGB")
+                    print(f" Imagen cargada para dedup: {image_local_path}")
                 except Exception as img_load_err:
                     print(f" Advertencia: no se pudo cargar imagen para deduplicación: {img_load_err}")
+                    # Intentar cargar desde URL directamente
+                    try:
+                        from services.deduplication_service import load_image_from_url
+                        dedup_image = load_image_from_url(new_report.image_url)
+                        if dedup_image:
+                            print(f" Imagen cargada desde URL para dedup")
+                    except Exception:
+                        pass
 
                 # Generar imagen anotada con bounding boxes
                 import json as _json, os as _os
@@ -472,6 +542,59 @@ async def create_report(
                 confidence = result.confidence
                 ml_ran_inline = True
                 print(f" Detección inline: {result.damage_type.value} ({result.severity.value}) conf={result.confidence:.2f}")
+
+                # Auto-aprobar si confianza >= 0.75
+                AUTO_APPROVE_THRESHOLD = 0.75
+                if result.confidence >= AUTO_APPROVE_THRESHOLD:
+                    try:
+                        new_report.status = ReportStatus.APPROVED
+                        new_report.reviewed_at = datetime.utcnow()
+                        db.commit()
+                        db.refresh(new_report)
+
+                        # Dedup geo+visual para auto-approve (dedup_image ya está en memoria)
+                        import logging as _auto_log
+                        existing_incident = _resolve_incident_dedup(
+                            db, new_report, dedup_image, _auto_log.getLogger(__name__)
+                        )
+                        if existing_incident:
+                            print(f" Auto-aprobado: reporte {new_report.id} → incidente existente {existing_incident.id}")
+                            try:
+                                pl, sc = priority_service.calculate_priority(existing_incident)
+                                existing_incident.priority = pl
+                                existing_incident.priority_score = sc
+                                db.commit()
+                            except Exception:
+                                pass
+                        else:
+                            new_incident = Incident(
+                                report_id=new_report.id,
+                                reported_by=new_report.user_id,
+                                location=new_report.location,
+                                address=new_report.address,
+                                city=new_report.city,
+                                province=new_report.province,
+                                damage_type=new_report.damage_type,
+                                severity=new_report.severity,
+                                priority=PriorityLevel.MEDIA,
+                                priority_score=0.0,
+                                status=IncidentStatus.OPEN,
+                                before_image_url=new_report.image_url,
+                                notes=new_report.description,
+                            )
+                            db.add(new_incident)
+                            db.flush()
+                            try:
+                                pl, sc = priority_service.calculate_priority(new_incident)
+                                new_incident.priority = pl
+                                new_incident.priority_score = sc
+                            except Exception:
+                                pass
+                            db.commit()
+                            print(f" Auto-aprobado: reporte {new_report.id} → nuevo incidente {new_incident.id}")
+                    except Exception as auto_err:
+                        print(f" Error en auto-aprobación: {auto_err}")
+                        db.rollback()
 
         except Exception as e:
             import traceback
