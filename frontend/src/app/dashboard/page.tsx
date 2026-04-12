@@ -15,6 +15,7 @@ import {
   TrendingUp,
   RefreshCw,
   Users,
+  Settings2,
   LogOut,
   FileText,
 } from 'lucide-react';
@@ -205,6 +206,15 @@ export default function DashboardPage() {
             >
               <Users className="w-4 h-4" />
               {t('nav.users')}
+            </Link>
+          )}
+          {user?.role === UserRole.ADMIN && (
+            <Link
+              href="/dashboard/settings"
+              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+            >
+              <Settings2 className="w-4 h-4" />
+              Ajustes
             </Link>
           )}
           <Link

@@ -324,6 +324,34 @@ export interface UpdateUserData {
   password?: string;
 }
 
+// Priority settings (admin)
+export interface PrioritySettings {
+  id: number;
+  weight_severity: number;
+  weight_age: number;
+  weight_damage_type: number;
+  weight_location: number;
+  weight_duplicates: number;
+  weights_total: number;
+  poi_radius_meters: number;
+  duplicate_radius_meters: number;
+  duplicate_time_window_days: number;
+  updated_by?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdatePrioritySettingsData {
+  weight_severity?: number;
+  weight_age?: number;
+  weight_damage_type?: number;
+  weight_location?: number;
+  weight_duplicates?: number;
+  poi_radius_meters?: number;
+  duplicate_radius_meters?: number;
+  duplicate_time_window_days?: number;
+}
+
 // Detailed incident from GET /incidents/{id}
 export interface IncidentDetail {
   id: number;

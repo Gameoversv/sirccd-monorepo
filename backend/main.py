@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from api.routes import health, auth, reports, deduplication, incidents, export, users, pois
+from api.routes import health, auth, reports, deduplication, incidents, export, users, pois, settings as settings_routes
 from core.config import settings
 from core.metrics import PrometheusMiddleware
 
@@ -42,6 +42,7 @@ app.include_router(incidents.router, prefix=f"{settings.API_V1_STR}/incidents", 
 app.include_router(pois.router, prefix=f"{settings.API_V1_STR}/pois", tags=["POIs"])
 app.include_router(export.router, prefix=f"{settings.API_V1_STR}/export", tags=["Exportaciones"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["Usuarios"])
+app.include_router(settings_routes.router, prefix=settings.API_V1_STR, tags=["Ajustes"])
 
 # Montar archivos estáticos (imágenes subidas)
 app.mount("/storage", StaticFiles(directory="storage"), name="storage")

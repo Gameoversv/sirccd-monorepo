@@ -12,6 +12,7 @@ from .report import Report, ReportStatus, DamageType, SeverityLevel
 from .incident import Incident, IncidentStatus, PriorityLevel
 from .poi import POI, POICategory
 from .metric import Metric
+from .priority_setting import PrioritySetting
 
 __all__ = [
     "Base",
@@ -32,4 +33,6 @@ __all__ = [
     "POICategory",
     # Metric
     "Metric",
+    # Priority settings
+    "PrioritySetting",
 ]

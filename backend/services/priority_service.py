@@ -19,6 +19,7 @@ from geoalchemy2.elements import WKTElement
 from models.incident import Incident, IncidentStatus, PriorityLevel
 from models.report import SeverityLevel, DamageType, Report
 from models.poi import POI
+from models.priority_setting import PrioritySetting
 from core.config import settings
 
 
@@ -58,6 +59,39 @@ class PriorityService:
     
     def __init__(self, db: Session):
         self.db = db
+
+    def _get_priority_settings(self) -> Optional[PrioritySetting]:
+        try:
+            return self.db.query(PrioritySetting).order_by(PrioritySetting.id.asc()).first()
+        except Exception:
+            return None
+
+    def _effective_weights(self, cfg: Optional[PrioritySetting] = None) -> tuple[float, float, float, float, float]:
+        cfg = cfg or self._get_priority_settings()
+
+        w_severity = float(cfg.weight_severity) if cfg else float(self.WEIGHT_SEVERITY)
+        w_age = float(cfg.weight_age) if cfg else float(self.WEIGHT_AGE)
+        w_damage = float(cfg.weight_damage_type) if cfg else float(self.WEIGHT_DAMAGE_TYPE)
+        w_location = float(cfg.weight_location) if cfg else float(self.WEIGHT_LOCATION)
+        w_duplicates = float(cfg.weight_duplicates) if cfg else float(self.WEIGHT_DUPLICATES)
+
+        total = w_severity + w_age + w_damage + w_location + w_duplicates
+        if total <= 0:
+            return (
+                float(self.WEIGHT_SEVERITY),
+                float(self.WEIGHT_AGE),
+                float(self.WEIGHT_DAMAGE_TYPE),
+                float(self.WEIGHT_LOCATION),
+                float(self.WEIGHT_DUPLICATES),
+            )
+
+        return (
+            w_severity / total,
+            w_age / total,
+            w_damage / total,
+            w_location / total,
+            w_duplicates / total,
+        )
     
     def calculate_priority_score(
         self,
@@ -77,30 +111,32 @@ class PriorityService:
             Tuple[float, PriorityLevel]: Score (0-100) y nivel de prioridad
         """
         score = 0.0
+        cfg = self._get_priority_settings()
+        w_severity, w_age, w_damage, w_location, w_duplicates = self._effective_weights(cfg)
         
         # 1. Score por severidad (35%)
         severity_score = self.SEVERITY_SCORES.get(incident.severity, 50)
-        score += severity_score * self.WEIGHT_SEVERITY
+        score += severity_score * w_severity
         
         # 2. Score por edad del incidente (20%)
         age_score = self._calculate_age_score(incident.created_at)
-        score += age_score * self.WEIGHT_AGE
+        score += age_score * w_age
         
         # 3. Score por tipo de daño (15%)
         damage_score = self.DAMAGE_TYPE_SCORES.get(incident.damage_type, 50)
-        score += damage_score * self.WEIGHT_DAMAGE_TYPE
+        score += damage_score * w_damage
         
         # 4. Score por ubicación - POIs cercanos (20%)
         if nearby_pois_count is None:
-            nearby_pois_count = self._count_nearby_pois(incident)
+            nearby_pois_count = self._count_nearby_pois(incident, cfg)
         location_score = self._calculate_location_score(nearby_pois_count)
-        score += location_score * self.WEIGHT_LOCATION
+        score += location_score * w_location
         
         # 5. Score por reportes duplicados en área (10%)
         if nearby_duplicates_count is None:
-            nearby_duplicates_count = self._count_nearby_duplicates(incident)
+            nearby_duplicates_count = self._count_nearby_duplicates(incident, cfg)
         duplicate_score = self._calculate_duplicate_score(nearby_duplicates_count)
-        score += duplicate_score * self.WEIGHT_DUPLICATES
+        score += duplicate_score * w_duplicates
         
         # Determinar nivel de prioridad
         priority_level = self._score_to_priority_level(score)
@@ -109,8 +145,10 @@ class PriorityService:
 
     def calculate_priority_breakdown(self, incident: Incident) -> dict:
         """Retorna desglose detallado del score de prioridad"""
-        nearby_pois_count = self._count_nearby_pois(incident)
-        nearby_duplicates_count = self._count_nearby_duplicates(incident)
+        cfg = self._get_priority_settings()
+        w_severity, w_age, w_damage, w_location, w_duplicates = self._effective_weights(cfg)
+        nearby_pois_count = self._count_nearby_pois(incident, cfg)
+        nearby_duplicates_count = self._count_nearby_duplicates(incident, cfg)
 
         severity_score = self.SEVERITY_SCORES.get(incident.severity, 50)
         age_score = self._calculate_age_score(incident.created_at)
@@ -119,11 +157,11 @@ class PriorityService:
         duplicate_score = self._calculate_duplicate_score(nearby_duplicates_count)
 
         return {
-            "severity":   {"score": round(severity_score * self.WEIGHT_SEVERITY, 2),   "raw": severity_score,   "weight": self.WEIGHT_SEVERITY,   "detail": str(incident.severity)},
-            "age":        {"score": round(age_score * self.WEIGHT_AGE, 2),              "raw": age_score,        "weight": self.WEIGHT_AGE,        "detail": f"{nearby_pois_count} POIs cercanos" if False else "antigüedad"},
-            "damage":     {"score": round(damage_score * self.WEIGHT_DAMAGE_TYPE, 2),   "raw": damage_score,     "weight": self.WEIGHT_DAMAGE_TYPE, "detail": str(incident.damage_type)},
-            "location":   {"score": round(location_score * self.WEIGHT_LOCATION, 2),   "raw": location_score,   "weight": self.WEIGHT_LOCATION,   "detail": f"{nearby_pois_count} POIs en 500m"},
-            "duplicates": {"score": round(duplicate_score * self.WEIGHT_DUPLICATES, 2), "raw": duplicate_score, "weight": self.WEIGHT_DUPLICATES,  "detail": f"{nearby_duplicates_count} reportes similares"},
+            "severity":   {"score": round(severity_score * w_severity, 2),   "raw": severity_score,   "weight": round(w_severity, 4),   "detail": str(incident.severity)},
+            "age":        {"score": round(age_score * w_age, 2),              "raw": age_score,        "weight": round(w_age, 4),        "detail": f"{nearby_pois_count} POIs cercanos" if False else "antigüedad"},
+            "damage":     {"score": round(damage_score * w_damage, 2),   "raw": damage_score,     "weight": round(w_damage, 4), "detail": str(incident.damage_type)},
+            "location":   {"score": round(location_score * w_location, 2),   "raw": location_score,   "weight": round(w_location, 4),   "detail": f"{nearby_pois_count} POIs en {self._poi_radius_meters(cfg)}m"},
+            "duplicates": {"score": round(duplicate_score * w_duplicates, 2), "raw": duplicate_score, "weight": round(w_duplicates, 4),  "detail": f"{nearby_duplicates_count} reportes visualmente similares"},
         }
 
     def recalculate_priority(self, incident_id: int) -> Incident:
@@ -240,7 +278,25 @@ class PriorityService:
         else:
             return (age_hours / 168) * 100
     
-    def _count_nearby_pois(self, incident: Incident) -> int:
+    def _poi_radius_meters(self, cfg: Optional[PrioritySetting] = None) -> int:
+        cfg = cfg or self._get_priority_settings()
+        if cfg and cfg.poi_radius_meters:
+            return int(cfg.poi_radius_meters)
+        return int(getattr(settings, 'PRIORITY_POI_RADIUS_METERS', 500))
+
+    def _duplicate_radius_meters(self, cfg: Optional[PrioritySetting] = None) -> int:
+        cfg = cfg or self._get_priority_settings()
+        if cfg and cfg.duplicate_radius_meters:
+            return int(cfg.duplicate_radius_meters)
+        return int(getattr(settings, 'PRIORITY_DUPLICATE_RADIUS_METERS', 100))
+
+    def _duplicate_window_days(self, cfg: Optional[PrioritySetting] = None) -> int:
+        cfg = cfg or self._get_priority_settings()
+        if cfg and cfg.duplicate_time_window_days:
+            return int(cfg.duplicate_time_window_days)
+        return int(getattr(settings, 'PRIORITY_DUPLICATE_TIME_WINDOW_DAYS', 30))
+
+    def _count_nearby_pois(self, incident: Incident, cfg: Optional[PrioritySetting] = None) -> int:
         """
         Cuenta POIs importantes dentro de radio configurable
         
@@ -250,7 +306,7 @@ class PriorityService:
         Returns:
             Número de POIs cercanos
         """
-        radius_meters = getattr(settings, 'PRIORITY_POI_RADIUS_METERS', 500)
+        radius_meters = self._poi_radius_meters(cfg)
         
         try:
             count = self.db.query(func.count(POI.id)).filter(
@@ -265,23 +321,18 @@ class PriorityService:
             # Si no hay tabla POI o hay error, retornar 0
             return 0
     
-    def _count_nearby_duplicates(self, incident: Incident) -> int:
+    def _count_nearby_duplicates(self, incident: Incident, cfg: Optional[PrioritySetting] = None) -> int:
         """
-        Cuenta reportes aprobados similares en el área cercana
-        
-        Args:
-            incident: Incidente a evaluar
-        
-        Returns:
-            Número de reportes duplicados cercanos
+        Cuenta reportes similares cercanos para prioridad.
+        Se aplica filtro visual para evitar falsos duplicados por cercania.
         """
-        radius_meters = getattr(settings, 'PRIORITY_DUPLICATE_RADIUS_METERS', 100)
-        time_window_days = getattr(settings, 'PRIORITY_DUPLICATE_TIME_WINDOW_DAYS', 30)
+        radius_meters = self._duplicate_radius_meters(cfg)
+        time_window_days = self._duplicate_window_days(cfg)
+        visual_gate = float(getattr(settings, "DEDUP_VISUAL_GATE_THRESHOLD", 0.82))
         cutoff_date = datetime.utcnow() - timedelta(days=time_window_days)
-        
+
         try:
-            # Buscar reportes aprobados del mismo tipo en el área
-            count = self.db.query(func.count(Report.id)).filter(
+            candidate_reports = self.db.query(Report).filter(
                 and_(
                     Report.id != incident.report_id,
                     Report.damage_type == incident.damage_type,
@@ -292,11 +343,37 @@ class PriorityService:
                         radius_meters
                     )
                 )
-            ).scalar()
-            return count or 0
+            ).all()
+
+            if not candidate_reports:
+                return 0
+
+            from services.deduplication_service import load_image_from_url, compute_visual_similarity
+
+            base_image = load_image_from_url(incident.before_image_url) if incident.before_image_url else None
+            if base_image is None:
+                return 0
+
+            similar_count = 0
+            for report in candidate_reports:
+                if not report.image_url:
+                    continue
+
+                candidate_image = load_image_from_url(report.image_url)
+                if candidate_image is None:
+                    continue
+
+                similarity = compute_visual_similarity(base_image, candidate_image)
+                if similarity is None:
+                    continue
+
+                if similarity >= visual_gate:
+                    similar_count += 1
+
+            return similar_count
         except Exception:
             return 0
-    
+
     def _calculate_location_score(self, nearby_pois_count: int) -> float:
         """
         Calcula score basado en proximidad a POIs (0-100)

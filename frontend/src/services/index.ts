@@ -4,4 +4,5 @@ export { reportsService } from './reportsService';
 export { incidentsService } from './incidentsService';
 export { poisService } from './poisService';
 export { metricsService } from './metricsService';
+export { prioritySettingsService } from './prioritySettingsService';
 export { default as apiClient, handleApiError, isApiError } from './api';
