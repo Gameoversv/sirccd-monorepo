@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/store';
 
 export default function Home() {
@@ -9,19 +10,20 @@ export default function Home() {
   const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    // Redirect based on auth status
-    if (isAuthenticated) {
-      router.push('/dashboard');
-    } else {
-      router.push('/login');
-    }
+    router.push(isAuthenticated ? '/dashboard' : '/login');
   }, [isAuthenticated, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900">SIRCCD</h1>
-        <p className="mt-2 text-gray-600">Cargando...</p>
+    <div className="flex min-h-screen items-center justify-center bg-background bg-gradient-mesh">
+      <div className="flex flex-col items-center gap-4 animate-fade-in">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-brand text-white shadow-elevated">
+          <ShieldCheck className="h-7 w-7" />
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight">SIRCCD</h1>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="h-2 w-2 rounded-full bg-primary-500 animate-pulse" />
+          Cargando...
+        </div>
       </div>
     </div>
   );

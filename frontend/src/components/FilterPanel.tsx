@@ -43,20 +43,20 @@ function FilterSection({ title, icon, children, defaultOpen = true }: SectionPro
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-gray-100 last:border-b-0">
+    <div className="border-b border-border last:border-b-0">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+        className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors"
       >
         <span className="flex items-center gap-2">
           {icon}
           {title}
         </span>
         {open ? (
-          <ChevronUp className="h-4 w-4 text-gray-400" />
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
         ) : (
-          <ChevronDown className="h-4 w-4 text-gray-400" />
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
         )}
       </button>
       {open && <div className="px-4 pb-3">{children}</div>}
@@ -120,15 +120,15 @@ export function FilterPanel({
     <div
       className={
         isHorizontal
-          ? 'bg-white rounded-lg shadow border border-gray-200'
-          : 'bg-white rounded-lg shadow border border-gray-200 w-72 flex-shrink-0'
+          ? 'rounded-xl border border-border bg-card shadow-soft'
+          : 'rounded-xl border border-border bg-card shadow-soft w-72 flex-shrink-0'
       }
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-primary-600" />
-          <span className="text-sm font-semibold text-gray-900">Filtros</span>
+          <span className="text-sm font-semibold text-foreground">Filtros</span>
           {activeCount > 0 && (
             <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 text-xs font-bold text-white bg-primary-600 rounded-full">
               {activeCount}
@@ -137,13 +137,13 @@ export function FilterPanel({
         </div>
         <div className="flex items-center gap-2">
           {total !== undefined && (
-            <span className="text-xs text-gray-500">{total} resultados</span>
+            <span className="text-xs text-muted-foreground">{total} resultados</span>
           )}
           {activeCount > 0 && (
             <button
               type="button"
               onClick={onClear}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-danger-600 transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-danger-600 transition-colors"
               title="Limpiar filtros"
             >
               <RotateCcw className="h-3 w-3" />
@@ -174,7 +174,7 @@ export function FilterPanel({
                       severity: filters.severity === sev ? undefined : sev,
                     })
                   }
-                  className="h-3.5 w-3.5 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  className="h-3.5 w-3.5 text-primary-600 border-border focus:ring-primary-500"
                 />
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getSeverityColor(sev)} group-hover:ring-1 ring-gray-300 transition-shadow`}
@@ -194,7 +194,7 @@ export function FilterPanel({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1">Mín</label>
+                <label className="block text-xs text-muted-foreground mb-1">Mín</label>
                 <input
                   type="number"
                   min={0}
@@ -207,12 +207,12 @@ export function FilterPanel({
                       priority_min: e.target.value ? Number(e.target.value) : undefined,
                     })
                   }
-                  className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+                  className="w-full rounded-md border border-border px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
                 />
               </div>
-              <span className="text-gray-400 pt-5">–</span>
+              <span className="text-muted-foreground pt-5">–</span>
               <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1">Máx</label>
+                <label className="block text-xs text-muted-foreground mb-1">Máx</label>
                 <input
                   type="number"
                   min={0}
@@ -225,7 +225,7 @@ export function FilterPanel({
                       priority_max: e.target.value ? Number(e.target.value) : undefined,
                     })
                   }
-                  className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+                  className="w-full rounded-md border border-border px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -253,8 +253,8 @@ export function FilterPanel({
                     }
                     className={`px-2 py-1 text-xs rounded-md border transition-colors ${
                       isActive
-                        ? 'bg-primary-50 border-primary-300 text-primary-700 font-medium'
-                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        ? 'bg-primary-500/10 border-primary-500/40 text-primary-700 dark:text-primary-300 font-medium'
+                        : 'border-border text-muted-foreground hover:bg-muted'
                     }`}
                   >
                     {preset.label}
@@ -285,7 +285,7 @@ export function FilterPanel({
                       status: filters.status === st ? undefined : st,
                     })
                   }
-                  className="h-3.5 w-3.5 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  className="h-3.5 w-3.5 text-primary-600 border-border focus:ring-primary-500"
                 />
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(st)} group-hover:ring-1 ring-gray-300 transition-shadow`}
@@ -304,7 +304,7 @@ export function FilterPanel({
           defaultOpen={false}
         >
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
               <input
                 type="checkbox"
                 checked={poiLayerFilters?.showPOIs ?? false}
@@ -315,36 +315,36 @@ export function FilterPanel({
                     showRiskBuffers: enabled ? (poiLayerFilters?.showRiskBuffers ?? false) : false,
                   });
                 }}
-                className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                className="h-4 w-4 text-primary-600 border-border rounded focus:ring-primary-500"
               />
               Mostrar capa de POIs
             </label>
 
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
               <input
                 type="checkbox"
                 checked={poiLayerFilters?.showRiskBuffers ?? false}
                 disabled={!(poiLayerFilters?.showPOIs ?? false)}
                 onChange={(e) => updatePoiLayerFilters({ showRiskBuffers: e.target.checked })}
-                className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 disabled:opacity-50"
+                className="h-4 w-4 text-primary-600 border-border rounded focus:ring-primary-500 disabled:opacity-50"
               />
               Mostrar zonas de riesgo peatonal
             </label>
 
             <div>
-              <p className="text-xs text-gray-500 mb-1">Categorías POI</p>
+              <p className="text-xs text-muted-foreground mb-1">Categorías POI</p>
               <div className="grid grid-cols-2 gap-1.5">
                 {(Object.keys(POI_CATEGORY_LABELS) as POILayerCategory[]).map((category) => (
                   <label
                     key={category}
-                    className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer"
+                    className="flex items-center gap-2 text-xs text-foreground cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={poiLayerFilters?.categories?.[category] ?? false}
                       disabled={!(poiLayerFilters?.showPOIs ?? false)}
                       onChange={(e) => updatePoiCategory(category, e.target.checked)}
-                      className="h-3.5 w-3.5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 disabled:opacity-50"
+                      className="h-3.5 w-3.5 text-primary-600 border-border rounded focus:ring-primary-500 disabled:opacity-50"
                     />
                     {POI_CATEGORY_LABELS[category]}
                   </label>
@@ -353,7 +353,7 @@ export function FilterPanel({
             </div>
 
             <div>
-              <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                 <span>Radio buffer</span>
                 <span>{poiLayerFilters?.bufferRadiusMeters ?? 120} m</span>
               </div>
@@ -375,30 +375,30 @@ export function FilterPanel({
 
         <FilterSection
           title="Rango de Fechas"
-          icon={<Calendar className="h-4 w-4 text-gray-500" />}
+          icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
           defaultOpen={false}
         >
           <div className="space-y-2">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Desde</label>
+              <label className="block text-xs text-muted-foreground mb-1">Desde</label>
               <input
                 type="date"
                 value={filters.date_from ?? ''}
                 onChange={(e) =>
                   onChange({ date_from: e.target.value || undefined })
                 }
-                className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+                className="w-full rounded-md border border-border px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Hasta</label>
+              <label className="block text-xs text-muted-foreground mb-1">Hasta</label>
               <input
                 type="date"
                 value={filters.date_to ?? ''}
                 onChange={(e) =>
                   onChange({ date_to: e.target.value || undefined })
                 }
-                className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+                className="w-full rounded-md border border-border px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
               />
             </div>
             {/* Quick-pick buttons */}
@@ -421,7 +421,7 @@ export function FilterPanel({
                       date_to: to.toISOString().split('T')[0],
                     });
                   }}
-                  className="px-2 py-1 text-xs rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="px-2 py-1 text-xs rounded-md border border-border text-muted-foreground hover:bg-muted transition-colors"
                 >
                   {preset.label}
                 </button>

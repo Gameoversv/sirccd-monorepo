@@ -2,14 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ShieldCheck, ArrowRight } from 'lucide-react';
 import { authService } from '@/services';
 import { useToast } from '@/hooks';
 import type { RegisterData } from '@/types';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ThemeToggle } from '@/components/ThemeToggle';
+
+const inputCls =
+  'block w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-shadow';
 
 export default function RegisterPage() {
   const router = useRouter();
   const toast = useToast();
-  
+
   const [formData, setFormData] = useState<RegisterData>({
     username: '',
     email: '',
@@ -21,14 +27,11 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (formData.password !== confirmPassword) {
       toast.error('Las contraseñas no coinciden');
       return;
     }
-
     setIsSubmitting(true);
-
     try {
       await authService.register(formData);
       toast.success('Registro exitoso. Por favor inicia sesión.');
@@ -42,118 +45,79 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Crear cuenta
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Regístrate en SIRCCD
-          </p>
+    <div className="min-h-screen bg-background bg-gradient-mesh">
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <LanguageSwitcher />
+        <ThemeToggle />
+      </div>
+
+      <div className="flex min-h-screen items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md animate-slide-up">
+          <div className="mb-8 flex items-center gap-3 justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-brand text-white shadow-soft">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight">SIRCCD</span>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-8 shadow-elevated">
+            <div className="space-y-1 mb-6 text-center">
+              <h1 className="text-2xl font-bold tracking-tight">Crear cuenta</h1>
+              <p className="text-sm text-muted-foreground">Regístrate en SIRCCD</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="full_name" className="text-sm font-medium">Nombre completo</label>
+                <input id="full_name" type="text" required className={inputCls}
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label htmlFor="username" className="text-sm font-medium">Usuario</label>
+                  <input id="username" type="text" required className={inputCls}
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="email" className="text-sm font-medium">Email</label>
+                  <input id="email" type="email" required className={inputCls}
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="password" className="text-sm font-medium">Contraseña</label>
+                <input id="password" type="password" required className={inputCls}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="confirm_password" className="text-sm font-medium">Confirmar contraseña</label>
+                <input id="confirm_password" type="password" required className={inputCls}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)} />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="group mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:shadow-elevated transition-all active:scale-[0.99] disabled:opacity-60"
+              >
+                {isSubmitting ? 'Registrando...' : 'Registrarse'}
+                {!isSubmitting && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
+              </button>
+
+              <p className="text-center text-sm text-muted-foreground">
+                ¿Ya tienes cuenta?{' '}
+                <a href="/login" className="font-medium text-primary-600 hover:text-primary-500 hover:underline underline-offset-4">
+                  Inicia sesión
+                </a>
+              </p>
+            </form>
+          </div>
         </div>
-        
-        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">
-              Nombre completo
-            </label>
-            <input
-              id="full_name"
-              name="full_name"
-              type="text"
-              required
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-              value={formData.full_name}
-              onChange={(e) =>
-                setFormData({ ...formData, full_name: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-              Usuario
-            </label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              required
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-              value={formData.username}
-              onChange={(e) =>
-                setFormData({ ...formData, username: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Contraseña
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700">
-              Confirmar contraseña
-            </label>
-            <input
-              id="confirm_password"
-              name="confirm_password"
-              type="password"
-              required
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Registrando...' : 'Registrarse'}
-          </button>
-
-          <div className="text-center">
-            <a
-              href="/login"
-              className="text-sm font-medium text-primary-600 hover:text-primary-500"
-            >
-              ¿Ya tienes cuenta? Inicia sesión
-            </a>
-          </div>
-        </form>
       </div>
     </div>
   );

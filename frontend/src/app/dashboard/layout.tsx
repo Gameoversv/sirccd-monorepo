@@ -1,26 +1,25 @@
 'use client';
 
 import { useAuth } from '@/hooks';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { Sidebar } from '@/components/Sidebar';
+import { Topbar } from '@/components/Topbar';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  useAuth(); // Protect all dashboard routes
+  useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Language toggle — fixed top-right */}
-      <div className="fixed top-3 right-4 z-50">
-        <LanguageSwitcher />
+    <div className="min-h-screen bg-background bg-gradient-mesh">
+      <Sidebar />
+      <div className="lg:pl-64">
+        <Topbar />
+        <main className="px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
+          <div className="mx-auto max-w-7xl">{children}</div>
+        </main>
       </div>
-      <main className="py-6">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {children}
-        </div>
-      </main>
     </div>
   );
 }

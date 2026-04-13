@@ -1,23 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import {
-  PlusCircle,
-  List,
   Activity,
   CheckCircle2,
   Clock,
-  AlertTriangle,
   BarChart3,
   Target,
   TrendingUp,
   RefreshCw,
-  Users,
-  Settings2,
-  LogOut,
-  FileText,
 } from 'lucide-react';
 import {
   BarChart,
@@ -31,10 +23,8 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store';
 import { incidentsService } from '@/services/incidentsService';
-import { UserRole } from '@/types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type Stats = Awaited<ReturnType<typeof incidentsService.getStats>>;
@@ -78,19 +68,22 @@ function KPICard({
   loading: boolean;
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start gap-4">
-      <div className={`p-3 rounded-lg ${color}`}>
-        <Icon className="w-5 h-5 text-white" />
+    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-soft transition-all hover:shadow-elevated hover:-translate-y-0.5">
+      <div className="flex items-start gap-4">
+        <div className={`p-3 rounded-lg text-white shadow-sog ${color}`}>
+          <Icon className="w-5 h-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">{title}</p>
+          {loading ? (
+            <div className="h-7 w-20 skeleton rounded mt-1.5" />
+          ) : (
+            <p className="text-2xl font-bold tracking-tight leading-tight mt-0.5">{value}</p>
+          )}
+          {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+        </div>
       </div>
-      <div className="min-w-0">
-        <p className="text-sm text-gray-500 font-medium">{title}</p>
-        {loading ? (
-          <div className="h-7 w-16 bg-gray-200 animate-pulse rounded mt-1" />
-        ) : (
-          <p className="text-2xl font-bold text-gray-900 leading-tight">{value}</p>
-        )}
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
-      </div>
+      <div className="pointer-events-none absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-gradient-to-br from-primary-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 }
@@ -100,11 +93,11 @@ function SLABar({ pct, loading, t }: { pct: number | null; loading: boolean; t: 
   const color = val >= 80 ? 'bg-green-500' : val >= 60 ? 'bg-yellow-500' : 'bg-red-500';
   return (
     <div>
-      <div className="flex justify-between text-xs text-gray-500 mb-1">
+      <div className="flex justify-between text-xs text-muted-foreground mb-1">
         <span>{t('dashboard.sla.compliance')}</span>
         <span className="font-semibold">{loading || pct == null ? '—' : `${val}%`}</span>
       </div>
-      <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-3 bg-muted rounded-full overflow-hidden">
         {!loading && pct != null && (
           <div
             className={`h-full rounded-full transition-all duration-700 ${color}`}
@@ -118,8 +111,7 @@ function SLABar({ pct, loading, t }: { pct: number | null; loading: boolean; t: 
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const { user, logout } = useAuthStore();
-  const router = useRouter();
+  const { user } = useAuthStore();
   const { t } = useTranslation();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -169,74 +161,25 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.title')}</h1>
-          <p className="mt-1 text-gray-500 text-sm">
+          <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.title')}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {t('dashboard.welcome', { name: user?.full_name || user?.username })}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={fetchStats}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm rounded-lg transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            {t('nav.refresh')}
-          </button>
-          <Link
-            href="/dashboard/incidents"
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-          >
-            <List className="w-4 h-4" />
-            {t('nav.viewIncidents')}
-          </Link>
-          <Link
-            href="/dashboard/reports"
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-          >
-            <FileText className="w-4 h-4" />
-            {t('nav.viewReports')}
-          </Link>
-          {(user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERVISOR) && (
-            <Link
-              href="/dashboard/users"
-              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-            >
-              <Users className="w-4 h-4" />
-              {t('nav.users')}
-            </Link>
-          )}
-          {user?.role === UserRole.ADMIN && (
-            <Link
-              href="/dashboard/settings"
-              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-            >
-              <Settings2 className="w-4 h-4" />
-              Ajustes
-            </Link>
-          )}
-          <Link
-            href="/dashboard/reports/new"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            <PlusCircle className="w-4 h-4" />
-            {t('nav.createReport')}
-          </Link>
-          <button
-            onClick={() => { logout(); router.push('/auth/login'); }}
-            aria-label={t('nav.logout')}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-red-200 hover:bg-red-50 text-red-600 text-sm rounded-lg transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            {t('nav.logout')}
-          </button>
-        </div>
+        <button
+          onClick={fetchStats}
+          disabled={loading}
+          className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          {t('nav.refresh')}
+        </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+        <div className="rounded-lg border border-danger-500/30 bg-danger-50 dark:bg-danger-500/10 text-danger-700 dark:text-danger-400 px-4 py-3 text-sm">
           {error}
         </div>
       )}
@@ -285,15 +228,15 @@ export default function DashboardPage() {
       </div>
 
       {/* SLA bar */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+      <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
         <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="w-5 h-5 text-gray-600" />
-          <h2 className="text-base font-semibold text-gray-900">{t('dashboard.sla.title')}</h2>
+          <TrendingUp className="w-5 h-5 text-muted-foreground" />
+          <h2 className="text-base font-semibold tracking-tight">{t('dashboard.sla.title')}</h2>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <SLABar pct={stats?.sla_compliance_pct ?? null} loading={loading} t={t} />
           <div>
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
               <span>{t('dashboard.sla.avgResolution')}</span>
               <span className="font-semibold">
                 {loading || !stats?.avg_resolution_hours
@@ -301,7 +244,7 @@ export default function DashboardPage() {
                   : `${fmt(stats.avg_resolution_hours)}h`}
               </span>
             </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-3 bg-muted rounded-full overflow-hidden">
               {!loading && stats?.avg_resolution_hours != null && (
                 <div
                   className="h-full bg-indigo-400 rounded-full transition-all duration-700"
@@ -318,10 +261,10 @@ export default function DashboardPage() {
       {/* Charts row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Incidents by status */}
-        <div className="col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">{t('dashboard.charts.byStatus')}</h2>
+        <div className="col-span-2 rounded-xl border border-border bg-card p-5 shadow-soft">
+          <h2 className="text-base font-semibold tracking-tight mb-4">{t('dashboard.charts.byStatus')}</h2>
           {loading ? (
-            <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
+            <div className="h-56 skeleton rounded-lg" />
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={statusChartData} barSize={28}>
@@ -342,10 +285,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Active vs Resolved donut */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">{t('dashboard.charts.activeVsResolved')}</h2>
+        <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
+          <h2 className="text-base font-semibold tracking-tight mb-4">{t('dashboard.charts.activeVsResolved')}</h2>
           {loading ? (
-            <div className="h-56 bg-gray-50 animate-pulse rounded-lg" />
+            <div className="h-56 skeleton rounded-lg" />
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
@@ -372,10 +315,10 @@ export default function DashboardPage() {
       </div>
 
       {/* Priority breakdown */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">{t('dashboard.charts.byPriority')}</h2>
+      <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
+        <h2 className="text-base font-semibold tracking-tight mb-4">{t('dashboard.charts.byPriority')}</h2>
         {loading ? (
-          <div className="h-44 bg-gray-50 animate-pulse rounded-lg" />
+          <div className="h-44 skeleton rounded-lg" />
         ) : (
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={priorityChartData} layout="vertical" barSize={22}>

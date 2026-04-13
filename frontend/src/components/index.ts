@@ -11,3 +11,6 @@ export { IncidentsTable } from './IncidentsTable';
 export { StatusTimeline } from './StatusTimeline';
 export { StatusUpdateModal } from './StatusUpdateModal';
 export { MiniMap } from './MiniMap';
+export { ThemeToggle } from './ThemeToggle';
+export { Sidebar } from './Sidebar';
+export { Topbar } from './Topbar';

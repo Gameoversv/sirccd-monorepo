@@ -4,24 +4,27 @@ import { ToastContainer } from '@/components';
 import { I18nProvider } from '@/components/I18nProvider';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: 'SIRCCD - Sistema de Reporte de Calles Dañadas',
+  title: 'SIRCCD — Sistema de Reporte de Calles Dañadas',
   description: 'Sistema Inteligente de Reporte Ciudadano de Calles Dañadas',
-  icons: {
-    icon: '/favicon.ico',
-  },
+  icons: { icon: '/favicon.ico' },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const themeScript = `(() => { try {
+  const t = localStorage.getItem('sirccd-theme');
+  const d = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (d) document.documentElement.classList.add('dark');
+} catch(_) {} })();`;
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className={`${inter.className} antialiased`}>
         <I18nProvider>
           {children}
           <ToastContainer />
