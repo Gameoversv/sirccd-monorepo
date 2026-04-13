@@ -65,10 +65,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  processing: 'bg-yellow-100 text-yellow-700',
-  pending: 'bg-blue-100 text-blue-700',
-  approved: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700',
+  processing: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-200',
+  pending: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200',
+  approved: 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-200',
+  rejected: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-200',
 };
 
 const SEVERITY_LABELS: Record<string, string> = {
@@ -78,9 +78,9 @@ const SEVERITY_LABELS: Record<string, string> = {
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
-  baja: 'bg-green-100 text-green-700',
-  media: 'bg-yellow-100 text-yellow-700',
-  alta: 'bg-red-100 text-red-700',
+  baja: 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-200',
+  media: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-200',
+  alta: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-200',
 };
 
 const PER_PAGE = 15;

@@ -48,12 +48,12 @@ function formatDate(dateString: string): string {
 
 function getPriorityBadge(priority: string, score?: number) {
   const colors: Record<string, string> = {
-    critica: 'bg-red-100 text-red-800',
-    alta: 'bg-orange-100 text-orange-800',
-    media: 'bg-amber-100 text-amber-800',
-    baja: 'bg-blue-100 text-blue-800',
+    critica: 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-200',
+    alta: 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-200',
+    media: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200',
+    baja: 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-200',
   };
-  const cls = colors[priority.toLowerCase()] || 'bg-gray-100 text-gray-700';
+  const cls = colors[priority.toLowerCase()] || 'bg-gray-100 text-gray-700 dark:bg-gray-700/40 dark:text-gray-100';
   return (
     <div className="flex items-center gap-1.5">
       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${cls}`}>

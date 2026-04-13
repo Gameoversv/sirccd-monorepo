@@ -46,10 +46,10 @@ function Toast({ id, type, message, duration = 5000, onClose }: ToastProps) {
   };
 
   const colors = {
-    success: 'bg-success-50 border-success-200',
-    error: 'bg-danger-50 border-danger-200',
-    warning: 'bg-warning-50 border-warning-200',
-    info: 'bg-primary-50 border-primary-200',
+    success: 'bg-success-50 border-success-200 dark:bg-success-500/15 dark:border-success-500/35',
+    error: 'bg-danger-50 border-danger-200 dark:bg-danger-500/15 dark:border-danger-500/35',
+    warning: 'bg-warning-50 border-warning-200 dark:bg-warning-500/15 dark:border-warning-500/35',
+    info: 'bg-primary-50 border-primary-200 dark:bg-primary-500/15 dark:border-primary-500/35',
   };
 
   return (
@@ -60,12 +60,12 @@ function Toast({ id, type, message, duration = 5000, onClose }: ToastProps) {
         <div className="flex items-start">
           <div className="flex-shrink-0">{icons[type]}</div>
           <div className="ml-3 w-0 flex-1 pt-0.5">
-            <p className="text-sm font-medium text-gray-900">{message}</p>
+            <p className="text-sm font-medium text-foreground">{message}</p>
           </div>
           <div className="ml-4 flex flex-shrink-0">
             <button
               type="button"
-              className="inline-flex rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="inline-flex rounded-md text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-background"
               onClick={onClose}
             >
               <span className="sr-only">Cerrar</span>

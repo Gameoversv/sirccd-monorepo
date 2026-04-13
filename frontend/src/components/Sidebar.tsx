@@ -29,7 +29,7 @@ export function Sidebar() {
   const { t } = useTranslation();
 
   const items: Item[] = [
-    { href: '/dashboard', label: t('nav.dashboard') || 'Dashboard', icon: LayoutDashboard },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/incidents', label: t('nav.viewIncidents') || 'Incidentes', icon: List },
     { href: '/dashboard/reports', label: t('nav.viewReports') || 'Reportes', icon: FileText },
     { href: '/dashboard/users', label: t('nav.users') || 'Usuarios', icon: Users, roles: [UserRole.ADMIN, UserRole.SUPERVISOR] },

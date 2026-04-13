@@ -17,6 +17,8 @@
     "nextPage": "Página siguiente"
   },
   "nav": {
+    "dashboard": "Dashboard",
+    "search": "Buscar...",
     "refresh": "Actualizar",
     "viewIncidents": "Ver Incidentes",
     "viewReports": "Ver Reportes",

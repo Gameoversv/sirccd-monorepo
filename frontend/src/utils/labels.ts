@@ -5,11 +5,11 @@ import type { DamageClass, SeverityLevel, IncidentStatus, ReportStatus } from '@
  */
 export function getSeverityColor(severity: SeverityLevel | string): string {
   const colors: Record<string, string> = {
-    baja: 'text-success-700 bg-success-50',
-    media: 'text-warning-700 bg-warning-50',
-    alta: 'text-danger-700 bg-danger-50',
+    baja: 'text-success-700 bg-success-50 dark:bg-success-500/20 dark:text-success-200',
+    media: 'text-warning-700 bg-warning-50 dark:bg-warning-500/20 dark:text-warning-200',
+    alta: 'text-danger-700 bg-danger-50 dark:bg-danger-500/20 dark:text-danger-200',
   };
-  return colors[String(severity).toLowerCase()] || 'text-gray-700 bg-gray-50';
+  return colors[String(severity).toLowerCase()] || 'text-gray-700 bg-gray-50 dark:bg-gray-700/40 dark:text-gray-100';
 }
 
 /**
@@ -18,21 +18,21 @@ export function getSeverityColor(severity: SeverityLevel | string): string {
 export function getStatusColor(status: IncidentStatus | string): string {
   const colors: Record<string, string> = {
     // Spanish (legacy frontend enums)
-    reportado: 'text-gray-700 bg-gray-50',
-    asignado: 'text-blue-700 bg-blue-50',
-    en_progreso: 'text-warning-700 bg-warning-50',
-    completado: 'text-success-700 bg-success-50',
-    verificado: 'text-primary-700 bg-primary-50',
-    cerrado: 'text-gray-700 bg-gray-100',
+    reportado: 'text-gray-700 bg-gray-50 dark:bg-gray-700/40 dark:text-gray-100',
+    asignado: 'text-blue-700 bg-blue-50 dark:bg-blue-500/20 dark:text-blue-200',
+    en_progreso: 'text-warning-700 bg-warning-50 dark:bg-warning-500/20 dark:text-warning-200',
+    completado: 'text-success-700 bg-success-50 dark:bg-success-500/20 dark:text-success-200',
+    verificado: 'text-primary-700 bg-primary-50 dark:bg-primary-500/20 dark:text-primary-200',
+    cerrado: 'text-gray-700 bg-gray-100 dark:bg-gray-700/40 dark:text-gray-100',
     // English (backend API values)
-    open: 'text-gray-700 bg-gray-50',
-    assigned: 'text-blue-700 bg-blue-50',
-    in_progress: 'text-warning-700 bg-warning-50',
-    resolved: 'text-success-700 bg-success-50',
-    verified: 'text-primary-700 bg-primary-50',
-    closed: 'text-gray-700 bg-gray-100',
+    open: 'text-gray-700 bg-gray-50 dark:bg-gray-700/40 dark:text-gray-100',
+    assigned: 'text-blue-700 bg-blue-50 dark:bg-blue-500/20 dark:text-blue-200',
+    in_progress: 'text-warning-700 bg-warning-50 dark:bg-warning-500/20 dark:text-warning-200',
+    resolved: 'text-success-700 bg-success-50 dark:bg-success-500/20 dark:text-success-200',
+    verified: 'text-primary-700 bg-primary-50 dark:bg-primary-500/20 dark:text-primary-200',
+    closed: 'text-gray-700 bg-gray-100 dark:bg-gray-700/40 dark:text-gray-100',
   };
-  return colors[String(status).toLowerCase()] || 'text-gray-700 bg-gray-50';
+  return colors[String(status).toLowerCase()] || 'text-gray-700 bg-gray-50 dark:bg-gray-700/40 dark:text-gray-100';
 }
 
 /**
@@ -40,13 +40,13 @@ export function getStatusColor(status: IncidentStatus | string): string {
  */
 export function getReportStatusColor(status: ReportStatus | string): string {
   const colors: Record<string, string> = {
-    pendiente: 'text-warning-700 bg-warning-50',
-    en_revision: 'text-blue-700 bg-blue-50',
-    aprobado: 'text-success-700 bg-success-50',
-    rechazado: 'text-danger-700 bg-danger-50',
-    duplicado: 'text-gray-700 bg-gray-100',
+    pendiente: 'text-warning-700 bg-warning-50 dark:bg-warning-500/20 dark:text-warning-200',
+    en_revision: 'text-blue-700 bg-blue-50 dark:bg-blue-500/20 dark:text-blue-200',
+    aprobado: 'text-success-700 bg-success-50 dark:bg-success-500/20 dark:text-success-200',
+    rechazado: 'text-danger-700 bg-danger-50 dark:bg-danger-500/20 dark:text-danger-200',
+    duplicado: 'text-gray-700 bg-gray-100 dark:bg-gray-700/40 dark:text-gray-100',
   };
-  return colors[String(status).toLowerCase()] || 'text-gray-700 bg-gray-50';
+  return colors[String(status).toLowerCase()] || 'text-gray-700 bg-gray-50 dark:bg-gray-700/40 dark:text-gray-100';
 }
 
 /**
@@ -101,12 +101,12 @@ export function getPriorityLabel(priority: string): string {
 
 export function getPriorityColor(priority: string): string {
   const colors: Record<string, string> = {
-    baja: 'text-blue-700 bg-blue-50',
-    media: 'text-amber-700 bg-amber-50',
-    alta: 'text-orange-700 bg-orange-50',
-    critica: 'text-red-700 bg-red-50',
+    baja: 'text-blue-700 bg-blue-50 dark:bg-blue-500/20 dark:text-blue-200',
+    media: 'text-amber-700 bg-amber-50 dark:bg-amber-500/20 dark:text-amber-200',
+    alta: 'text-orange-700 bg-orange-50 dark:bg-orange-500/20 dark:text-orange-200',
+    critica: 'text-red-700 bg-red-50 dark:bg-red-500/20 dark:text-red-200',
   };
-  return colors[String(priority).toLowerCase()] || 'text-gray-700 bg-gray-50';
+  return colors[String(priority).toLowerCase()] || 'text-gray-700 bg-gray-50 dark:bg-gray-700/40 dark:text-gray-100';
 }
 
 export function getReportStatusLabel(status: ReportStatus | string): string {

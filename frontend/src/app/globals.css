@@ -68,6 +68,91 @@
     background-size: 200% 100%;
     animation: shimmer 2s linear infinite;
   }
+
+  /*
+   * Compatibilidad dark-mode para vistas legacy que aun usan clases
+   * fijas de Tailwind (bg-white, text-gray-*, border-gray-*).
+   * Esto mejora contraste sin afectar el tema claro.
+   */
+  .dark .bg-white { background-color: hsl(222 47% 12%); }
+  .dark .bg-gray-50 { background-color: hsl(220 24% 15%); }
+  .dark .bg-gray-100 { background-color: hsl(220 24% 18%); }
+
+  .dark .border-gray-100,
+  .dark .border-gray-200,
+  .dark .border-gray-300 { border-color: hsl(var(--border)); }
+
+  .dark .text-gray-900 { color: hsl(var(--foreground)); }
+  .dark .text-gray-800 { color: hsl(210 40% 92%); }
+  .dark .text-gray-700 { color: hsl(215 20% 82%); }
+  .dark .text-gray-600 { color: hsl(215 20% 74%); }
+  .dark .text-gray-500 { color: hsl(215 20% 66%); }
+  .dark .text-gray-400 { color: hsl(215 16% 56%); }
+
+  .dark .hover\:bg-gray-50:hover { background-color: hsl(220 24% 17%); }
+  .dark .hover\:bg-gray-100:hover { background-color: hsl(220 24% 20%); }
+  .dark .hover\:bg-gray-200:hover { background-color: hsl(220 24% 23%); }
+
+  /* Controles de formulario legibles en dark mode */
+  .dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .dark select,
+  .dark textarea {
+    background-color: hsl(var(--card));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
+  }
+
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 0.9;
+  }
+
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.82);
+    opacity: 0.9;
+  }
+
+  /* Paletas suaves para badges/toasts en dark */
+  .dark .bg-success-50 { background-color: hsl(142 72% 29% / 0.24); }
+  .dark .bg-warning-50 { background-color: hsl(38 92% 40% / 0.24); }
+  .dark .bg-danger-50 { background-color: hsl(0 84% 40% / 0.24); }
+  .dark .bg-primary-50 { background-color: hsl(217 91% 60% / 0.22); }
+  .dark .bg-blue-50 { background-color: hsl(217 91% 60% / 0.22); }
+  .dark .bg-green-50 { background-color: hsl(142 72% 29% / 0.24); }
+  .dark .bg-yellow-50,
+  .dark .bg-amber-50,
+  .dark .bg-orange-50 { background-color: hsl(38 92% 40% / 0.24); }
+  .dark .bg-red-50 { background-color: hsl(0 84% 40% / 0.24); }
+
+  .dark .border-success-200,
+  .dark .border-warning-200,
+  .dark .border-danger-200,
+  .dark .border-primary-200,
+  .dark .border-blue-200,
+  .dark .border-green-200,
+  .dark .border-yellow-200,
+  .dark .border-amber-200,
+  .dark .border-orange-200,
+  .dark .border-red-200 { border-color: hsl(var(--border)); }
+
+  .dark .text-success-700,
+  .dark .text-green-700 { color: hsl(142 69% 80%); }
+  .dark .text-warning-700,
+  .dark .text-yellow-700,
+  .dark .text-amber-700,
+  .dark .text-orange-700 { color: hsl(42 100% 82%); }
+  .dark .text-danger-700,
+  .dark .text-red-700 { color: hsl(0 90% 84%); }
+  .dark .text-primary-700,
+  .dark .text-blue-700 { color: hsl(214 100% 84%); }
+
+  .dark .bg-gradient-mesh {
+    background-image:
+      radial-gradient(at 20% 20%, hsl(217 91% 60% / 0.08) 0, transparent 50%),
+      radial-gradient(at 80% 0%, hsl(250 91% 60% / 0.06) 0, transparent 50%),
+      radial-gradient(at 80% 80%, hsl(190 91% 60% / 0.05) 0, transparent 50%);
+  }
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
