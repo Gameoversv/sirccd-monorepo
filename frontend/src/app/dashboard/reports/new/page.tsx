@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -28,6 +28,7 @@ export default function NewReportPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const toast = useToast();
+  const [isHydrated, setIsHydrated] = useState(false);
 
   const [image, setImage] = useState<File | null>(null);
   const [coords, setCoords] = useState<Coordinates>({ latitude: null, longitude: null });
@@ -39,8 +40,17 @@ export default function NewReportPage() {
   const [submitting, setSubmitting] = useState(false);
   const { t } = useTranslation();
 
-  if (!isAuthenticated) {
-    router.replace('/auth/login');
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (isHydrated && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isHydrated, isAuthenticated, router]);
+
+  if (!isHydrated || !isAuthenticated) {
     return null;
   }
 
