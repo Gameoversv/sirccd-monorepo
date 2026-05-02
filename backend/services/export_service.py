@@ -631,6 +631,170 @@ class ExportService:
         return stats
 
 
+    # ============================================
+    # Exportación PDF — Reporte Mensual
+    # ============================================
+
+    def export_monthly_report_pdf(
+        self,
+        year: int,
+        month: int,
+        city: Optional[str] = None,
+        province: Optional[str] = None
+    ) -> bytes:
+        """
+        Generar reporte mensual en PDF.
+
+        Incluye: incidentes creados/resueltos, tiempo promedio de cierre,
+        distribución por prioridad y zonas críticas (top 5 ciudades).
+        """
+        from calendar import monthrange
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import cm
+        from reportlab.lib import colors
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
+
+        days_in_month = monthrange(year, month)[1]
+        date_from = datetime(year, month, 1)
+        date_to = datetime(year, month, days_in_month, 23, 59, 59)
+
+        query = self.db.query(Incident).filter(
+            Incident.created_at >= date_from,
+            Incident.created_at <= date_to
+        )
+        if city:
+            query = query.filter(Incident.city.ilike(f"%{city}%"))
+        if province:
+            query = query.filter(Incident.province.ilike(f"%{province}%"))
+        incidents = query.all()
+
+        total_created = len(incidents)
+        resolved_statuses = {IncidentStatus.RESOLVED, IncidentStatus.VERIFIED, IncidentStatus.CLOSED}
+        total_resolved = sum(1 for i in incidents if i.status in resolved_statuses)
+        total_in_progress = sum(1 for i in incidents if i.status == IncidentStatus.IN_PROGRESS)
+        total_open = sum(1 for i in incidents if i.status == IncidentStatus.OPEN)
+
+        resolution_times = []
+        for i in incidents:
+            if i.completed_at and i.created_at:
+                hours = (i.completed_at - i.created_at).total_seconds() / 3600
+                resolution_times.append(hours)
+        avg_resolution = sum(resolution_times) / len(resolution_times) if resolution_times else None
+
+        city_counts: Dict[str, int] = {}
+        for i in incidents:
+            key = i.city or "Sin ciudad"
+            city_counts[key] = city_counts.get(key, 0) + 1
+        top_cities = sorted(city_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+
+        priority_counts: Dict[str, int] = {}
+        for i in incidents:
+            p = i.priority.value
+            priority_counts[p] = priority_counts.get(p, 0) + 1
+
+        MONTH_NAMES = [
+            "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ]
+        month_name = MONTH_NAMES[month]
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, pagesize=A4,
+            rightMargin=2 * cm, leftMargin=2 * cm,
+            topMargin=2 * cm, bottomMargin=2 * cm
+        )
+
+        PRIMARY = colors.HexColor("#1e40af")
+        ALT_ROW = colors.HexColor("#eff6ff")
+        BORDER = colors.HexColor("#d1d5db")
+
+        base_table_style = TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), PRIMARY),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, ALT_ROW]),
+            ("GRID", (0, 0), (-1, -1), 0.5, BORDER),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ])
+
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            "ReportTitle", parent=styles["Heading1"],
+            fontSize=16, textColor=PRIMARY, spaceAfter=4
+        )
+        subtitle_style = ParagraphStyle(
+            "ReportSubtitle", parent=styles["Normal"],
+            fontSize=11, textColor=colors.gray, spaceAfter=16
+        )
+        section_style = ParagraphStyle(
+            "ReportSection", parent=styles["Heading2"],
+            fontSize=12, textColor=PRIMARY, spaceBefore=14, spaceAfter=6
+        )
+
+        def pct(n: int) -> str:
+            return f"{round(n / total_created * 100, 1)}%" if total_created > 0 else "0%"
+
+        elements = [
+            Paragraph("SIRCCD — Sistema Inteligente de Reporte y Control de Daños Viales", title_style),
+            Paragraph(f"Reporte Mensual: {month_name} {year}", subtitle_style),
+            Paragraph(
+                f"Generado: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC",
+                styles["Normal"]
+            ),
+            Spacer(1, 0.4 * cm),
+            Paragraph("Resumen Ejecutivo", section_style),
+        ]
+
+        kpi_data = [
+            ["Indicador", "Valor"],
+            ["Incidentes creados", str(total_created)],
+            ["Incidentes resueltos", str(total_resolved)],
+            ["Tasa de resolución", pct(total_resolved)],
+            ["En proceso", str(total_in_progress)],
+            ["Abiertos", str(total_open)],
+            ["Tiempo promedio de cierre",
+             f"{round(avg_resolution, 1)} h" if avg_resolution is not None else "N/A"],
+        ]
+        kpi_table = Table(kpi_data, colWidths=[10 * cm, 6 * cm])
+        kpi_table.setStyle(base_table_style)
+        elements.append(kpi_table)
+
+        elements.append(Paragraph("Distribución por Prioridad", section_style))
+        prio_data = [["Prioridad", "Cantidad", "Porcentaje"]]
+        for prio in ["critica", "alta", "media", "baja"]:
+            count = priority_counts.get(prio, 0)
+            prio_data.append([prio.capitalize(), str(count), pct(count)])
+        prio_table = Table(prio_data, colWidths=[6 * cm, 5 * cm, 5 * cm])
+        prio_table.setStyle(base_table_style)
+        elements.append(prio_table)
+
+        if top_cities:
+            elements.append(Paragraph("Zonas Críticas — Top 5 Ciudades", section_style))
+            zone_data = [["Ciudad", "Incidentes", "% del Total"]]
+            for city_name, count in top_cities:
+                zone_data.append([city_name, str(count), pct(count)])
+            zone_table = Table(zone_data, colWidths=[8 * cm, 5 * cm, 3 * cm])
+            zone_table.setStyle(base_table_style)
+            elements.append(zone_table)
+
+        elements.extend([
+            Spacer(1, 0.8 * cm),
+            Paragraph(
+                f"Período: 01/{month:02d}/{year} – {days_in_month:02d}/{month:02d}/{year}.",
+                styles["Normal"]
+            ),
+        ])
+
+        doc.build(elements)
+        return buffer.getvalue()
+
+
 def get_export_service(db: Session = Depends(get_db)) -> ExportService:
     """
     Dependencia para obtener instancia del servicio de exportación

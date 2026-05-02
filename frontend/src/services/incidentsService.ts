@@ -87,12 +87,33 @@ export const incidentsService = {
   },
 
   /**
+   * Export monthly PDF report
+   */
+  async exportMonthlyReport(year: number, month: number): Promise<Blob> {
+    const params = new URLSearchParams({ year: String(year), month: String(month) });
+    const response = await apiClient.get(
+      `/export/report/pdf?${params.toString()}`,
+      { responseType: 'blob' }
+    );
+    return response.data;
+  },
+
+  /**
    * Export KPI metrics as CSV
    */
   async exportKpis(groupBy: 'day' | 'week' | 'month' = 'day'): Promise<Blob> {
-    const params = new URLSearchParams({ group_by: groupBy });
+    const now = new Date();
+    const dateFrom = new Date(now.getFullYear(), now.getMonth(), 1);
+    const dateTo = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const params = new URLSearchParams({
+      date_from: dateFrom.toISOString(),
+      date_to: dateTo.toISOString(),
+      group_by: groupBy
+    });
+
     const response = await apiClient.get(
-      `/export/metrics/kpi?${params.toString()}`,
+      `/export/kpis/csv?${params.toString()}`,
       { responseType: 'blob' }
     );
     return response.data;

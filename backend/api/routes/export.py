@@ -421,6 +421,52 @@ async def export_kpis_csv(
 
 
 # ============================================
+# Exportación PDF — Reporte Mensual
+# ============================================
+
+@router.get(
+    "/report/pdf",
+    response_model=None,
+    summary="Exportar reporte mensual en PDF",
+    description="""
+    Genera un reporte mensual en formato PDF con:
+    - Resumen ejecutivo: incidentes creados, resueltos, tasa de resolución, tiempo promedio de cierre
+    - Distribución por prioridad (crítica, alta, media, baja)
+    - Zonas críticas: top 5 ciudades por cantidad de incidentes
+    """,
+    tags=["Exportaciones"]
+)
+async def export_monthly_report_pdf(
+    current_user: SupervisorUser,
+    year: int = Query(..., ge=2020, le=2100, description="Año del reporte"),
+    month: int = Query(..., ge=1, le=12, description="Mes del reporte (1-12)"),
+    city: Optional[str] = Query(None, max_length=100),
+    province: Optional[str] = Query(None, max_length=100),
+    export_service: ExportService = Depends(get_export_service)
+):
+    try:
+        pdf_bytes = export_service.export_monthly_report_pdf(
+            year=year,
+            month=month,
+            city=city,
+            province=province
+        )
+        filename = f"reporte_mensual_{year}_{month:02d}.pdf"
+        return StreamingResponse(
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al generar reporte PDF: {str(e)}"
+        )
+
+
+# ============================================
 # Endpoint de Estado
 # ============================================
 
@@ -439,11 +485,12 @@ async def get_export_status(
     """
     return ExportStatusResponse(
         service="export",
-        available_formats=["geojson", "csv"],
+        available_formats=["geojson", "csv", "pdf"],
         endpoints={
             "incidents_geojson": "/api/v1/export/incidents/geojson",
             "incidents_csv": "/api/v1/export/incidents/csv",
             "kpis_csv": "/api/v1/export/kpis/csv",
+            "report_pdf": "/api/v1/export/report/pdf",
             "status": "/api/v1/export/status"
         },
         limits={

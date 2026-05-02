@@ -151,7 +151,7 @@ export default function IncidentsPage() {
     }
   };
 
-  const handleExport = async (format: 'csv' | 'geojson' | 'kpi' = 'csv') => {
+  const handleExport = async (format: 'csv' | 'geojson' | 'kpi' | 'pdf' = 'csv') => {
     try {
       let blob: Blob;
       let filename: string;
@@ -160,6 +160,10 @@ export default function IncidentsPage() {
       if (format === 'kpi') {
         blob = await incidentsService.exportKpis();
         filename = `kpis_${dateStr}.csv`;
+      } else if (format === 'pdf') {
+        const now = new Date();
+        blob = await incidentsService.exportMonthlyReport(now.getFullYear(), now.getMonth() + 1);
+        filename = `reporte_mensual_${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}.pdf`;
       } else {
         blob = await incidentsService.exportIncidents({ format, filters: apiFilters });
         filename = `incidentes_${dateStr}.${format === 'geojson' ? 'geojson' : 'csv'}`;
@@ -248,9 +252,10 @@ export default function IncidentsPage() {
             {exportMenuOpen && (
               <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-[1100]">
                 {[
-                  { label: 'Exportar CSV', format: 'csv' as const },
-                  { label: 'Exportar GeoJSON', format: 'geojson' as const },
-                  { label: 'Exportar KPIs', format: 'kpi' as const },
+                  { label: t('incidents.exportCsv', { defaultValue: 'Exportar CSV' }), format: 'csv' as const },
+                  { label: t('incidents.exportGeojson', { defaultValue: 'Exportar GeoJSON' }), format: 'geojson' as const },
+                  { label: t('incidents.exportKpis', { defaultValue: 'Exportar KPIs' }), format: 'kpi' as const },
+                  { label: t('incidents.exportPdf', { defaultValue: 'Reporte PDF Mensual' }), format: 'pdf' as const },
                 ].map(({ label, format }) => (
                   <button
                     key={format}

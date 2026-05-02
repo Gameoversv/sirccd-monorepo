@@ -51,6 +51,9 @@ httpx==0.28.1
 schemathesis==3.27.1
 faker==33.0.0
 
+# PDF generation
+reportlab==4.2.5
+
 # Logging y monitoring
 python-json-logger==3.2.1
 prometheus-client==0.21.0
