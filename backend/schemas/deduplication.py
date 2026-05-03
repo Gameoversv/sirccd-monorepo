@@ -201,6 +201,79 @@ class DeduplicationStats(BaseModel):
     }
 
 
+# ── M-13: Spatial Clustering ─────────────────────────────────────────────────
+
+class ClusterMemberSchema(BaseModel):
+    """Miembro de un cluster espacial"""
+    report_id: int = Field(..., description="ID del reporte")
+    latitude: float = Field(..., description="Latitud")
+    longitude: float = Field(..., description="Longitud")
+    damage_type: str = Field(..., description="Tipo de daño")
+    severity: str = Field(..., description="Severidad")
+    confidence: float = Field(..., description="Confianza ML [0,1]")
+    status: str = Field(..., description="Estado del reporte")
+    created_at: str = Field(..., description="Fecha de creación (ISO 8601)")
+    is_primary: bool = Field(..., description="Si es el reporte primario del cluster")
+
+
+class SpatialClusterSchema(BaseModel):
+    """Un cluster de reportes geoespacialmente agrupados"""
+    cluster_id: int = Field(..., description="ID interno del cluster (de DBSCAN)")
+    primary_report_id: int = Field(..., description="Reporte con mayor confianza ML en el cluster")
+    member_count: int = Field(..., description="Número de reportes en el cluster")
+    centroid_lat: float = Field(..., description="Latitud del centroide del cluster")
+    centroid_lon: float = Field(..., description="Longitud del centroide del cluster")
+    damage_type: str = Field(..., description="Tipo de daño predominante")
+    radius_m: float = Field(..., description="Radio máximo del cluster desde el centroide (metros)")
+    members: List[ClusterMemberSchema] = Field(..., description="Reportes miembro del cluster")
+    oldest_report_at: Optional[str] = Field(None, description="Fecha del reporte más antiguo")
+    newest_report_at: Optional[str] = Field(None, description="Fecha del reporte más reciente")
+
+
+class SpatialClusteringResponse(BaseModel):
+    """Response de clustering espacial M-13"""
+    clusters: List[SpatialClusterSchema] = Field(..., description="Clusters detectados")
+    noise_report_ids: List[int] = Field(..., description="Reportes sin cluster (ruido DBSCAN)")
+    total_reports_analyzed: int = Field(..., description="Total de reportes analizados")
+    total_clustered: int = Field(..., description="Total de reportes en algún cluster")
+    total_noise: int = Field(..., description="Total de reportes noise")
+    eps_meters: float = Field(..., description="Radio DBSCAN usado (metros)")
+    min_samples: int = Field(..., description="min_samples DBSCAN usado")
+    damage_type_filter: Optional[str] = Field(None, description="Filtro de tipo de daño aplicado")
+    time_window_days: Optional[int] = Field(None, description="Ventana temporal aplicada (días)")
+
+
+class ClusterResolveRequest(BaseModel):
+    """Request para resolver un cluster (marcar duplicados)"""
+    cluster_id: int = Field(..., description="ID del cluster a resolver")
+    damage_type: Optional[str] = Field(None, description="Tipo de daño (para re-computar clusters)")
+    eps_meters: Optional[float] = Field(None, description="Radio DBSCAN (metros). Si omitido usa ajuste de admin.", gt=0)
+    min_samples: Optional[int] = Field(None, description="min_samples DBSCAN. Si omitido usa ajuste de admin.", ge=2)
+    time_window_days: Optional[int] = Field(None, description="Ventana temporal (días). Si omitido usa ajuste de admin.")
+
+
+class ClusterResolveSummary(BaseModel):
+    """Resultado de resolución de un cluster individual"""
+    cluster_id: int
+    primary_report_id: int
+    resolved: int
+    skipped: int
+
+
+class ClusterResolveResponse(BaseModel):
+    """Response de resolución de cluster(s)"""
+    primary_report_id: Optional[int] = Field(None, description="Reporte primario (resolución de cluster único)")
+    resolved_ids: List[int] = Field(..., description="IDs de reportes marcados como duplicados")
+    skipped_ids: List[int] = Field(default_factory=list, description="IDs ya rechazados previamente")
+    clusters_processed: Optional[int] = Field(None, description="Clusters procesados (modo batch)")
+    total_resolved: Optional[int] = Field(None, description="Total resueltos (modo batch)")
+    cluster_summaries: Optional[List[ClusterResolveSummary]] = Field(None, description="Resumen por cluster (modo batch)")
+    message: str = Field(..., description="Descripción del resultado")
+
+
+# ── End M-13 ─────────────────────────────────────────────────────────────────
+
+
 class IndexRebuildResponse(BaseModel):
     """Response de reconstrucción de índice"""
     success: bool = Field(..., description="Si la operación fue exitosa")

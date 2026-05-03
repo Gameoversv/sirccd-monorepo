@@ -336,6 +336,8 @@ export interface PrioritySettings {
   poi_radius_meters: number;
   duplicate_radius_meters: number;
   duplicate_time_window_days: number;
+  clustering_eps_meters: number;
+  clustering_min_samples: number;
   updated_by?: number | null;
   created_at: string;
   updated_at: string;
@@ -350,6 +352,8 @@ export interface UpdatePrioritySettingsData {
   poi_radius_meters?: number;
   duplicate_radius_meters?: number;
   duplicate_time_window_days?: number;
+  clustering_eps_meters?: number;
+  clustering_min_samples?: number;
 }
 
 // Detailed incident from GET /incidents/{id}

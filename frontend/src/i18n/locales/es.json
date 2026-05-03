@@ -14,7 +14,9 @@
     "page": "{{current}} / {{total}}",
     "showingRange": "Mostrando {{from}}–{{to}} de {{total}}",
     "prevPage": "Página anterior",
-    "nextPage": "Página siguiente"
+    "nextPage": "Página siguiente",
+    "retry": "Reintentar",
+    "view": "Ver"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -27,6 +29,110 @@
     "logout": "Salir",
     "backToDashboard": "Volver al dashboard"
   },
+  "filters": {
+    "title": "Filtros",
+    "results": "{{count}} resultados",
+    "clear": "Limpiar",
+    "severity": "Severidad",
+    "priorityScore": "Score de Prioridad",
+    "status": "Estado",
+    "poiLayers": "Capas POI y riesgo peatonal",
+    "showPoiLayer": "Mostrar capa de POIs",
+    "showRiskZones": "Mostrar zonas de riesgo peatonal",
+    "poiCategories": "Categorías POI",
+    "bufferRadius": "Radio buffer",
+    "dateRange": "Rango de Fechas",
+    "from": "Desde",
+    "to": "Hasta",
+    "min": "Mín",
+    "max": "Máx",
+    "presets": {
+      "critical": "Crítica (>=80)",
+      "high": "Alta (60-80)",
+      "medium": "Media (40-60)",
+      "low": "Baja (<40)"
+    },
+    "quick": {
+      "today": "Hoy",
+      "days7": "7 días",
+      "days30": "30 días",
+      "days90": "90 días"
+    },
+    "poi": {
+      "school": "Escuelas",
+      "hospital": "Hospitales",
+      "fire_station": "Bomberos",
+      "community_center": "Centros comunitarios"
+    }
+  },
+  "settings": {
+    "title": "Ajustes",
+    "priorityTitle": "Ajustes de Prioridad",
+    "subtitle": "Configura los pesos y radios usados para calcular el score.",
+    "adminOnly": "Esta sección es solo para administradores.",
+    "actions": {
+      "save": "Guardar cambios",
+      "reset": "Restablecer"
+    },
+    "errors": {
+      "load": "No se pudieron cargar los ajustes.",
+      "save": "No se pudieron guardar los ajustes.",
+      "weightsTotal": "La suma de pesos debe ser exactamente 100%."
+    },
+    "notice": {
+      "saved": "Ajustes guardados correctamente."
+    },
+    "weightsTotalTitle": "Suma de pesos",
+    "weightsTotalHint": "Debe sumar 100% para mantener el score en escala 0-100.",
+    "sections": {
+      "weights": "Pesos del score",
+      "ranges": "Radios y ventana",
+      "clustering": "Clustering espacial (M-13)"
+    },
+    "clusteringHint": "Parámetros DBSCAN usados en GET /deduplication/clusters para agrupar reportes del mismo daño por zona.",
+    "fields": {
+      "severity": {
+        "label": "Severidad",
+        "description": "Define cuánto impacta la gravedad del daño detectado."
+      },
+      "age": {
+        "label": "Antigüedad",
+        "description": "Aumenta prioridad según el tiempo transcurrido sin resolver."
+      },
+      "damageType": {
+        "label": "Tipo de daño",
+        "description": "Peso del tipo de daño (por ejemplo bache vs grieta)."
+      },
+      "location": {
+        "label": "Ubicación",
+        "description": "Cuánto influyen los puntos de interés cercanos."
+      },
+      "duplicates": {
+        "label": "Duplicados",
+        "description": "Peso de reportes visualmente similares en el área."
+      },
+      "poiRadius": {
+        "label": "Radio de POIs",
+        "description": "Distancia máxima para contar POIs y calcular el factor de ubicación."
+      },
+      "duplicateRadius": {
+        "label": "Radio de duplicados",
+        "description": "Radio geográfico para buscar reportes candidatos a duplicado."
+      },
+      "duplicateWindow": {
+        "label": "Ventana de duplicados",
+        "description": "Cantidad de días hacia atrás para considerar reportes similares."
+      },
+      "clusteringEps": {
+        "label": "Radio de cluster (eps)",
+        "description": "Radio máximo en metros para que dos reportes sean vecinos en DBSCAN."
+      },
+      "clusteringMinSamples": {
+        "label": "Mínimo de reportes por cluster",
+        "description": "Cantidad mínima de reportes para formar un cluster válido."
+      }
+    }
+  },
   "auth": {
     "login": {
       "title": "SIRCCD",
@@ -36,7 +142,14 @@
       "submit": "Iniciar sesión",
       "submitting": "Iniciando sesión...",
       "success": "Inicio de sesión exitoso",
-      "error": "Error al iniciar sesión"
+      "error": "Error al iniciar sesión",
+      "heroTitle": "Reportes ciudadanos, calles mas seguras.",
+      "heroSubtitle": "Sistema inteligente para detectar, priorizar y resolver incidencias en la via publica.",
+      "featureGeo": "Geolocalizacion automatica",
+      "featureMl": "Priorizacion con ML",
+      "featureDashboards": "Dashboards en tiempo real",
+      "noAccount": "No tienes cuenta?",
+      "registerCta": "Registrate"
     }
   },
   "dashboard": {
@@ -124,7 +237,39 @@
       "priorityRecalculated": "Prioridad recalculada",
       "priorityError": "Error al recalcular prioridad",
       "recalculate": "Recalcular prioridad",
-      "loadError": "No se pudo cargar el incidente"
+      "loadError": "No se pudo cargar el incidente",
+      "statusUpdated": "Estado actualizado a \"{{status}}\"",
+      "afterUploadSuccess": "Foto despues subida correctamente",
+      "uploadImageError": "Error al subir la imagen",
+      "estimateUpdated": "Tiempo estimado actualizado",
+      "estimateUpdateError": "Error al actualizar",
+      "hoursPlaceholder": "horas",
+      "saveEstimate": "Guardar",
+      "uploadAfterPhoto": "Subir foto despues"
+    },
+    "columns": {
+      "location": "Ubicacion",
+      "severity": "Severidad",
+      "priority": "Prioridad",
+      "status": "Estado",
+      "date": "Fecha",
+      "actions": "Acciones"
+    },
+    "exportCsv": "Exportar CSV",
+    "exportGeojson": "Exportar GeoJSON",
+    "exportKpis": "Exportar KPIs",
+    "noAddress": "Sin direccion",
+    "tableEmptyTitle": "Sin resultados",
+    "tableEmptyHint": "No se encontraron incidentes con los filtros seleccionados.",
+    "statusModal": {
+      "title": "Actualizar estado - Incidente #{{incidentId}}",
+      "currentStatus": "Estado actual",
+      "newStatus": "Nuevo estado",
+      "notesOptional": "Notas (opcional)",
+      "notesPlaceholder": "Describe el cambio de estado, observaciones, etc.",
+      "finalState": "Este incidente esta en estado final y no puede actualizarse.",
+      "confirmChange": "Confirmar cambio",
+      "updateError": "Error al actualizar el estado"
     }
   },
   "reports": {
@@ -145,7 +290,8 @@
       "status": "Estado",
       "city": "Ciudad",
       "created": "Creado",
-      "actions": "Acciones"
+      "actions": "Acciones",
+      "viewDetail": "Ver detalle"
     },
     "status": {
       "processing": "Procesando",
@@ -160,6 +306,13 @@
     },
     "detail": {
       "title": "Reporte #{{id}}",
+      "originalImage": "Foto original",
+      "mlDetection": "Detección ML",
+      "annotatedUnavailable": "Imagen anotada no disponible",
+      "modelMetrics": "Métricas del modelo",
+      "confidence": "Confianza",
+      "precision": "Precisión",
+      "recall": "Recall",
       "status": "Estado",
       "severity": "Severidad",
       "damageType": "Tipo de daño",
@@ -204,6 +357,22 @@
         "addressMax": "La dirección no puede superar 500 caracteres.",
         "cityMax": "La ciudad no puede superar 100 caracteres.",
         "provinceMax": "La provincia no puede superar 100 caracteres."
+      },
+      "geo": {
+        "unsupported": "Tu navegador no soporta geolocalizacion.",
+        "permissionDenied": "Permiso de ubicacion denegado. Ingresala manualmente.",
+        "positionUnavailable": "Ubicacion no disponible. Ingresala manualmente.",
+        "timeout": "Tiempo de espera agotado. Ingresala manualmente.",
+        "genericError": "Error al obtener ubicacion. Ingresala manualmente.",
+        "gettingLocation": "Obteniendo ubicacion...",
+        "useMyLocation": "Usar mi ubicacion",
+        "gettingAddress": "Obteniendo direccion...",
+        "success": "Ubicacion y direccion obtenidas exitosamente.",
+        "latitudeLabel": "Latitud",
+        "longitudeLabel": "Longitud",
+        "latitudePlaceholder": "-90 a 90",
+        "longitudePlaceholder": "-180 a 180",
+        "helpText": "El boton detecta tu ubicacion y rellena la direccion automaticamente. Tambien puedes ingresar las coordenadas manualmente."
       }
     }
   },
@@ -267,5 +436,29 @@
       "saveEdit": "Guardar cambios",
       "saveError": "Error al guardar"
     }
+  },
+  "map": {
+    "loading": "Cargando mapa...",
+    "errorLoading": "Error al cargar incidentes",
+    "noAddress": "Direccion no disponible",
+    "type": "Tipo",
+    "severity": "Severidad",
+    "priority": "Prioridad",
+    "score": "score",
+    "reported": "Reportado",
+    "viewDetails": "Ver detalles",
+    "heatmap": "Mapa de calor",
+    "heatmapLoading": "Cargando...",
+    "hideHeatmap": "Ocultar mapa de calor",
+    "weightBy": "Ponderar por",
+    "frequency": "Frecuencia",
+    "age": "Antiguedad",
+    "points": "{{count}} puntos",
+    "loadingLayer": "Cargando capa...",
+    "layerSummary": "{{count}} puntos ? buffer {{radius}} m",
+    "pedestrianBuffer": "Buffer peatonal",
+    "incidents": "incidentes",
+    "poiRisk": "POIs y riesgo peatonal",
+    "activeBuffers": "Buffers activos"
   }
 }

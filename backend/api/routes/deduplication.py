@@ -16,8 +16,12 @@ from schemas.deduplication import (
     DuplicateCheckResponse,
     SimilarReportsResponse,
     DeduplicationStats,
-    IndexRebuildResponse
+    IndexRebuildResponse,
+    SpatialClusteringResponse,
+    ClusterResolveRequest,
+    ClusterResolveResponse,
 )
+from services.spatial_clustering_service import SpatialClusteringService, get_clustering_params as _clustering_params
 
 router = APIRouter(prefix="/deduplication", tags=["Deduplicación"])
 
@@ -313,26 +317,221 @@ async def save_index(
 ):
     """
     Guarda el índice FAISS en disco
-    
+
     Returns:
         Confirmación y ruta del archivo
     """
     try:
-        
+
         from core.config import settings
         index_path = getattr(settings, 'FAISS_INDEX_PATH', './storage/faiss_index.bin')
-        
+
         dedup_service = get_deduplication_service(db)
         dedup_service.save_index(index_path)
-        
+
         return {
             "success": True,
             "message": "Índice guardado exitosamente",
             "path": index_path
         }
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error guardando índice: {str(e)}"
+        )
+
+
+# ── M-13: Spatial Clustering ──────────────────────────────────────────────────
+
+@router.get(
+    "/clusters",
+    response_model=SpatialClusteringResponse,
+    summary="Detectar clusters espaciales de reportes duplicados (M-13)",
+    description="""
+    Ejecuta DBSCAN geoespacial sobre todos los reportes activos y agrupa los que
+    reportan el mismo daño físico.
+
+    **Diferencia con /check (M-11):**
+    - `/check` evalúa si UN reporte nuevo es duplicado de uno existente.
+    - `/clusters` analiza TODA la base de datos y encuentra grupos de reportes
+      que ya existen y describen el mismo daño.
+
+    **Algoritmo:** DBSCAN con métrica Haversine.
+    - `eps_meters`: radio máximo para que dos reportes sean vecinos.
+    - `min_samples`: mínimo de reportes para formar un cluster.
+    - Reportes fuera de cualquier cluster se clasifican como *noise*.
+
+    **Uso típico:**
+    - Revisión periódica del dashboard para detectar acumulaciones de reportes.
+    - Antes de ejecutar `/clusters/resolve` para limpiar duplicados en batch.
+    """,
+)
+async def get_spatial_clusters(
+    current_user: ActiveUser,
+    db: DbSession,
+    eps_meters: Optional[float] = None,
+    min_samples: Optional[int] = None,
+    damage_type: Optional[str] = None,
+    time_window_days: Optional[int] = None,
+):
+    try:
+        eps, minsamp, window = _clustering_params(db, eps_meters, min_samples, time_window_days)
+        svc = SpatialClusteringService(
+            db=db,
+            eps_meters=eps,
+            min_samples=minsamp,
+            time_window_days=window,
+        )
+        result = svc.compute_clusters(damage_type=damage_type)
+
+        return {
+            "clusters": [
+                {
+                    "cluster_id": c.cluster_id,
+                    "primary_report_id": c.primary_report_id,
+                    "member_count": c.member_count,
+                    "centroid_lat": c.centroid_lat,
+                    "centroid_lon": c.centroid_lon,
+                    "damage_type": c.damage_type,
+                    "radius_m": c.radius_m,
+                    "members": [
+                        {
+                            "report_id": m.report_id,
+                            "latitude": m.latitude,
+                            "longitude": m.longitude,
+                            "damage_type": m.damage_type,
+                            "severity": m.severity,
+                            "confidence": m.confidence,
+                            "status": m.status,
+                            "created_at": m.created_at,
+                            "is_primary": m.is_primary,
+                        }
+                        for m in c.members
+                    ],
+                    "oldest_report_at": c.oldest_report_at,
+                    "newest_report_at": c.newest_report_at,
+                }
+                for c in result.clusters
+            ],
+            "noise_report_ids": result.noise_report_ids,
+            "total_reports_analyzed": result.total_reports_analyzed,
+            "total_clustered": result.total_clustered,
+            "total_noise": result.total_noise,
+            "eps_meters": result.eps_meters,
+            "min_samples": result.min_samples,
+            "damage_type_filter": result.damage_type_filter,
+            "time_window_days": result.time_window_days,
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error ejecutando clustering espacial: {str(e)}",
+        )
+
+
+@router.post(
+    "/clusters/resolve",
+    response_model=ClusterResolveResponse,
+    summary="Resolver cluster: marcar duplicados como rechazados (M-13)",
+    description="""
+    Dado un `cluster_id` retornado por `/clusters`, marca todos los reportes
+    **no-primarios** del cluster como `REJECTED` con razón de rechazo automática.
+
+    El **reporte primario** se determina por mayor confianza ML; en empate,
+    el más antiguo prevalece.
+
+    **Requiere:** Permisos de supervisor.
+    """,
+)
+async def resolve_cluster(
+    body: ClusterResolveRequest,
+    current_user: SupervisorUser,
+    db: DbSession,
+):
+    try:
+        eps, minsamp, window = _clustering_params(db, body.eps_meters, body.min_samples, body.time_window_days)
+        svc = SpatialClusteringService(
+            db=db,
+            eps_meters=eps,
+            min_samples=minsamp,
+            time_window_days=window,
+        )
+        result = svc.resolve_cluster(
+            cluster_id=body.cluster_id,
+            damage_type=body.damage_type,
+        )
+
+        return {
+            "primary_report_id": result["primary_report_id"],
+            "resolved_ids": result["resolved_ids"],
+            "skipped_ids": result["skipped_ids"],
+            "clusters_processed": None,
+            "total_resolved": None,
+            "cluster_summaries": None,
+            "message": result["message"],
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error resolviendo cluster: {str(e)}",
+        )
+
+
+@router.post(
+    "/clusters/resolve-all",
+    response_model=ClusterResolveResponse,
+    summary="Resolver todos los clusters en batch (M-13)",
+    description="""
+    Resuelve **todos** los clusters detectados de una sola operación.
+
+    Útil para limpieza periódica de la BD. Cada cluster conserva su reporte
+    primario; el resto se marca como `REJECTED`.
+
+    **Requiere:** Permisos de supervisor.
+    """,
+)
+async def resolve_all_clusters(
+    current_user: SupervisorUser,
+    db: DbSession,
+    eps_meters: Optional[float] = None,
+    min_samples: Optional[int] = None,
+    damage_type: Optional[str] = None,
+    time_window_days: Optional[int] = None,
+    min_cluster_size: int = 2,
+):
+    try:
+        eps, minsamp, window = _clustering_params(db, eps_meters, min_samples, time_window_days)
+        svc = SpatialClusteringService(
+            db=db,
+            eps_meters=eps,
+            min_samples=minsamp,
+            time_window_days=window,
+        )
+        result = svc.resolve_all_clusters(
+            damage_type=damage_type,
+            min_cluster_size=min_cluster_size,
+        )
+
+        return {
+            "primary_report_id": None,
+            "resolved_ids": result["resolved_ids"],
+            "skipped_ids": [],
+            "clusters_processed": result["clusters_processed"],
+            "total_resolved": result["total_resolved"],
+            "cluster_summaries": result["cluster_summaries"],
+            "message": (
+                f"{result['clusters_processed']} clusters procesados, "
+                f"{result['total_resolved']} reportes marcados como duplicados"
+            ),
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error en resolución batch: {str(e)}",
         )

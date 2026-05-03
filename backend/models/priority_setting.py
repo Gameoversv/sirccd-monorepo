@@ -27,6 +27,10 @@ class PrioritySetting(Base):
     duplicate_radius_meters = Column(Integer, nullable=False, default=100)
     duplicate_time_window_days = Column(Integer, nullable=False, default=30)
 
+    # Parametros DBSCAN para clustering espacial (M-13)
+    clustering_eps_meters = Column(Integer, nullable=False, default=50)
+    clustering_min_samples = Column(Integer, nullable=False, default=2)
+
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

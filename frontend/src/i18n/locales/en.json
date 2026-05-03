@@ -14,7 +14,9 @@
     "page": "{{current}} / {{total}}",
     "showingRange": "Showing {{from}}–{{to}} of {{total}}",
     "prevPage": "Previous page",
-    "nextPage": "Next page"
+    "nextPage": "Next page",
+    "retry": "Retry",
+    "view": "View"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -27,6 +29,110 @@
     "logout": "Sign out",
     "backToDashboard": "Back to dashboard"
   },
+  "filters": {
+    "title": "Filters",
+    "results": "{{count}} results",
+    "clear": "Clear",
+    "severity": "Severity",
+    "priorityScore": "Priority Score",
+    "status": "Status",
+    "poiLayers": "POI and pedestrian risk layers",
+    "showPoiLayer": "Show POI layer",
+    "showRiskZones": "Show pedestrian risk zones",
+    "poiCategories": "POI categories",
+    "bufferRadius": "Buffer radius",
+    "dateRange": "Date Range",
+    "from": "From",
+    "to": "To",
+    "min": "Min",
+    "max": "Max",
+    "presets": {
+      "critical": "Critical (>=80)",
+      "high": "High (60-80)",
+      "medium": "Medium (40-60)",
+      "low": "Low (<40)"
+    },
+    "quick": {
+      "today": "Today",
+      "days7": "7 days",
+      "days30": "30 days",
+      "days90": "90 days"
+    },
+    "poi": {
+      "school": "Schools",
+      "hospital": "Hospitals",
+      "fire_station": "Fire stations",
+      "community_center": "Community centers"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "priorityTitle": "Priority Settings",
+    "subtitle": "Configure weights and radii used to calculate the score.",
+    "adminOnly": "This section is for administrators only.",
+    "actions": {
+      "save": "Save changes",
+      "reset": "Reset"
+    },
+    "errors": {
+      "load": "Could not load settings.",
+      "save": "Could not save settings.",
+      "weightsTotal": "The sum of weights must be exactly 100%."
+    },
+    "notice": {
+      "saved": "Settings saved successfully."
+    },
+    "weightsTotalTitle": "Weights total",
+    "weightsTotalHint": "It must add up to 100% to keep the score in a 0-100 scale.",
+    "sections": {
+      "weights": "Score weights",
+      "ranges": "Radii and window",
+      "clustering": "Spatial clustering (M-13)"
+    },
+    "clusteringHint": "DBSCAN parameters used by GET /deduplication/clusters to group reports about the same damage by area.",
+    "fields": {
+      "severity": {
+        "label": "Severity",
+        "description": "Defines how much detected damage severity impacts priority."
+      },
+      "age": {
+        "label": "Age",
+        "description": "Increases priority based on unresolved time."
+      },
+      "damageType": {
+        "label": "Damage type",
+        "description": "Weight of damage type (for example pothole vs crack)."
+      },
+      "location": {
+        "label": "Location",
+        "description": "How much nearby points of interest influence priority."
+      },
+      "duplicates": {
+        "label": "Duplicates",
+        "description": "Weight of visually similar reports in the area."
+      },
+      "poiRadius": {
+        "label": "POI radius",
+        "description": "Maximum distance to count POIs and calculate location factor."
+      },
+      "duplicateRadius": {
+        "label": "Duplicate radius",
+        "description": "Geographic radius used to find duplicate candidate reports."
+      },
+      "duplicateWindow": {
+        "label": "Duplicate window",
+        "description": "Number of days back to consider similar reports."
+      },
+      "clusteringEps": {
+        "label": "Cluster radius (eps)",
+        "description": "Maximum radius in meters for two reports to be neighbors in DBSCAN."
+      },
+      "clusteringMinSamples": {
+        "label": "Min reports per cluster",
+        "description": "Minimum number of reports required to form a valid cluster."
+      }
+    }
+  },
   "auth": {
     "login": {
       "title": "SIRCCD",
@@ -36,7 +142,14 @@
       "submit": "Sign in",
       "submitting": "Signing in...",
       "success": "Successfully signed in",
-      "error": "Error signing in"
+      "error": "Error signing in",
+      "heroTitle": "Citizen reports, safer roads.",
+      "heroSubtitle": "Smart system to detect, prioritize, and resolve public road incidents.",
+      "featureGeo": "Automatic geolocation",
+      "featureMl": "ML prioritization",
+      "featureDashboards": "Real-time dashboards",
+      "noAccount": "Don't have an account?",
+      "registerCta": "Sign up"
     }
   },
   "dashboard": {
@@ -126,7 +239,39 @@
       "priorityRecalculated": "Priority recalculated",
       "priorityError": "Error recalculating priority",
       "recalculate": "Recalculate priority",
-      "loadError": "Could not load incident"
+      "loadError": "Could not load incident",
+      "statusUpdated": "Status updated to \"{{status}}\"",
+      "afterUploadSuccess": "After photo uploaded successfully",
+      "uploadImageError": "Error uploading image",
+      "estimateUpdated": "Estimated time updated",
+      "estimateUpdateError": "Error updating estimate",
+      "hoursPlaceholder": "hours",
+      "saveEstimate": "Save",
+      "uploadAfterPhoto": "Upload after photo"
+    },
+    "columns": {
+      "location": "Location",
+      "severity": "Severity",
+      "priority": "Priority",
+      "status": "Status",
+      "date": "Date",
+      "actions": "Actions"
+    },
+    "exportCsv": "Export CSV",
+    "exportGeojson": "Export GeoJSON",
+    "exportKpis": "Export KPIs",
+    "noAddress": "No address",
+    "tableEmptyTitle": "No results",
+    "tableEmptyHint": "No incidents found for the selected filters.",
+    "statusModal": {
+      "title": "Update status - Incident #{{incidentId}}",
+      "currentStatus": "Current status",
+      "newStatus": "New status",
+      "notesOptional": "Notes (optional)",
+      "notesPlaceholder": "Describe the status change, observations, etc.",
+      "finalState": "This incident is in a final state and cannot be updated.",
+      "confirmChange": "Confirm change",
+      "updateError": "Error updating status"
     }
   },
   "reports": {
@@ -147,7 +292,8 @@
       "status": "Status",
       "city": "City",
       "created": "Created",
-      "actions": "Actions"
+      "actions": "Actions",
+      "viewDetail": "View detail"
     },
     "status": {
       "processing": "Processing",
@@ -162,6 +308,13 @@
     },
     "detail": {
       "title": "Report #{{id}}",
+      "originalImage": "Original photo",
+      "mlDetection": "ML Detection",
+      "annotatedUnavailable": "Annotated image not available",
+      "modelMetrics": "Model metrics",
+      "confidence": "Confidence",
+      "precision": "Precision",
+      "recall": "Recall",
       "status": "Status",
       "severity": "Severity",
       "damageType": "Damage type",
@@ -206,6 +359,22 @@
         "addressMax": "Address cannot exceed 500 characters.",
         "cityMax": "City cannot exceed 100 characters.",
         "provinceMax": "Province cannot exceed 100 characters."
+      },
+      "geo": {
+        "unsupported": "Your browser does not support geolocation.",
+        "permissionDenied": "Location permission denied. Enter it manually.",
+        "positionUnavailable": "Location unavailable. Enter it manually.",
+        "timeout": "Request timed out. Enter it manually.",
+        "genericError": "Error getting location. Enter it manually.",
+        "gettingLocation": "Getting location...",
+        "useMyLocation": "Use my location",
+        "gettingAddress": "Getting address...",
+        "success": "Location and address obtained successfully.",
+        "latitudeLabel": "Latitude",
+        "longitudeLabel": "Longitude",
+        "latitudePlaceholder": "-90 to 90",
+        "longitudePlaceholder": "-180 to 180",
+        "helpText": "The button detects your location and fills the address automatically. You can also enter coordinates manually."
       }
     }
   },
@@ -269,5 +438,29 @@
       "saveEdit": "Save changes",
       "saveError": "Error saving"
     }
+  },
+  "map": {
+    "loading": "Loading map...",
+    "errorLoading": "Error loading incidents",
+    "noAddress": "Address not available",
+    "type": "Type",
+    "severity": "Severity",
+    "priority": "Priority",
+    "score": "score",
+    "reported": "Reported",
+    "viewDetails": "View details",
+    "heatmap": "Heat map",
+    "heatmapLoading": "Loading...",
+    "hideHeatmap": "Hide heat map",
+    "weightBy": "Weight by",
+    "frequency": "Frequency",
+    "age": "Age",
+    "points": "{{count}} points",
+    "loadingLayer": "Loading layer...",
+    "layerSummary": "{{count}} points ? {{radius}} m buffer",
+    "pedestrianBuffer": "Pedestrian buffer",
+    "incidents": "incidents",
+    "poiRisk": "POIs and pedestrian risk",
+    "activeBuffers": "Active buffers"
   }
 }

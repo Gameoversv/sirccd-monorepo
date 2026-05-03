@@ -103,7 +103,7 @@ function ReportDetailModal({
   const [showReject, setShowReject] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imgTab, setImgTab] = useState<'original' | 'annotated'>('original');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const handleApprove = async () => {
     setReviewing(true);
@@ -187,7 +187,7 @@ function ReportDetailModal({
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                Foto original
+                {t('reports.detail.originalImage')}
               </button>
               <button
                 onClick={() => setImgTab('annotated')}
@@ -197,7 +197,7 @@ function ReportDetailModal({
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                Detección ML
+                {t('reports.detail.mlDetection')}
                 {bboxCount > 0 && (
                   <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
                     {bboxCount}
@@ -216,12 +216,12 @@ function ReportDetailModal({
             ) : annotatedSrc ? (
               <img
                 src={annotatedSrc}
-                alt={`Reporte ${report.id} - detección`}
+                alt={`Report ${report.id} - detection`}
                 className="w-full object-contain max-h-96 bg-gray-50"
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-48 text-gray-400 text-sm gap-2">
-                <span>Imagen anotada no disponible</span>
+                <span>{t('reports.detail.annotatedUnavailable')}</span>
                 <span className="text-xs text-gray-400">(generada en reportes nuevos)</span>
               </div>
             )}
@@ -229,23 +229,25 @@ function ReportDetailModal({
 
           {/* ML Metrics */}
           <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Métricas del modelo</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              {t('reports.detail.modelMetrics')}
+            </p>
             <div className="grid grid-cols-4 gap-2 text-center">
               <div className="bg-white rounded-lg py-2 px-1 border border-gray-100">
                 <p className="text-base font-bold text-gray-900">{(report.confidence * 100).toFixed(0)}%</p>
-                <p className="text-xs text-gray-500 mt-0.5">Confianza</p>
+                <p className="text-xs text-gray-500 mt-0.5">{t('reports.detail.confidence')}</p>
               </div>
               <div className="bg-white rounded-lg py-2 px-1 border border-gray-100">
                 <p className="text-base font-bold text-blue-700">
                   {report.model_precision != null ? (report.model_precision * 100).toFixed(1) + '%' : '—'}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">Precisión</p>
+                <p className="text-xs text-gray-500 mt-0.5">{t('reports.detail.precision')}</p>
               </div>
               <div className="bg-white rounded-lg py-2 px-1 border border-gray-100">
                 <p className="text-base font-bold text-blue-700">
                   {report.model_recall != null ? (report.model_recall * 100).toFixed(1) + '%' : '—'}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">Recall</p>
+                <p className="text-xs text-gray-500 mt-0.5">{t('reports.detail.recall')}</p>
               </div>
               <div className="bg-white rounded-lg py-2 px-1 border border-gray-100">
                 <p className="text-base font-bold text-blue-700">
@@ -287,7 +289,7 @@ function ReportDetailModal({
             <div>
               <span className="text-gray-500">{t('reports.detail.created')}</span>
               <p className="font-medium text-gray-900">
-                {new Date(report.created_at).toLocaleString('es-DO')}
+                {new Date(report.created_at).toLocaleString(i18n.language?.startsWith('en') ? 'en-US' : 'es-DO')}
               </p>
             </div>
             <div>
@@ -309,7 +311,7 @@ function ReportDetailModal({
             <MiniMap
               lat={report.latitude}
               lng={report.longitude}
-              label={report.address || 'Ubicación del reporte'}
+              label={report.address || t('reports.new.locationSection')}
               height="180px"
               zoom={16}
             />
@@ -341,7 +343,7 @@ function ReportDetailModal({
                       onClick={() => setShowReject(false)}
                       className="px-4 py-2 border border-gray-200 text-sm rounded-lg hover:bg-gray-50"
                     >
-                      Cancelar
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </div>
@@ -380,7 +382,7 @@ export default function ReportsPage() {
   const { user } = useAuthStore();
   const canReview =
     user?.role === UserRole.ADMIN || user?.role === UserRole.SUPERVISOR;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -437,7 +439,7 @@ export default function ReportsPage() {
   }, [search, statusFilter, severityFilter]);
 
   const fmtDate = (s: string) =>
-    new Date(s).toLocaleDateString('es-DO', {
+    new Date(s).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'es-DO', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -469,9 +471,9 @@ export default function ReportsPage() {
             <FileText className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('reports.title')}</h1>
             <p className="text-sm text-gray-500">
-              {total} reporte{total !== 1 ? 's' : ''} en el sistema
+              {t('reports.count', { count: total })}
             </p>
           </div>
         </div>

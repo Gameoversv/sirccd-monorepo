@@ -19,6 +19,10 @@ class PrioritySettingsUpdateRequest(BaseModel):
     duplicate_radius_meters: Optional[int] = Field(None, ge=1, le=5000)
     duplicate_time_window_days: Optional[int] = Field(None, ge=1, le=365)
 
+    # M-13: DBSCAN clustering params
+    clustering_eps_meters: Optional[int] = Field(None, ge=5, le=2000)
+    clustering_min_samples: Optional[int] = Field(None, ge=2, le=20)
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -30,6 +34,8 @@ class PrioritySettingsUpdateRequest(BaseModel):
                 "poi_radius_meters": 500,
                 "duplicate_radius_meters": 100,
                 "duplicate_time_window_days": 30,
+                "clustering_eps_meters": 50,
+                "clustering_min_samples": 2,
             }
         }
     )
@@ -46,6 +52,8 @@ class PrioritySettingsResponse(BaseModel):
     poi_radius_meters: int
     duplicate_radius_meters: int
     duplicate_time_window_days: int
+    clustering_eps_meters: int
+    clustering_min_samples: int
     updated_by: Optional[int] = None
     created_at: datetime
     updated_at: datetime

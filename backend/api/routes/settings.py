@@ -30,6 +30,8 @@ def _ensure_priority_settings(db: Session) -> PrioritySetting:
         poi_radius_meters=int(getattr(app_settings, "PRIORITY_POI_RADIUS_METERS", 500)),
         duplicate_radius_meters=int(getattr(app_settings, "PRIORITY_DUPLICATE_RADIUS_METERS", 100)),
         duplicate_time_window_days=int(getattr(app_settings, "PRIORITY_DUPLICATE_TIME_WINDOW_DAYS", 30)),
+        clustering_eps_meters=int(getattr(app_settings, "CLUSTERING_EPS_METERS", 50)),
+        clustering_min_samples=int(getattr(app_settings, "CLUSTERING_MIN_SAMPLES", 2)),
     )
     db.add(row)
     db.commit()
@@ -56,6 +58,8 @@ def _to_response(row: PrioritySetting) -> PrioritySettingsResponse:
         poi_radius_meters=int(row.poi_radius_meters),
         duplicate_radius_meters=int(row.duplicate_radius_meters),
         duplicate_time_window_days=int(row.duplicate_time_window_days),
+        clustering_eps_meters=int(row.clustering_eps_meters),
+        clustering_min_samples=int(row.clustering_min_samples),
         updated_by=row.updated_by,
         created_at=row.created_at,
         updated_at=row.updated_at,
