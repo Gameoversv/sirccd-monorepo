@@ -63,7 +63,9 @@
       "hospital": "Hospitals",
       "fire_station": "Fire stations",
       "community_center": "Community centers"
-    }
+    },
+    "zone": "Administrative zone",
+    "allZones": "All zones"
   },
   "settings": {
     "title": "Settings",

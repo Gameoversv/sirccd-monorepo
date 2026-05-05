@@ -13,8 +13,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_, desc, asc
-from geoalchemy2.functions import ST_X, ST_Y
-from datetime import datetime, timedelta
+from geoalchemy2.functions import ST_X, ST_Y, ST_Within
+from datetime import datetime, timedelta, date
 import math
 
 from db.session import get_db
@@ -56,6 +56,9 @@ def list_incidents(
     severity: Optional[SeverityLevelEnum] = Query(None, description="Filtrar por severidad"),
     city: Optional[str] = Query(None, max_length=100, description="Filtrar por ciudad"),
     is_verified: Optional[bool] = Query(None, description="Filtrar por verificación"),
+    date_from: Optional[date] = Query(None, description="Fecha inicio (YYYY-MM-DD)"),
+    date_to: Optional[date] = Query(None, description="Fecha fin (YYYY-MM-DD)"),
+    zone_id: Optional[int] = Query(None, description="Filtrar por zona administrativa"),
     
     # Paginación y ordenamiento
     skip: int = Query(0, ge=0, description="Registros a saltar"),
@@ -108,7 +111,19 @@ def list_incidents(
     
     if is_verified is not None:
         filters.append(Incident.is_verified == is_verified)
-    
+
+    if date_from is not None:
+        filters.append(Incident.created_at >= datetime.combine(date_from, datetime.min.time()))
+
+    if date_to is not None:
+        filters.append(Incident.created_at <= datetime.combine(date_to, datetime.max.time()))
+
+    if zone_id is not None:
+        from models.zone import Zone
+        zone = db.query(Zone).filter(Zone.id == zone_id).first()
+        if zone is not None:
+            filters.append(ST_Within(Incident.location, zone.boundary))
+
     if filters:
         query = query.filter(and_(*filters))
     

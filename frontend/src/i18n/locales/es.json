@@ -63,7 +63,9 @@
       "hospital": "Hospitales",
       "fire_station": "Bomberos",
       "community_center": "Centros comunitarios"
-    }
+    },
+    "zone": "Zona administrativa",
+    "allZones": "Todas las zonas"
   },
   "settings": {
     "title": "Ajustes",

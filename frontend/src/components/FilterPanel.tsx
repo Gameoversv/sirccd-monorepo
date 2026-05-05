@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Filter,
   ChevronDown,
@@ -11,7 +11,9 @@ import {
   Calendar,
   Gauge,
   Layers,
+  MapPin,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type {
   IncidentFilters,
   SeverityLevel,
@@ -19,6 +21,8 @@ import type {
   POILayerFilters,
   POILayerCategory,
 } from '@/types';
+import { zonesService } from '@/services/zonesService';
+import type { Zone } from '@/services/zonesService';
 import { SeverityLevel as SeverityEnum, IncidentStatus as StatusEnum } from '@/types';
 import { getSeverityLabel, getStatusLabel, getSeverityColor, getStatusColor } from '@/utils';
 
@@ -78,11 +82,11 @@ const STATUSES: IncidentStatus[] = [
   StatusEnum.CERRADO,
 ];
 
-const POI_CATEGORY_LABELS: Record<POILayerCategory, string> = {
-  school: 'Escuelas',
-  hospital: 'Hospitales',
-  fire_station: 'Bomberos',
-  community_center: 'Centros comunitarios',
+const POI_CATEGORY_I18N: Record<POILayerCategory, string> = {
+  school: 'filters.poi.school',
+  hospital: 'filters.poi.hospital',
+  fire_station: 'filters.poi.fire_station',
+  community_center: 'filters.poi.community_center',
 };
 
 export function FilterPanel({
@@ -94,9 +98,16 @@ export function FilterPanel({
   poiLayerFilters,
   onPoiLayerFiltersChange,
 }: FilterPanelProps) {
-  const activeCount = Object.values(filters).filter(
-    (v) => v !== undefined && v !== null && v !== ''
-  ).length;
+  const { t } = useTranslation();
+
+  const activeCount = [
+    filters.severity,
+    filters.status,
+    filters.damage_class,
+    filters.zone_id,
+    filters.date_from ?? filters.date_to,
+    filters.priority_min != null || filters.priority_max != null ? true : undefined,
+  ].filter((v) => v !== undefined && v !== null && v !== '').length;
 
   const isHorizontal = layout === 'horizontal';
 
@@ -116,6 +127,25 @@ export function FilterPanel({
     });
   };
 
+  const priorityPresets = [
+    { label: t('filters.presets.critical'), min: 80, max: undefined },
+    { label: t('filters.presets.high'), min: 60, max: 80 },
+    { label: t('filters.presets.medium'), min: 40, max: 60 },
+    { label: t('filters.presets.low'), min: undefined, max: 40 },
+  ];
+
+  const datePresets = [
+    { label: t('filters.quick.today'), days: 0 },
+    { label: t('filters.quick.days7'), days: 7 },
+    { label: t('filters.quick.days30'), days: 30 },
+    { label: t('filters.quick.days90'), days: 90 },
+  ];
+
+  const [zones, setZones] = useState<Zone[]>([]);
+  useEffect(() => {
+    zonesService.getZones().then(setZones).catch(() => setZones([]));
+  }, []);
+
   return (
     <div
       className={
@@ -124,11 +154,10 @@ export function FilterPanel({
           : 'rounded-xl border border-border bg-card shadow-soft w-72 flex-shrink-0'
       }
     >
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-primary-600" />
-          <span className="text-sm font-semibold text-foreground">Filtros</span>
+          <span className="text-sm font-semibold text-foreground">{t('filters.title')}</span>
           {activeCount > 0 && (
             <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 text-xs font-bold text-white bg-primary-600 rounded-full">
               {activeCount}
@@ -137,27 +166,27 @@ export function FilterPanel({
         </div>
         <div className="flex items-center gap-2">
           {total !== undefined && (
-            <span className="text-xs text-muted-foreground">{total} resultados</span>
+            <span className="text-xs text-muted-foreground">{t('filters.results', { count: total })}</span>
           )}
           {activeCount > 0 && (
             <button
               type="button"
               onClick={onClear}
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-danger-600 transition-colors"
-              title="Limpiar filtros"
+              title={t('filters.clear')}
             >
               <RotateCcw className="h-3 w-3" />
-              Limpiar
+              {t('filters.clear')}
             </button>
           )}
         </div>
       </div>
 
       <div className={isHorizontal ? 'grid grid-cols-4 divide-x divide-gray-100' : ''}>
-        {/* Severity */}
         <FilterSection
-          title="Severidad"
+          title={t('filters.severity')}
           icon={<AlertTriangle className="h-4 w-4 text-warning-500" />}
+          defaultOpen={false}
         >
           <div className="space-y-1.5">
             {SEVERITIES.map((sev) => (
@@ -186,15 +215,15 @@ export function FilterPanel({
           </div>
         </FilterSection>
 
-        {/* Priority Score */}
         <FilterSection
-          title="Score de Prioridad"
+          title={t('filters.priorityScore')}
           icon={<Gauge className="h-4 w-4 text-primary-500" />}
+          defaultOpen={false}
         >
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="flex-1">
-                <label className="block text-xs text-muted-foreground mb-1">Mín</label>
+                <label className="block text-xs text-muted-foreground mb-1">{t('filters.min')}</label>
                 <input
                   type="number"
                   min={0}
@@ -210,9 +239,9 @@ export function FilterPanel({
                   className="w-full rounded-md border border-border px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
                 />
               </div>
-              <span className="text-muted-foreground pt-5">–</span>
+              <span className="text-muted-foreground pt-5">-</span>
               <div className="flex-1">
-                <label className="block text-xs text-muted-foreground mb-1">Máx</label>
+                <label className="block text-xs text-muted-foreground mb-1">{t('filters.max')}</label>
                 <input
                   type="number"
                   min={0}
@@ -229,14 +258,9 @@ export function FilterPanel({
                 />
               </div>
             </div>
-            {/* Quick-pick buttons */}
+
             <div className="flex flex-wrap gap-1">
-              {[
-                { label: 'Crítica (≥80)', min: 80, max: undefined },
-                { label: 'Alta (60-80)', min: 60, max: 80 },
-                { label: 'Media (40-60)', min: 40, max: 60 },
-                { label: 'Baja (<40)', min: undefined, max: 40 },
-              ].map((preset) => {
+              {priorityPresets.map((preset) => {
                 const isActive =
                   filters.priority_min === preset.min &&
                   filters.priority_max === preset.max;
@@ -265,10 +289,10 @@ export function FilterPanel({
           </div>
         </FilterSection>
 
-        {/* Status */}
         <FilterSection
-          title="Estado"
+          title={t('filters.status')}
           icon={<Activity className="h-4 w-4 text-success-500" />}
+          defaultOpen={false}
         >
           <div className="space-y-1.5">
             {STATUSES.map((st) => (
@@ -297,9 +321,8 @@ export function FilterPanel({
           </div>
         </FilterSection>
 
-        {/* POI and pedestrian risk layers */}
         <FilterSection
-          title="Capas POI y riesgo peatonal"
+          title={t('filters.poiLayers')}
           icon={<Layers className="h-4 w-4 text-indigo-500" />}
           defaultOpen={false}
         >
@@ -317,7 +340,7 @@ export function FilterPanel({
                 }}
                 className="h-4 w-4 text-primary-600 border-border rounded focus:ring-primary-500"
               />
-              Mostrar capa de POIs
+              {t('filters.showPoiLayer')}
             </label>
 
             <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
@@ -328,13 +351,13 @@ export function FilterPanel({
                 onChange={(e) => updatePoiLayerFilters({ showRiskBuffers: e.target.checked })}
                 className="h-4 w-4 text-primary-600 border-border rounded focus:ring-primary-500 disabled:opacity-50"
               />
-              Mostrar zonas de riesgo peatonal
+              {t('filters.showRiskZones')}
             </label>
 
             <div>
-              <p className="text-xs text-muted-foreground mb-1">Categorías POI</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('filters.poiCategories')}</p>
               <div className="grid grid-cols-2 gap-1.5">
-                {(Object.keys(POI_CATEGORY_LABELS) as POILayerCategory[]).map((category) => (
+                {(Object.keys(POI_CATEGORY_I18N) as POILayerCategory[]).map((category) => (
                   <label
                     key={category}
                     className="flex items-center gap-2 text-xs text-foreground cursor-pointer"
@@ -346,7 +369,7 @@ export function FilterPanel({
                       onChange={(e) => updatePoiCategory(category, e.target.checked)}
                       className="h-3.5 w-3.5 text-primary-600 border-border rounded focus:ring-primary-500 disabled:opacity-50"
                     />
-                    {POI_CATEGORY_LABELS[category]}
+                    {t(POI_CATEGORY_I18N[category])}
                   </label>
                 ))}
               </div>
@@ -354,7 +377,7 @@ export function FilterPanel({
 
             <div>
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                <span>Radio buffer</span>
+                <span>{t('filters.bufferRadius')}</span>
                 <span>{poiLayerFilters?.bufferRadiusMeters ?? 120} m</span>
               </div>
               <input
@@ -373,14 +396,39 @@ export function FilterPanel({
           </div>
         </FilterSection>
 
+        {zones.length > 0 && (
+          <FilterSection
+            title={t('filters.zone')}
+            icon={<MapPin className="h-4 w-4 text-emerald-500" />}
+            defaultOpen={false}
+          >
+            <div className="space-y-1.5">
+              <select
+                value={filters.zone_id ?? ''}
+                onChange={(e) =>
+                  onChange({ zone_id: e.target.value ? Number(e.target.value) : undefined })
+                }
+                className="w-full rounded-md border border-border px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none bg-background"
+              >
+                <option value="">{t('filters.allZones')}</option>
+                {zones.map((z) => (
+                  <option key={z.id} value={z.id}>
+                    {z.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </FilterSection>
+        )}
+
         <FilterSection
-          title="Rango de Fechas"
+          title={t('filters.dateRange')}
           icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
           defaultOpen={false}
         >
           <div className="space-y-2">
             <div>
-              <label className="block text-xs text-muted-foreground mb-1">Desde</label>
+              <label className="block text-xs text-muted-foreground mb-1">{t('filters.from')}</label>
               <input
                 type="date"
                 value={filters.date_from ?? ''}
@@ -391,7 +439,7 @@ export function FilterPanel({
               />
             </div>
             <div>
-              <label className="block text-xs text-muted-foreground mb-1">Hasta</label>
+              <label className="block text-xs text-muted-foreground mb-1">{t('filters.to')}</label>
               <input
                 type="date"
                 value={filters.date_to ?? ''}
@@ -401,14 +449,9 @@ export function FilterPanel({
                 className="w-full rounded-md border border-border px-2 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
               />
             </div>
-            {/* Quick-pick buttons */}
+
             <div className="flex flex-wrap gap-1">
-              {[
-                { label: 'Hoy', days: 0 },
-                { label: '7 días', days: 7 },
-                { label: '30 días', days: 30 },
-                { label: '90 días', days: 90 },
-              ].map((preset) => (
+              {datePresets.map((preset) => (
                 <button
                   key={preset.label}
                   type="button"

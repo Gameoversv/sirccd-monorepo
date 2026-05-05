@@ -180,6 +180,7 @@ export interface IncidentFilters {
   date_to?: string;
   priority_min?: number;
   priority_max?: number;
+  zone_id?: number;
 }
 
 // API Response types

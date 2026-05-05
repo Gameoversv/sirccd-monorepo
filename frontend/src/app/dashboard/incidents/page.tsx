@@ -74,8 +74,9 @@ export default function IncidentsPage() {
     if (filters.date_from) f.date_from = filters.date_from;
     if (filters.date_to) f.date_to = filters.date_to;
     if (filters.damage_class) f.damage_class = filters.damage_class;
+    if (filters.zone_id) f.zone_id = filters.zone_id;
     return f;
-  }, [filters.severity, filters.status, filters.date_from, filters.date_to, filters.damage_class]);
+  }, [filters.severity, filters.status, filters.date_from, filters.date_to, filters.damage_class, filters.zone_id]);
 
   // Fetch incidents for table
   const fetchIncidents = useCallback(async () => {

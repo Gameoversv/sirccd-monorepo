@@ -44,8 +44,11 @@ sys.modules['services.storage'] = MagicMock()
 sys.modules['services.ml_service'] = MagicMock()
 sys.modules['services.queue_service'] = MagicMock()
 
-with patch('redis.Redis'), \
-     patch('boto3.client'):
+# boto3 is not in requirements (MinIO client uses minio-py), stub it out
+if 'boto3' not in sys.modules:
+    sys.modules['boto3'] = MagicMock()
+
+with patch('redis.Redis'):
     from main import app
 from db.base import Base
 from db.session import get_db
