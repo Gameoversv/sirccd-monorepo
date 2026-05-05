@@ -313,6 +313,29 @@ class IncidentListResponse(BaseModel):
     )
 
 
+# ============================================
+# Audit Log Schemas (P-07)
+# ============================================
+
+class AuditLogEntry(BaseModel):
+    id: int
+    incident_id: int
+    user_id: Optional[int]
+    event_type: str
+    field_name: Optional[str]
+    old_value: Optional[str]
+    new_value: Optional[str]
+    notes: Optional[str]
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AuditLogListResponse(BaseModel):
+    total: int
+    entries: List[AuditLogEntry]
+
+
 class IncidentStatsResponse(BaseModel):
     """Estadísticas de incidentes"""
     total_incidents: int

@@ -1,11 +1,12 @@
 import apiClient from './api';
-import type { 
-  Incident, 
+import type {
+  Incident,
   IncidentDetail,
-  IncidentFilters, 
+  IncidentFilters,
   PaginatedResponse,
   IncidentStatus,
-  ExportOptions
+  ExportOptions,
+  AuditLogListResponse,
 } from '@/types';
 
 export const incidentsService = {
@@ -161,6 +162,14 @@ export const incidentsService = {
     sla_compliance_pct: number | null;
   }> {
     const response = await apiClient.get('/incidents/stats/overview');
+    return response.data;
+  },
+
+  /**
+   * Get audit log for an incident (P-07)
+   */
+  async getAuditLog(id: number): Promise<AuditLogListResponse> {
+    const response = await apiClient.get<AuditLogListResponse>(`/incidents/${id}/audit`);
     return response.data;
   },
 

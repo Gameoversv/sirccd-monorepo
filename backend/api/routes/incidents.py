@@ -31,8 +31,11 @@ from schemas.incident import (
     IncidentBriefResponse,
     IncidentDetailResponse,
     IncidentListResponse,
-    IncidentStatsResponse
+    IncidentStatsResponse,
+    AuditLogEntry,
+    AuditLogListResponse,
 )
+from models.incident_audit_log import IncidentAuditLog
 from services.priority_service import get_priority_service
 from services.storage import storage_service
 from core.config import settings
@@ -293,12 +296,23 @@ def update_incident_details(
     current_user: User = Depends(get_current_active_user)
 ):
     """Actualiza tiempo estimado y/o foto después del incidente"""
-    from api.deps import require_supervisor
     incident = db.query(Incident).filter(Incident.id == incident_id).first()
     if not incident:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incidente no encontrado")
     if estimated_repair_hours is not None:
+        old_hours = incident.estimated_repair_hours
         incident.estimated_repair_hours = estimated_repair_hours
+        audit_entry = IncidentAuditLog(
+            incident_id=incident_id,
+            user_id=current_user.id,
+            event_type="manual_update",
+            field_name="estimated_repair_hours",
+            old_value=str(old_hours) if old_hours is not None else None,
+            new_value=str(estimated_repair_hours),
+        )
+        db.add(audit_entry)
+    db.commit()
+    db.refresh(incident)
     return {"id": incident_id, "estimated_repair_hours": incident.estimated_repair_hours, "after_image_url": _public_url(incident.after_image_url)}
 
 
@@ -316,6 +330,14 @@ async def upload_after_image(
     try:
         image_url, _, _, _ = await storage_service.upload_image(file=image, folder="after", anonymize=False)
         incident.after_image_url = image_url
+        audit_entry = IncidentAuditLog(
+            incident_id=incident_id,
+            user_id=current_user.id,
+            event_type="image_uploaded",
+            field_name="after_image_url",
+            new_value=image_url,
+        )
+        db.add(audit_entry)
         db.commit()
         return {"id": incident_id, "after_image_url": _public_url(image_url)}
     except Exception as e:
@@ -355,7 +377,7 @@ def recalculate_priority(
     
     try:
         # Recalcular
-        updated_incident = priority_service.recalculate_priority(incident_id)
+        updated_incident = priority_service.recalculate_priority(incident_id, user_id=current_user.id)
         
         new_priority = updated_incident.priority
         new_score = updated_incident.priority_score
@@ -530,6 +552,34 @@ def get_incident_stats(
         avg_ttr_hours=avg_ttr_hours,
         sla_compliance_pct=sla_compliance_pct
     )
+
+
+# ============================================
+# Bitácora / Auditoría — P-07
+# ============================================
+
+@router.get("/{incident_id:int}/audit", response_model=AuditLogListResponse)
+def get_incident_audit_log(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Retorna la bitácora completa de cambios de un incidente"""
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Incidente {incident_id} no encontrado",
+        )
+
+    entries = (
+        db.query(IncidentAuditLog)
+        .filter(IncidentAuditLog.incident_id == incident_id)
+        .order_by(IncidentAuditLog.created_at.asc())
+        .all()
+    )
+
+    return AuditLogListResponse(total=len(entries), entries=entries)
 
 
 # ============================================

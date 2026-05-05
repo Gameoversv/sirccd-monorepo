@@ -1,7 +1,8 @@
 'use client';
 
-import { CheckCircle2, Clock, UserCheck, Wrench, ShieldCheck, XCircle, Circle } from 'lucide-react';
+import { CheckCircle2, Clock, UserCheck, Wrench, ShieldCheck, XCircle, Circle, RefreshCw, Upload, Edit3 } from 'lucide-react';
 import { getStatusLabel } from '@/utils';
+import type { AuditLogEntry } from '@/types';
 
 export interface TimelineEntry {
   timestamp: string;
@@ -16,34 +17,14 @@ export interface TimelineEntry {
 interface StatusTimelineProps {
   incident: {
     created_at: string;
-    assigned_at: string | null;
+    assigned_at?: string | null;
     started_at: string | null;
     completed_at: string | null;
     verified_at: string | null;
     status: string;
-    notes: string | null;
+    notes?: string | null;
   };
-}
-
-function parseNotesHistory(notes: string | null): TimelineEntry[] {
-  if (!notes) return [];
-  const entries: TimelineEntry[] = [];
-
-  // Match pattern: [ISO_TIMESTAMP] old_status -> new_status: optional note
-  const regex = /\[(\d{4}-\d{2}-\d{2}T[\d:.]+)\]\s+([\w_]+)\s*->\s*([\w_]+)(?::\s*(.+?))?(?=\n\[|\n\n\[|$)/gs;
-
-  let match;
-  while ((match = regex.exec(notes)) !== null) {
-    entries.push({
-      timestamp: match[1],
-      from_status: match[2],
-      to_status: match[3],
-      note: match[4]?.trim() || undefined,
-      type: 'status_change',
-    });
-  }
-
-  return entries;
+  auditLog?: AuditLogEntry[];
 }
 
 function formatTs(ts: string): string {
@@ -56,9 +37,13 @@ function formatTs(ts: string): string {
   });
 }
 
-function StatusIcon({ status }: { status: string }) {
-  const s = status.toLowerCase();
+function StatusIcon({ eventType, status }: { eventType?: string; status?: string }) {
   const cls = 'h-5 w-5';
+  if (eventType === 'priority_recalculated') return <RefreshCw className={`${cls} text-primary-400`} />;
+  if (eventType === 'image_uploaded') return <Upload className={`${cls} text-blue-400`} />;
+  if (eventType === 'manual_update') return <Edit3 className={`${cls} text-gray-400`} />;
+
+  const s = (status || '').toLowerCase();
   if (s === 'open' || s === 'reportado') return <Circle className={`${cls} text-gray-400`} />;
   if (s === 'assigned') return <UserCheck className={`${cls} text-blue-500`} />;
   if (s === 'in_progress') return <Wrench className={`${cls} text-amber-500`} />;
@@ -68,8 +53,141 @@ function StatusIcon({ status }: { status: string }) {
   return <Clock className={`${cls} text-gray-400`} />;
 }
 
-export function StatusTimeline({ incident }: StatusTimelineProps) {
-  // Build timeline from known timestamp fields + parsed notes
+const EVENT_LABELS: Record<string, string> = {
+  status_change: 'Cambio de estado',
+  priority_recalculated: 'Prioridad recalculada',
+  manual_update: 'Actualización manual',
+  image_uploaded: 'Imagen subida',
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  status: 'Estado',
+  priority: 'Prioridad',
+  estimated_repair_hours: 'Tiempo estimado',
+  after_image_url: 'Foto posterior',
+};
+
+function AuditEntryContent({ entry }: { entry: AuditLogEntry }) {
+  if (entry.event_type === 'status_change') {
+    return (
+      <p className="text-sm text-gray-900">
+        <span className="font-medium text-gray-500 line-through text-xs">
+          {getStatusLabel(entry.old_value || '')}
+        </span>{' '}
+        →{' '}
+        <span className="font-semibold">{getStatusLabel(entry.new_value || '')}</span>
+        {entry.notes && (
+          <span className="block mt-0.5 text-sm text-gray-600">{entry.notes}</span>
+        )}
+      </p>
+    );
+  }
+
+  if (entry.event_type === 'priority_recalculated') {
+    return (
+      <p className="text-sm text-gray-900">
+        <span className="font-semibold">Prioridad recalculada</span>
+        {entry.old_value && entry.new_value && (
+          <span className="block mt-0.5 text-xs text-gray-500">
+            {entry.old_value} → {entry.new_value}
+          </span>
+        )}
+      </p>
+    );
+  }
+
+  if (entry.event_type === 'manual_update') {
+    const fieldLabel = FIELD_LABELS[entry.field_name || ''] || entry.field_name;
+    return (
+      <p className="text-sm text-gray-900">
+        <span className="font-semibold">{fieldLabel}</span> actualizado
+        {entry.old_value && entry.new_value && (
+          <span className="block mt-0.5 text-xs text-gray-500">
+            {entry.old_value} → {entry.new_value}
+          </span>
+        )}
+      </p>
+    );
+  }
+
+  if (entry.event_type === 'image_uploaded') {
+    return <p className="text-sm font-semibold text-gray-900">Foto posterior subida</p>;
+  }
+
+  return (
+    <p className="text-sm text-gray-900">
+      <span className="font-semibold">{EVENT_LABELS[entry.event_type] || entry.event_type}</span>
+      {entry.new_value && (
+        <span className="block mt-0.5 text-xs text-gray-500">{entry.new_value}</span>
+      )}
+    </p>
+  );
+}
+
+export function StatusTimeline({ incident, auditLog }: StatusTimelineProps) {
+  // Use real audit log when available
+  if (auditLog && auditLog.length > 0) {
+    // Prepend incident creation entry
+    const creationEntry: AuditLogEntry = {
+      id: -1,
+      incident_id: -1,
+      user_id: null,
+      event_type: 'created',
+      field_name: null,
+      old_value: null,
+      new_value: 'open',
+      notes: 'Incidente registrado',
+      created_at: incident.created_at,
+    };
+
+    const entries = [creationEntry, ...auditLog];
+
+    return (
+      <div className="flow-root">
+        <ul className="-mb-8">
+          {entries.map((entry, idx) => {
+            const isLast = idx === entries.length - 1;
+            const displayStatus = entry.event_type === 'status_change'
+              ? entry.new_value || ''
+              : entry.new_value || '';
+
+            return (
+              <li key={`${entry.id}-${idx}`}>
+                <div className="relative pb-8">
+                  {!isLast && (
+                    <span
+                      className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <div className="relative flex items-start gap-3">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white ring-2 ring-gray-200">
+                      <StatusIcon eventType={entry.event_type} status={displayStatus} />
+                    </div>
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      {entry.event_type === 'created' ? (
+                        <p className="text-sm font-semibold text-gray-900">
+                          Incidente registrado
+                          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600">
+                            Creación
+                          </span>
+                        </p>
+                      ) : (
+                        <AuditEntryContent entry={entry} />
+                      )}
+                      <p className="mt-1 text-xs text-gray-400">{formatTs(entry.created_at)}</p>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  }
+
+  // Fallback: build timeline from milestone timestamps
   const milestones: TimelineEntry[] = [];
 
   milestones.push({
@@ -106,21 +224,9 @@ export function StatusTimeline({ incident }: StatusTimelineProps) {
     });
   }
 
-  // Add notes-based changes (deduplicate by timestamp)
-  const parsedNotes = parseNotesHistory(incident.notes);
-  const existingTs = new Set(milestones.map((m) => m.timestamp.substring(0, 16)));
-  for (const entry of parsedNotes) {
-    if (!existingTs.has(entry.timestamp.substring(0, 16))) {
-      milestones.push(entry);
-    }
-  }
-
-  // Sort chronologically
   milestones.sort(
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
-
-  const current = incident.status;
 
   return (
     <div className="flow-root">
@@ -132,21 +238,16 @@ export function StatusTimeline({ incident }: StatusTimelineProps) {
           return (
             <li key={`${entry.timestamp}-${idx}`}>
               <div className="relative pb-8">
-                {/* Connector line */}
                 {!isLast && (
                   <span
                     className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
                     aria-hidden="true"
                   />
                 )}
-
                 <div className="relative flex items-start gap-3">
-                  {/* Icon */}
                   <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white ring-2 ring-gray-200">
                     <StatusIcon status={entryStatus} />
                   </div>
-
-                  {/* Content */}
                   <div className="min-w-0 flex-1 pt-0.5">
                     <div className="flex items-center gap-2 flex-wrap">
                       {entry.from_status && entry.to_status ? (
@@ -162,19 +263,17 @@ export function StatusTimeline({ incident }: StatusTimelineProps) {
                       ) : (
                         <p className="text-sm font-semibold text-gray-900">
                           {getStatusLabel(entryStatus)}
+                          {entry.type === 'created' && (
+                            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600">
+                              Creación
+                            </span>
+                          )}
                         </p>
                       )}
-                      {entry.type === 'created' && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600">
-                          Creación
-                        </span>
-                      )}
                     </div>
-
                     {entry.note && (
                       <p className="mt-0.5 text-sm text-gray-600">{entry.note}</p>
                     )}
-
                     <p className="mt-1 text-xs text-gray-400">{formatTs(entry.timestamp)}</p>
                   </div>
                 </div>
@@ -183,7 +282,6 @@ export function StatusTimeline({ incident }: StatusTimelineProps) {
           );
         })}
       </ul>
-
       {milestones.length === 0 && (
         <p className="text-sm text-gray-400 text-center py-4">Sin historial disponible.</p>
       )}

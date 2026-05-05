@@ -90,6 +90,7 @@ class Incident(Base):
     original_report = relationship("Report", back_populates="incident")
     reported_by_user = relationship("User", back_populates="incidents", foreign_keys=[reported_by])
     metrics = relationship("Metric", back_populates="incident", cascade="all, delete-orphan")
+    audit_logs = relationship("IncidentAuditLog", back_populates="incident", cascade="all, delete-orphan", order_by="IncidentAuditLog.created_at")
     
     def __repr__(self):
         return f"<Incident {self.id} - {self.damage_type} - {self.status} - Priority: {self.priority}>"

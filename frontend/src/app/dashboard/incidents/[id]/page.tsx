@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
@@ -21,7 +21,7 @@ import { StatusTimeline } from '@/components/StatusTimeline';
 import { StatusUpdateModal } from '@/components/StatusUpdateModal';
 import { useAuthStore } from '@/store';
 import { useToast } from '@/hooks';
-import type { IncidentDetail } from '@/types';
+import type { IncidentDetail, AuditLogEntry } from '@/types';
 import { UserRole, STATUS_TRANSITIONS } from '@/types';
 import {
   getSeverityLabel,
@@ -32,8 +32,8 @@ import {
   getPriorityColor,
   getDamageClassLabel,
 } from '@/utils';
-
-import { MiniMap } from '@/components';
+import { MiniMap } from '@/components/MiniMap';
+import i18n from '@/i18n/config';
 
 interface PageProps {
   params: { id: string };
@@ -41,7 +41,8 @@ interface PageProps {
 
 function formatDate(ts: string | null): string {
   if (!ts) return '—';
-  return new Date(ts).toLocaleString('es-ES', {
+  const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-ES';
+  return new Date(ts).toLocaleString(locale, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -62,12 +63,12 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 type BreakdownFactor = { score: number; raw: number; weight: number; detail: string };
 type PriorityBreakdown = Record<string, BreakdownFactor>;
 
-const FACTOR_LABELS: Record<string, string> = {
-  severity:   'Severidad',
-  age:        'Antigüedad',
-  damage:     'Tipo de daño',
-  location:   'Ubicación',
-  duplicates: 'Duplicados',
+const FACTOR_LABELS: Record<string, { es: string; en: string }> = {
+  severity: { es: 'Severidad', en: 'Severity' },
+  age: { es: 'Antiguedad', en: 'Age' },
+  damage: { es: 'Tipo de dano', en: 'Damage type' },
+  location: { es: 'Ubicacion', en: 'Location' },
+  duplicates: { es: 'Duplicados', en: 'Duplicates' },
 };
 
 function PriorityBar({ score, breakdown }: { score: number | null; breakdown?: PriorityBreakdown | null }) {
@@ -79,7 +80,7 @@ function PriorityBar({ score, breakdown }: { score: number | null; breakdown?: P
     <div className="space-y-3">
       <div className="space-y-1">
         <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>Score de prioridad</span>
+          <span>{i18n.language?.startsWith('en') ? 'Priority score' : 'Score de prioridad'}</span>
           <span className="font-mono font-semibold text-gray-900">{pct.toFixed(1)} / 100</span>
         </div>
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -90,7 +91,9 @@ function PriorityBar({ score, breakdown }: { score: number | null; breakdown?: P
         <div className="space-y-1.5 pt-1 border-t border-gray-100">
           {Object.entries(breakdown).map(([key, f]) => (
             <div key={key} className="flex items-center gap-2 text-xs">
-              <span className="w-20 text-gray-500 flex-shrink-0">{FACTOR_LABELS[key] ?? key}</span>
+              <span className="w-20 text-gray-500 flex-shrink-0">
+                {FACTOR_LABELS[key]?.[i18n.language?.startsWith('en') ? 'en' : 'es'] ?? key}
+              </span>
               <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-primary-400 rounded-full"
@@ -119,6 +122,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [priorityBreakdown, setPriorityBreakdown] = useState<PriorityBreakdown | null>(null);
+  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
 
   const canUpdateStatus =
     user?.role === UserRole.SUPERVISOR ||
@@ -131,16 +135,23 @@ export default function IncidentDetailPage({ params }: PageProps) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await incidentsService.getIncident(incidentId);
+      const [data, auditData] = await Promise.all([
+        incidentsService.getIncident(incidentId),
+        incidentsService.getAuditLog(incidentId).catch(() => ({ total: 0, entries: [] })),
+      ]);
       setIncident(data);
+      setAuditLog(auditData.entries);
       // If score is 0, recalculate to populate it; otherwise just fetch breakdown
       try {
         if (!data.priority_score || data.priority_score === 0) {
           const result = await incidentsService.recalculatePriority(incidentId);
           if (result?.factors) setPriorityBreakdown(result.factors as PriorityBreakdown);
-          // Refresh incident to get updated score
-          const updated = await incidentsService.getIncident(incidentId);
+          const [updated, updatedAudit] = await Promise.all([
+            incidentsService.getIncident(incidentId),
+            incidentsService.getAuditLog(incidentId).catch(() => ({ total: 0, entries: [] })),
+          ]);
           setIncident(updated);
+          setAuditLog(updatedAudit.entries);
         } else {
           const breakdown = await incidentsService.getPriorityBreakdown(incidentId);
           if (breakdown?.factors) setPriorityBreakdown(breakdown.factors as PriorityBreakdown);
@@ -164,7 +175,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
   };
 
   const handleStatusSuccess = (newStatus: string) => {
-    toast.success(`Estado actualizado a "${getStatusLabel(newStatus)}"`);
+    toast.success(t('incidents.detail.statusUpdated', { status: getStatusLabel(newStatus) }));
     fetchIncident();
   };
 
@@ -316,16 +327,16 @@ export default function IncidentDetailPage({ params }: PageProps) {
                           const form = new FormData();
                           form.append('image', file);
                           await incidentsService.uploadAfterImage(incidentId, form);
-                          toast.success('Foto después subida correctamente');
+                          toast.success(t('incidents.detail.afterUploadSuccess'));
                           fetchIncident();
                         } catch {
-                          toast.error('Error al subir la imagen');
+                          toast.error(t('incidents.detail.uploadImageError'));
                         }
                       }}
                     />
                     <div className="text-center text-gray-400">
                       <ImageIcon className="h-8 w-8 mx-auto" />
-                      <p className="text-xs mt-1">Subir foto después</p>
+                      <p className="text-xs mt-1">{t('incidents.detail.uploadAfterPhoto')}</p>
                     </div>
                   </label>
                 )}
@@ -376,9 +387,9 @@ export default function IncidentDetailPage({ params }: PageProps) {
                         if (!isNaN(val) && val > 0) {
                           try {
                             await incidentsService.updateDetails(incidentId, val);
-                            toast.success('Tiempo estimado actualizado');
+                            toast.success(t('incidents.detail.estimateUpdated'));
                             fetchIncident();
-                          } catch { toast.error('Error al actualizar'); }
+                          } catch { toast.error(t('incidents.detail.estimateUpdateError')); }
                         }
                       }}
                     >
@@ -388,10 +399,10 @@ export default function IncidentDetailPage({ params }: PageProps) {
                         min="0.5"
                         step="0.5"
                         defaultValue={incident.estimated_repair_hours ?? ''}
-                        placeholder="horas"
+                        placeholder={t('incidents.detail.hoursPlaceholder')}
                         className="w-20 text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-400"
                       />
-                      <button type="submit" className="text-xs text-primary-600 hover:underline">Guardar</button>
+                      <button type="submit" className="text-xs text-primary-600 hover:underline">{t('incidents.detail.saveEstimate')}</button>
                     </form>
                   ) : incident.estimated_repair_hours
                     ? `${incident.estimated_repair_hours}h`
@@ -501,7 +512,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
               <h2 className="text-sm font-semibold text-gray-800">{t('incidents.detail.changeHistory')}</h2>
             </div>
             <div className="px-5 py-4">
-              <StatusTimeline incident={incident} />
+              <StatusTimeline incident={incident} auditLog={auditLog} />
             </div>
           </div>
         </div>

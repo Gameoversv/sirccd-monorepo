@@ -10,6 +10,7 @@ from db.base import Base
 from .user import User, UserRole
 from .report import Report, ReportStatus, DamageType, SeverityLevel
 from .incident import Incident, IncidentStatus, PriorityLevel
+from .incident_audit_log import IncidentAuditLog
 from .poi import POI, POICategory
 from .metric import Metric
 from .priority_setting import PrioritySetting
@@ -29,6 +30,8 @@ __all__ = [
     "Incident",
     "IncidentStatus",
     "PriorityLevel",
+    # Audit log
+    "IncidentAuditLog",
     # POI
     "POI",
     "POICategory",

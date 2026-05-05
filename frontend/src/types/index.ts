@@ -357,6 +357,24 @@ export interface UpdatePrioritySettingsData {
   clustering_min_samples?: number;
 }
 
+// Audit log (P-07)
+export interface AuditLogEntry {
+  id: number;
+  incident_id: number;
+  user_id: number | null;
+  event_type: 'status_change' | 'priority_recalculated' | 'manual_update' | 'image_uploaded' | string;
+  field_name: string | null;
+  old_value: string | null;
+  new_value: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface AuditLogListResponse {
+  total: number;
+  entries: AuditLogEntry[];
+}
+
 // Detailed incident from GET /incidents/{id}
 export interface IncidentDetail {
   id: number;

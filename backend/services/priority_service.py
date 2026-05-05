@@ -17,6 +17,7 @@ from geoalchemy2.functions import ST_DWithin, ST_Distance
 from geoalchemy2.elements import WKTElement
 
 from models.incident import Incident, IncidentStatus, PriorityLevel
+from models.incident_audit_log import IncidentAuditLog
 from models.report import SeverityLevel, DamageType, Report
 from models.poi import POI
 from models.priority_setting import PrioritySetting
@@ -164,34 +165,49 @@ class PriorityService:
             "duplicates": {"score": round(duplicate_score * w_duplicates, 2), "raw": duplicate_score, "weight": round(w_duplicates, 4),  "detail": f"{nearby_duplicates_count} reportes visualmente similares"},
         }
 
-    def recalculate_priority(self, incident_id: int) -> Incident:
+    def recalculate_priority(self, incident_id: int, user_id: Optional[int] = None) -> Incident:
         """
         Recalcula y actualiza la prioridad de un incidente
-        
+
         Args:
             incident_id: ID del incidente
-        
+            user_id: ID del usuario que solicita el recálculo (para auditoría)
+
         Returns:
             Incident actualizado
-        
+
         Raises:
             ValueError: Si el incidente no existe
         """
         incident = self.db.query(Incident).filter(Incident.id == incident_id).first()
         if not incident:
             raise ValueError(f"Incidente {incident_id} no encontrado")
-        
+
+        old_priority = incident.priority
+        old_score = incident.priority_score
+
         # Calcular nuevo score
         score, priority_level = self.calculate_priority_score(incident)
-        
+
         # Actualizar
         incident.priority_score = score
         incident.priority = priority_level
         incident.updated_at = datetime.utcnow()
-        
+
+        # Registrar en bitácora (P-07)
+        audit_entry = IncidentAuditLog(
+            incident_id=incident_id,
+            user_id=user_id,
+            event_type="priority_recalculated",
+            field_name="priority",
+            old_value=f"{old_priority.value} ({old_score})" if old_priority else None,
+            new_value=f"{priority_level.value} ({score})",
+        )
+        self.db.add(audit_entry)
+
         self.db.commit()
         self.db.refresh(incident)
-        
+
         return incident
     
     def update_incident_status(
@@ -243,15 +259,18 @@ class PriorityService:
             if user_id:
                 incident.verified_by = user_id
         
-        # Siempre registrar el cambio de estado en el historial (notes)
-        history_entry = f"[{datetime.utcnow().isoformat()}] {old_status.value} -> {new_status.value}"
-        if notes:
-            history_entry += f": {notes}"
-        if incident.notes:
-            incident.notes += f"\n\n{history_entry}"
-        else:
-            incident.notes = history_entry
-        
+        # Registrar en bitácora de auditoría (P-07)
+        audit_entry = IncidentAuditLog(
+            incident_id=incident_id,
+            user_id=user_id,
+            event_type="status_change",
+            field_name="status",
+            old_value=old_status.value,
+            new_value=new_status.value,
+            notes=notes,
+        )
+        self.db.add(audit_entry)
+
         self.db.commit()
         self.db.refresh(incident)
         
