@@ -7,6 +7,9 @@ import type {
   IncidentStatus,
   ExportOptions,
   AuditLogListResponse,
+  SLAStatusResponse,
+  SLAExpiringResponse,
+  SLAConfig,
 } from '@/types';
 
 export const incidentsService = {
@@ -170,6 +173,30 @@ export const incidentsService = {
    */
   async getAuditLog(id: number): Promise<AuditLogListResponse> {
     const response = await apiClient.get<AuditLogListResponse>(`/incidents/${id}/audit`);
+    return response.data;
+  },
+
+  // ── SLA (P-06) ──────────────────────────────────────────────────────────────
+
+  async getSLAStatus(id: number): Promise<SLAStatusResponse> {
+    const response = await apiClient.get<SLAStatusResponse>(`/incidents/${id}/sla`);
+    return response.data;
+  },
+
+  async getSLAExpiring(withinHours = 4): Promise<SLAExpiringResponse> {
+    const response = await apiClient.get<SLAExpiringResponse>(
+      `/incidents/sla/expiring?within_hours=${withinHours}`
+    );
+    return response.data;
+  },
+
+  async getSLAConfig(): Promise<SLAConfig> {
+    const response = await apiClient.get<SLAConfig>('/incidents/sla/config');
+    return response.data;
+  },
+
+  async updateSLAConfig(data: Partial<SLAConfig>): Promise<SLAConfig> {
+    const response = await apiClient.put<SLAConfig>('/incidents/sla/config', data);
     return response.data;
   },
 

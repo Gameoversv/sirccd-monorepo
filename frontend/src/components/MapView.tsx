@@ -7,6 +7,8 @@ import { incidentsService, poisService } from '@/services';
 import type { IncidentFilters, POILayerFilters, POILayerCategory, POILayerItem } from '@/types';
 import { Loader2, MapPin, AlertTriangle, Clock, Flame } from 'lucide-react';
 import { HeatmapLayer } from './HeatmapLayer';
+import { useTranslation } from 'react-i18next';
+import { getPriorityLabel, getStatusLabel, getSeverityLabel, getDamageClassLabel } from '@/utils';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in React-Leaflet
@@ -62,10 +64,10 @@ const POI_CATEGORY_COLORS: Record<POILayerCategory, string> = {
 };
 
 const POI_CATEGORY_LABELS: Record<POILayerCategory, string> = {
-  school: 'Escuelas',
-  hospital: 'Hospitales',
-  fire_station: 'Bomberos',
-  community_center: 'Centros comunitarios',
+  school: 'filters.poi.school',
+  hospital: 'filters.poi.hospital',
+  fire_station: 'filters.poi.fire_station',
+  community_center: 'filters.poi.community_center',
 };
 
 // Component to recenter map when center prop changes
@@ -81,12 +83,16 @@ function MapUpdater({ center }: { center: LatLngExpression }) {
 function getPriorityColor(priority: string): string {
   switch (priority.toLowerCase()) {
     case 'critica':
+    case 'critical':
       return '#dc2626'; // red-600
     case 'alta':
+    case 'high':
       return '#ea580c'; // orange-600
     case 'media':
+    case 'medium':
       return '#f59e0b'; // amber-500
     case 'baja':
+    case 'low':
       return '#3b82f6'; // blue-500
     default:
       return '#6b7280'; // gray-500
@@ -97,16 +103,22 @@ function getPriorityColor(priority: string): string {
 function getStatusColor(status: string): string {
   switch (status.toLowerCase()) {
     case 'reportado':
+    case 'open':
       return 'bg-blue-100 text-blue-800';
     case 'asignado':
+    case 'assigned':
       return 'bg-purple-100 text-purple-800';
     case 'en_progreso':
+    case 'in_progress':
       return 'bg-yellow-100 text-yellow-800';
     case 'completado':
+    case 'resolved':
       return 'bg-green-100 text-green-800';
     case 'verificado':
+    case 'verified':
       return 'bg-emerald-100 text-emerald-800';
     case 'cerrado':
+    case 'closed':
       return 'bg-gray-100 text-gray-800';
     default:
       return 'bg-gray-100 text-gray-600';
@@ -114,14 +126,10 @@ function getStatusColor(status: string): string {
 }
 
 // Helper to format status text
-function formatStatus(status: string): string {
-  return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
-
 // Helper to format date
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, locale: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('es-ES', {
+  return date.toLocaleDateString(locale, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -136,6 +144,9 @@ export function MapView({
   poiLayerFilters,
   onIncidentsLoaded,
 }: MapViewProps) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-ES';
+
   const resolvedPoiLayerFilters = poiLayerFilters ?? DEFAULT_POI_LAYER_FILTERS;
   const [allIncidents, setAllIncidents] = useState<IncidentMarker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -271,7 +282,7 @@ export function MapView({
       setAllIncidents(markers);
     } catch (err: any) {
       console.error('Error loading incidents:', err);
-      setError(err.response?.data?.detail || 'Error al cargar incidentes');
+      setError(err.response?.data?.detail || t('map.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -285,7 +296,7 @@ export function MapView({
       >
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
-          <p className="mt-2 text-sm text-gray-600">Cargando mapa...</p>
+          <p className="mt-2 text-sm text-gray-600">{t('map.loading')}</p>
         </div>
       </div>
     );
@@ -304,7 +315,7 @@ export function MapView({
             onClick={loadIncidents}
             className="mt-3 px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
           >
-            Reintentar
+            {t('common.retry')}
           </button>
         </div>
       </div>
@@ -363,14 +374,14 @@ export function MapView({
               <Popup>
                 <div className="min-w-[230px] p-1.5">
                   <h3 className="text-sm font-semibold text-gray-900">{poi.name}</h3>
-                  <p className="text-xs text-gray-500 mt-1">{POI_CATEGORY_LABELS[poi.category]}</p>
+                  <p className="text-xs text-gray-500 mt-1">{t(POI_CATEGORY_LABELS[poi.category])}</p>
                   {(poi.address || poi.city) && (
                     <p className="text-xs text-gray-600 mt-2">
-                      {[poi.address, poi.city].filter(Boolean).join(' · ')}
+                      {[poi.address, poi.city].filter(Boolean).join(' ? ')}
                     </p>
                   )}
                   <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500">
-                    Buffer peatonal: {resolvedPoiLayerFilters.bufferRadiusMeters} m
+                    {t('map.pedestrianBuffer')}: {resolvedPoiLayerFilters.bufferRadiusMeters} m
                   </div>
                 </div>
               </Popup>
@@ -407,14 +418,14 @@ export function MapView({
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div>
                       <h3 className="font-semibold text-gray-900">
-                        Incidente #{incident.id}
+                        {t('incidents.detail.title', { id: incident.id })}
                       </h3>
                       <p className="text-xs text-gray-500">
-                        Reporte #{incident.report_id}
+                        {t('incidents.detail.reportRef', { id: incident.report_id })}
                       </p>
                     </div>
                     <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusColor(incident.status)}`}>
-                      {formatStatus(incident.status)}
+                      {getStatusLabel(incident.status)}
                     </span>
                   </div>
 
@@ -422,7 +433,7 @@ export function MapView({
                   <div className="flex items-start gap-2 mb-2">
                     <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                     <div className="text-sm">
-                      <p className="text-gray-700">{incident.address || 'Dirección no disponible'}</p>
+                      <p className="text-gray-700">{incident.address || t('map.noAddress')}</p>
                       {incident.city && (
                         <p className="text-gray-500 text-xs">{incident.city}</p>
                       )}
@@ -432,15 +443,15 @@ export function MapView({
                   {/* Damage info */}
                   <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
                     <div>
-                      <span className="text-gray-500 text-xs">Tipo:</span>
+                      <span className="text-gray-500 text-xs">{t('map.type')}:</span>
                       <p className="font-medium text-gray-700 capitalize">
-                        {incident.damage_type}
+                        {getDamageClassLabel(incident.damage_type)}
                       </p>
                     </div>
                     <div>
-                      <span className="text-gray-500 text-xs">Severidad:</span>
+                      <span className="text-gray-500 text-xs">{t('map.severity')}:</span>
                       <p className="font-medium text-gray-700 capitalize">
-                        {incident.severity}
+                        {getSeverityLabel(incident.severity)}
                       </p>
                     </div>
                   </div>
@@ -449,9 +460,9 @@ export function MapView({
                   <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200">
                     <AlertTriangle className="w-4 h-4" style={{ color: priorityColor }} />
                     <div className="flex-1">
-                      <span className="text-xs text-gray-500">Prioridad:</span>
+                      <span className="text-xs text-gray-500">{t('map.priority')}:</span>
                       <p className="font-semibold capitalize" style={{ color: priorityColor }}>
-                        {incident.priority}
+                        {getPriorityLabel(incident.priority)}
                       </p>
                     </div>
                     {incident.priority_score && (
@@ -459,7 +470,7 @@ export function MapView({
                         <span className="text-xl font-bold text-gray-700">
                           {incident.priority_score.toFixed(1)}
                         </span>
-                        <p className="text-xs text-gray-500">score</p>
+                        <p className="text-xs text-gray-500">{t('map.score')}</p>
                       </div>
                     )}
                   </div>
@@ -467,7 +478,7 @@ export function MapView({
                   {/* Date */}
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Clock className="w-3 h-3" />
-                    <span>Reportado: {formatDate(incident.created_at)}</span>
+                    <span>{t('map.reported')}: {formatDate(incident.created_at, dateLocale)}</span>
                   </div>
 
                   {/* View details link */}
@@ -478,7 +489,7 @@ export function MapView({
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Ver detalles
+                      {t('map.viewDetails')}
                     </a>
                   </div>
                 </div>
@@ -499,25 +510,29 @@ export function MapView({
           }`}
         >
           <Flame className="w-4 h-4" />
-          {heatmapLoading ? 'Cargando…' : heatmapVisible ? 'Ocultar mapa de calor' : 'Mapa de calor'}
+          {heatmapLoading
+            ? t('map.heatmapLoading')
+            : heatmapVisible
+              ? t('map.hideHeatmap')
+              : t('map.heatmap')}
         </button>
 
         {heatmapVisible && (
           <div className="space-y-1">
             <label className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-              Ponderar por
+              {t('map.weightBy')}
             </label>
             <select
               value={heatmapWeight}
               onChange={(e) => setHeatmapWeight(e.target.value as 'frequency' | 'severity' | 'age')}
               className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400"
             >
-              <option value="frequency">Frecuencia</option>
-              <option value="severity">Severidad</option>
-              <option value="age">Antigüedad</option>
+              <option value="frequency">{t('map.frequency')}</option>
+              <option value="severity">{t('map.severity')}</option>
+              <option value="age">{t('map.age')}</option>
             </select>
             <p className="text-[10px] text-gray-400">
-              {heatmapPoints.length} puntos
+              {t('map.points', { count: heatmapPoints.length })}
             </p>
           </div>
         )}
@@ -526,9 +541,12 @@ export function MapView({
           <div className="pt-2 border-t border-gray-200">
             <p className="text-[10px] text-gray-500 uppercase tracking-wide">POIs</p>
             <p className="text-[10px] text-gray-400">
-              {poiLoading
-                ? 'Cargando capa…'
-                : `${poiItems.length} puntos · buffer ${resolvedPoiLayerFilters.bufferRadiusMeters} m`}
+                {poiLoading
+                  ? t('map.loadingLayer')
+                  : t('map.layerSummary', {
+                    count: poiItems.length,
+                    radius: resolvedPoiLayerFilters.bufferRadiusMeters,
+                  })}
             </p>
           </div>
         )}
@@ -536,13 +554,13 @@ export function MapView({
 
       {/* Map legend */}
       <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-lg p-3 z-[1000]">
-        <h4 className="text-xs font-semibold text-gray-700 mb-2">Prioridad</h4>
+        <h4 className="text-xs font-semibold text-gray-700 mb-2">{t('map.priority')}</h4>
         <div className="space-y-1.5">
           {[
-            { label: 'Crítica', color: getPriorityColor('critica') },
-            { label: 'Alta', color: getPriorityColor('alta') },
-            { label: 'Media', color: getPriorityColor('media') },
-            { label: 'Baja', color: getPriorityColor('baja') },
+            { label: getPriorityLabel('critica'), color: getPriorityColor('critica') },
+            { label: getPriorityLabel('alta'), color: getPriorityColor('alta') },
+            { label: getPriorityLabel('media'), color: getPriorityColor('media') },
+            { label: getPriorityLabel('baja'), color: getPriorityColor('baja') },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2">
               <div 
@@ -557,13 +575,13 @@ export function MapView({
         {/* Incident count */}
         <div className="mt-3 pt-3 border-t border-gray-200">
           <p className="text-xs text-gray-500">
-            <span className="font-semibold text-gray-700">{incidents.length}</span> incidentes
+            <span className="font-semibold text-gray-700">{incidents.length}</span> {t('map.incidents')}
           </p>
         </div>
 
         {poiLayerEnabled && (
           <div className="mt-3 pt-3 border-t border-gray-200">
-            <h4 className="text-xs font-semibold text-gray-700 mb-2">POIs y riesgo peatonal</h4>
+            <h4 className="text-xs font-semibold text-gray-700 mb-2">{t('map.poiRisk')}</h4>
             <div className="space-y-1.5">
               {activePoiCategories.map((category) => (
                 <div key={category} className="flex items-center gap-2">
@@ -571,13 +589,13 @@ export function MapView({
                     className="w-3 h-3 rounded-full border border-white shadow-sm"
                     style={{ backgroundColor: POI_CATEGORY_COLORS[category] }}
                   />
-                  <span className="text-xs text-gray-600">{POI_CATEGORY_LABELS[category]}</span>
+                  <span className="text-xs text-gray-600">{t(POI_CATEGORY_LABELS[category])}</span>
                 </div>
               ))}
             </div>
             {resolvedPoiLayerFilters.showRiskBuffers && (
               <p className="text-[10px] text-gray-500 mt-2">
-                Buffers activos: {resolvedPoiLayerFilters.bufferRadiusMeters} m
+                {t('map.activeBuffers')}: {resolvedPoiLayerFilters.bufferRadiusMeters} m
               </p>
             )}
           </div>

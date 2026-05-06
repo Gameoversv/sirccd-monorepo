@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { ToastContainer } from '@/components';
+import { ToastContainer } from '@/components/Toast';
 import { I18nProvider } from '@/components/I18nProvider';
 import './globals.css';
 

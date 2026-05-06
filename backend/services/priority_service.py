@@ -251,6 +251,9 @@ class PriorityService:
         # Actualizar timestamps según el estado
         if new_status == IncidentStatus.IN_PROGRESS and not incident.started_at:
             incident.started_at = datetime.utcnow()
+            # Calcular deadline SLA al iniciar reparación (P-06)
+            from services.sla_service import set_sla_deadline
+            set_sla_deadline(incident, self.db)
         elif new_status == IncidentStatus.RESOLVED and not incident.completed_at:
             incident.completed_at = datetime.utcnow()
         elif new_status == IncidentStatus.VERIFIED:

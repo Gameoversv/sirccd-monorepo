@@ -29,11 +29,11 @@ export function Sidebar() {
   const { t } = useTranslation();
 
   const items: Item[] = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/dashboard/incidents', label: t('nav.viewIncidents') || 'Incidentes', icon: List },
-    { href: '/dashboard/reports', label: t('nav.viewReports') || 'Reportes', icon: FileText },
-    { href: '/dashboard/users', label: t('nav.users') || 'Usuarios', icon: Users, roles: [UserRole.ADMIN, UserRole.SUPERVISOR] },
-    { href: '/dashboard/settings', label: 'Ajustes', icon: Settings2, roles: [UserRole.ADMIN] },
+    { href: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { href: '/dashboard/incidents', label: t('nav.viewIncidents'), icon: List },
+    { href: '/dashboard/reports', label: t('nav.viewReports'), icon: FileText },
+    { href: '/dashboard/users', label: t('nav.users'), icon: Users, roles: [UserRole.ADMIN, UserRole.SUPERVISOR] },
+    { href: '/dashboard/settings', label: t('settings.title'), icon: Settings2, roles: [UserRole.ADMIN] },
   ];
 
   const visible = items.filter(i => !i.roles || (user?.role && i.roles.includes(user.role)));
@@ -78,7 +78,7 @@ export function Sidebar() {
           className="flex items-center gap-2 rounded-lg bg-gradient-brand px-3 py-2.5 text-sm font-semibold text-white shadow-soft hover:shadow-elevated transition-shadow"
         >
           <PlusCircle className="h-4 w-4" />
-          {t('nav.createReport') || 'Nuevo reporte'}
+          {t('nav.createReport')}
         </Link>
       </div>
     </aside>

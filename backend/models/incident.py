@@ -82,6 +82,9 @@ class Incident(Base):
     # Notas y comentarios
     notes = Column(Text, nullable=True)
     
+    # SLA (P-06)
+    sla_deadline = Column(DateTime, nullable=True, index=True)
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

@@ -336,6 +336,67 @@ class AuditLogListResponse(BaseModel):
     entries: List[AuditLogEntry]
 
 
+class SLAStatusEnum(str, Enum):
+    """Estado SLA de un incidente"""
+    NOT_STARTED = "not_started"
+    ON_TRACK = "on_track"
+    WARNING = "warning"
+    OVERDUE = "overdue"
+    COMPLETED = "completed"
+
+
+class SLAStatusResponse(BaseModel):
+    """SLA status de un incidente"""
+    incident_id: int
+    status: SLAStatusEnum
+    sla_deadline: Optional[datetime] = None
+    hours_remaining: Optional[float] = None
+    sla_hours: float
+    priority: str
+    started_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SLAExpiringItem(BaseModel):
+    incident_id: int
+    status: SLAStatusEnum
+    sla_deadline: Optional[datetime] = None
+    hours_remaining: Optional[float] = None
+    sla_hours: float
+    priority: str
+    address: Optional[str] = None
+    city: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SLAExpiringResponse(BaseModel):
+    expiring_count: int
+    overdue_count: int
+    items: List[SLAExpiringItem]
+
+
+class SLAConfigResponse(BaseModel):
+    id: int
+    sla_hours_baja: float
+    sla_hours_media: float
+    sla_hours_alta: float
+    sla_hours_critica: float
+    warning_threshold_pct: float
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UpdateSLAConfigRequest(BaseModel):
+    sla_hours_baja: Optional[float] = Field(None, gt=0)
+    sla_hours_media: Optional[float] = Field(None, gt=0)
+    sla_hours_alta: Optional[float] = Field(None, gt=0)
+    sla_hours_critica: Optional[float] = Field(None, gt=0)
+    warning_threshold_pct: Optional[float] = Field(None, gt=0, le=1)
+
+
 class IncidentStatsResponse(BaseModel):
     """Estadísticas de incidentes"""
     total_incidents: int

@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { MapPin, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export interface Coordinates {
   latitude: number | null;
@@ -22,12 +23,12 @@ interface LocationPickerProps {
   lngError?: string;
 }
 
-async function reverseGeocode(lat: number, lon: number): Promise<ResolvedAddress> {
+async function reverseGeocode(lat: number, lon: number, lang: string): Promise<ResolvedAddress> {
   const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
   const res = await fetch(url, {
-    headers: { 'Accept-Language': 'es', 'User-Agent': 'sirccd-app' },
+    headers: { 'Accept-Language': lang, 'User-Agent': 'sirccd-app' },
   });
-  if (!res.ok) throw new Error('No se pudo consultar la dirección.');
+  if (!res.ok) throw new Error('reverse_geocode_failed');
   const data = await res.json();
   const a = data.address ?? {};
 
@@ -35,10 +36,8 @@ async function reverseGeocode(lat: number, lon: number): Promise<ResolvedAddress
   const suburb = a.suburb || a.neighbourhood || '';
   const addressStr = [road, suburb].filter(Boolean).join(', ') || data.display_name?.split(',')[0] || '';
 
-  const city =
-    a.city || a.town || a.village || a.municipality || a.county || '';
-  const province =
-    a.state || a.region || a.province || '';
+  const city = a.city || a.town || a.village || a.municipality || a.county || '';
+  const province = a.state || a.region || a.province || '';
 
   return { address: addressStr, city, province };
 }
@@ -50,6 +49,7 @@ export function LocationPicker({
   latError,
   lngError,
 }: LocationPickerProps) {
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -57,12 +57,13 @@ export function LocationPicker({
 
   const handleGeolocate = () => {
     if (!navigator.geolocation) {
-      setGeoError('Tu navegador no soporta geolocalización.');
+      setGeoError(t('reports.new.geo.unsupported'));
       return;
     }
     setLoading(true);
     setGeoError(null);
     setSuccess(false);
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = parseFloat(pos.coords.latitude.toFixed(6));
@@ -74,10 +75,11 @@ export function LocationPicker({
         if (onAddressResolved) {
           setGeocoding(true);
           try {
-            const resolved = await reverseGeocode(lat, lon);
+            const lang = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'es';
+            const resolved = await reverseGeocode(lat, lon, lang);
             onAddressResolved(resolved);
           } catch {
-            // silently ignore — fields remain editable
+            // Keep fields editable if reverse geocode fails.
           } finally {
             setGeocoding(false);
           }
@@ -87,16 +89,16 @@ export function LocationPicker({
         setLoading(false);
         switch (err.code) {
           case err.PERMISSION_DENIED:
-            setGeoError('Permiso de ubicación denegado. Ingrésala manualmente.');
+            setGeoError(t('reports.new.geo.permissionDenied'));
             break;
           case err.POSITION_UNAVAILABLE:
-            setGeoError('Ubicación no disponible. Ingrésala manualmente.');
+            setGeoError(t('reports.new.geo.positionUnavailable'));
             break;
           case err.TIMEOUT:
-            setGeoError('Tiempo de espera agotado. Ingrésala manualmente.');
+            setGeoError(t('reports.new.geo.timeout'));
             break;
           default:
-            setGeoError('Error al obtener ubicación. Ingrésala manualmente.');
+            setGeoError(t('reports.new.geo.genericError'));
         }
       },
       { timeout: 10000, maximumAge: 60000 }
@@ -123,20 +125,14 @@ export function LocationPicker({
         disabled={loading}
         className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors"
       >
-        {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <MapPin className="w-4 h-4" />
-        )}
-        {loading ? 'Obteniendo ubicación…' : 'Usar mi ubicación'}
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+        {loading ? t('reports.new.geo.gettingLocation') : t('reports.new.geo.useMyLocation')}
       </button>
 
       {success && !geoError && (
         <p className="text-green-600 text-sm flex items-center gap-1">
           <CheckCircle2 className="w-4 h-4" />
-          {geocoding
-            ? 'Obteniendo dirección…'
-            : 'Ubicación y dirección obtenidas exitosamente.'}
+          {geocoding ? t('reports.new.geo.gettingAddress') : t('reports.new.geo.success')}
         </p>
       )}
 
@@ -150,14 +146,14 @@ export function LocationPicker({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Latitud <span className="text-red-500">*</span>
+            {t('reports.new.geo.latitudeLabel')} <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
             step="any"
             min="-90"
             max="90"
-            placeholder="-90 a 90"
+            placeholder={t('reports.new.geo.latitudePlaceholder')}
             value={value.latitude ?? ''}
             onChange={handleLatChange}
             className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -174,14 +170,14 @@ export function LocationPicker({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Longitud <span className="text-red-500">*</span>
+            {t('reports.new.geo.longitudeLabel')} <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
             step="any"
             min="-180"
             max="180"
-            placeholder="-180 a 180"
+            placeholder={t('reports.new.geo.longitudePlaceholder')}
             value={value.longitude ?? ''}
             onChange={handleLngChange}
             className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -197,10 +193,7 @@ export function LocationPicker({
         </div>
       </div>
 
-      <p className="text-xs text-gray-500">
-        El botón detecta tu ubicación y rellena la dirección automáticamente. También puedes
-        ingresar las coordenadas manualmente.
-      </p>
+      <p className="text-xs text-gray-500">{t('reports.new.geo.helpText')}</p>
     </div>
   );
 }

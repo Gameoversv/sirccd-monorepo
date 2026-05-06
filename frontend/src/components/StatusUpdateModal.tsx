@@ -1,6 +1,7 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 import { STATUS_TRANSITIONS } from '@/types';
 import { getStatusLabel, getStatusColor } from '@/utils';
@@ -20,6 +21,7 @@ export function StatusUpdateModal({
   onSuccess,
   onSubmit,
 }: StatusUpdateModalProps) {
+  const { t } = useTranslation();
   const availableNext = STATUS_TRANSITIONS[currentStatus.toLowerCase()] || [];
   const [selectedStatus, setSelectedStatus] = useState<string>(availableNext[0] || '');
   const [notes, setNotes] = useState('');
@@ -37,7 +39,7 @@ export function StatusUpdateModal({
       onSuccess(selectedStatus);
       onClose();
     } catch (err: any) {
-      setError(err?.detail || err?.message || 'Error al actualizar el estado');
+      setError(err?.detail || err?.message || t('incidents.statusModal.updateError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -45,16 +47,15 @@ export function StatusUpdateModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-base font-semibold text-gray-900">
-            Actualizar Estado — Incidente #{incidentId}
+      <div className="bg-white dark:bg-card rounded-xl shadow-xl w-full max-w-md border border-gray-200 dark:border-border">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-border">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-foreground">
+            {t('incidents.statusModal.title', { incidentId })}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-muted transition-colors"
           >
             <X className="h-4 w-4 text-gray-500" />
           </button>
@@ -62,33 +63,29 @@ export function StatusUpdateModal({
 
         <form onSubmit={handleSubmit}>
           <div className="px-6 py-4 space-y-4">
-            {/* Current status */}
             <div>
-              <p className="text-xs text-gray-500 mb-1">Estado actual</p>
-              <span
-                className={`inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium ${getStatusColor(currentStatus)}`}
-              >
+              <p className="text-xs text-gray-500 mb-1">{t('incidents.statusModal.currentStatus')}</p>
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium ${getStatusColor(currentStatus)}`}>
                 {getStatusLabel(currentStatus)}
               </span>
             </div>
 
-            {/* Available transitions */}
             {availableNext.length === 0 ? (
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 rounded-lg px-4 py-3">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-muted-foreground bg-gray-50 dark:bg-muted rounded-lg px-4 py-3">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                Este incidente está en estado final y no puede actualizarse.
+                {t('incidents.statusModal.finalState')}
               </div>
             ) : (
               <div>
-                <p className="text-xs text-gray-500 mb-2">Nuevo estado</p>
+                <p className="text-xs text-gray-500 mb-2">{t('incidents.statusModal.newStatus')}</p>
                 <div className="space-y-2">
                   {availableNext.map((st) => (
                     <label
                       key={st}
                       className={`flex items-center gap-3 rounded-lg border-2 px-4 py-3 cursor-pointer transition-colors ${
                         selectedStatus === st
-                          ? 'border-primary-500 bg-primary-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/15'
+                          : 'border-gray-200 dark:border-border hover:border-gray-300 dark:hover:border-primary-500/50'
                       }`}
                     >
                       <input
@@ -100,13 +97,9 @@ export function StatusUpdateModal({
                         className="h-4 w-4 text-primary-600 focus:ring-primary-500"
                       />
                       <div className="flex items-center gap-2 flex-1">
-                        <span className="text-gray-400 text-xs">
-                          {getStatusLabel(currentStatus)}
-                        </span>
+                        <span className="text-gray-400 text-xs">{getStatusLabel(currentStatus)}</span>
                         <ChevronRight className="h-3 w-3 text-gray-400" />
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(st)}`}
-                        >
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(st)}`}>
                           {getStatusLabel(st)}
                         </span>
                       </div>
@@ -116,43 +109,36 @@ export function StatusUpdateModal({
               </div>
             )}
 
-            {/* Notes */}
             {availableNext.length > 0 && (
               <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Notas (opcional)
-                </label>
+                <label className="block text-xs text-gray-500 mb-1">{t('incidents.statusModal.notesOptional')}</label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
                   maxLength={2000}
-                  placeholder="Describe el cambio de estado, observaciones, etc."
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none resize-none"
+                  placeholder={t('incidents.statusModal.notesPlaceholder')}
+                  className="w-full rounded-lg border border-gray-300 dark:border-border bg-white dark:bg-background px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none resize-none"
                 />
-                <p className="text-right text-xs text-gray-400 mt-1">
-                  {notes.length}/2000
-                </p>
+                <p className="text-right text-xs text-gray-400 mt-1">{notes.length}/2000</p>
               </div>
             )}
 
-            {/* Error */}
             {error && (
-              <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3">
+              <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-200 bg-red-50 dark:bg-red-500/15 rounded-lg px-4 py-3 border border-red-200 dark:border-red-500/40">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 {error}
               </div>
             )}
           </div>
 
-          {/* Footer */}
-          <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-200">
+          <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-200 dark:border-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-border text-gray-700 dark:text-foreground hover:bg-gray-50 dark:hover:bg-muted transition-colors"
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -160,7 +146,7 @@ export function StatusUpdateModal({
               className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Confirmar cambio
+              {t('incidents.statusModal.confirmChange')}
             </button>
           </div>
         </form>

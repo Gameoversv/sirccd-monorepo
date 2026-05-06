@@ -375,6 +375,46 @@ export interface AuditLogListResponse {
   entries: AuditLogEntry[];
 }
 
+// SLA types (P-06)
+export type SLAStatus = 'not_started' | 'on_track' | 'warning' | 'overdue' | 'completed';
+
+export interface SLAStatusResponse {
+  incident_id: number;
+  status: SLAStatus;
+  sla_deadline: string | null;
+  hours_remaining: number | null;
+  sla_hours: number;
+  priority: string;
+  started_at: string | null;
+}
+
+export interface SLAExpiringItem {
+  incident_id: number;
+  status: SLAStatus;
+  sla_deadline: string | null;
+  hours_remaining: number | null;
+  sla_hours: number;
+  priority: string;
+  address: string | null;
+  city: string | null;
+}
+
+export interface SLAExpiringResponse {
+  expiring_count: number;
+  overdue_count: number;
+  items: SLAExpiringItem[];
+}
+
+export interface SLAConfig {
+  id: number;
+  sla_hours_baja: number;
+  sla_hours_media: number;
+  sla_hours_alta: number;
+  sla_hours_critica: number;
+  warning_threshold_pct: number;
+  updated_at: string;
+}
+
 // Detailed incident from GET /incidents/{id}
 export interface IncidentDetail {
   id: number;

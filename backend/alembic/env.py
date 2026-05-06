@@ -18,7 +18,7 @@ from db.base import Base
 
 # Importar todos los modelos para que Alembic los detecte
 from models import (
-    User, Report, Incident, POI, Metric, PrioritySetting,
+    User, Report, Incident, POI, Metric, PrioritySetting, SLAConfig,
 )
 
 # this is the Alembic Config object, which provides

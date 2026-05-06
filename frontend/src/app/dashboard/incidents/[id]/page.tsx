@@ -21,8 +21,9 @@ import { StatusTimeline } from '@/components/StatusTimeline';
 import { StatusUpdateModal } from '@/components/StatusUpdateModal';
 import { useAuthStore } from '@/store';
 import { useToast } from '@/hooks';
-import type { IncidentDetail, AuditLogEntry } from '@/types';
+import type { IncidentDetail, AuditLogEntry, SLAStatusResponse } from '@/types';
 import { UserRole, STATUS_TRANSITIONS } from '@/types';
+import { SLABadge } from '@/components/SLABadge';
 import {
   getSeverityLabel,
   getSeverityColor,
@@ -123,6 +124,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [priorityBreakdown, setPriorityBreakdown] = useState<PriorityBreakdown | null>(null);
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
+  const [slaStatus, setSlaStatus] = useState<SLAStatusResponse | null>(null);
 
   const canUpdateStatus =
     user?.role === UserRole.SUPERVISOR ||
@@ -135,12 +137,14 @@ export default function IncidentDetailPage({ params }: PageProps) {
     setIsLoading(true);
     setError(null);
     try {
-      const [data, auditData] = await Promise.all([
+      const [data, auditData, slaData] = await Promise.all([
         incidentsService.getIncident(incidentId),
         incidentsService.getAuditLog(incidentId).catch(() => ({ total: 0, entries: [] })),
+        incidentsService.getSLAStatus(incidentId).catch(() => null),
       ]);
       setIncident(data);
       setAuditLog(auditData.entries);
+      setSlaStatus(slaData);
       // If score is 0, recalculate to populate it; otherwise just fetch breakdown
       try {
         if (!data.priority_score || data.priority_score === 0) {
@@ -489,6 +493,53 @@ export default function IncidentDetailPage({ params }: PageProps) {
               <InfoRow label={t('incidents.detail.verified')} value={formatDate(incident.verified_at)} />
             </div>
           </div>
+
+          {/* SLA (P-06) */}
+          {slaStatus && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                <Clock className="h-4 w-4 text-amber-500" />
+                <h2 className="text-sm font-semibold text-gray-800">SLA</h2>
+              </div>
+              <div className="px-5 py-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Estado</span>
+                  <SLABadge status={slaStatus.status} hoursRemaining={slaStatus.hours_remaining} />
+                </div>
+                <InfoRow
+                  label="Tiempo límite"
+                  value={
+                    slaStatus.sla_deadline
+                      ? new Date(slaStatus.sla_deadline).toLocaleString('es-ES', {
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : '—'
+                  }
+                />
+                <InfoRow
+                  label="SLA configurado"
+                  value={`${slaStatus.sla_hours}h`}
+                />
+                {slaStatus.hours_remaining != null &&
+                  slaStatus.status !== 'completed' &&
+                  slaStatus.status !== 'not_started' && (
+                    <InfoRow
+                      label={slaStatus.hours_remaining < 0 ? 'Vencido hace' : 'Tiempo restante'}
+                      value={
+                        <span className={slaStatus.hours_remaining < 0 ? 'text-red-600 font-semibold' : ''}>
+                          {Math.abs(slaStatus.hours_remaining) < 1
+                            ? `${Math.round(Math.abs(slaStatus.hours_remaining) * 60)} min`
+                            : `${Math.abs(slaStatus.hours_remaining).toFixed(1)} h`}
+                        </span>
+                      }
+                    />
+                  )}
+              </div>
+            </div>
+          )}
 
           {/* Notes */}
           {incident.notes && (

@@ -99,6 +99,18 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
+    # SMTP / Notificaciones (P-06)
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "noreply@sirccd.local"
+    SMTP_ENABLED: bool = False  # Desactivado hasta configurar credenciales
+
+    # SLA (P-06)
+    SLA_WARNING_HOURS_BEFORE: float = 4.0   # alertar X horas antes del vencimiento
+    SLA_CHECK_INTERVAL_MINUTES: int = 30    # frecuencia del job de verificación
+
     # Logging
     LOG_LEVEL: str = "INFO"
     

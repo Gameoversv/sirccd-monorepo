@@ -34,6 +34,12 @@ from schemas.incident import (
     IncidentStatsResponse,
     AuditLogEntry,
     AuditLogListResponse,
+    SLAStatusResponse,
+    SLAExpiringResponse,
+    SLAExpiringItem,
+    SLAStatusEnum,
+    SLAConfigResponse,
+    UpdateSLAConfigRequest,
 )
 from models.incident_audit_log import IncidentAuditLog
 from services.priority_service import get_priority_service
@@ -520,20 +526,25 @@ def get_incident_stats(
     else:
         avg_ttr_hours = None
 
-    # SLA compliance: % de incidentes completados dentro de 48 horas
-    SLA_HOURS = 48
+    # SLA compliance: % de incidentes completados dentro de su deadline SLA (P-06)
+    from services.sla_service import get_sla_hours as _get_sla_hours
     completed_for_sla = db.query(Incident).filter(
         and_(
             Incident.started_at.isnot(None),
             Incident.completed_at.isnot(None)
         )
     ).all()
-    
+
     if completed_for_sla:
-        within_sla = sum(
-            1 for inc in completed_for_sla
-            if (inc.completed_at - inc.started_at).total_seconds() / 3600 <= SLA_HOURS
-        )
+        within_sla = 0
+        for inc in completed_for_sla:
+            # Usar sla_deadline si existe, sino calcular con horas configuradas
+            if inc.sla_deadline:
+                within_sla += 1 if inc.completed_at <= inc.sla_deadline else 0
+            else:
+                sla_h = _get_sla_hours(db, inc.priority)
+                elapsed = (inc.completed_at - inc.started_at).total_seconds() / 3600
+                within_sla += 1 if elapsed <= sla_h else 0
         sla_compliance_pct = round(within_sla / len(completed_for_sla) * 100, 1)
     else:
         sla_compliance_pct = None
@@ -655,3 +666,159 @@ def get_heatmap_data(
         points.append([round(lat, 6), round(lon, 6), round(intensity, 3)])
 
     return {"points": points, "weight_by": weight_by, "count": len(points)}
+
+
+# ============================================
+# SLA — P-06
+# ============================================
+
+@router.get("/sla/expiring", response_model=SLAExpiringResponse)
+def get_sla_expiring(
+    within_hours: float = Query(4.0, gt=0, description="Ventana de tiempo en horas"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Incidentes que vencerán su SLA dentro de `within_hours` horas,
+    más los que ya están vencidos.
+    """
+    from services.sla_service import get_expiring_incidents, get_overdue_incidents, get_sla_info
+
+    expiring = get_expiring_incidents(db, within_hours=within_hours)
+    overdue = get_overdue_incidents(db)
+
+    items: list[SLAExpiringItem] = []
+    for inc in overdue:
+        info = get_sla_info(inc, db)
+        items.append(SLAExpiringItem(
+            incident_id=inc.id,
+            status=SLAStatusEnum(info["status"]),
+            sla_deadline=info["sla_deadline"],
+            hours_remaining=info["hours_remaining"],
+            sla_hours=info["sla_hours"],
+            priority=info["priority"],
+            address=inc.address,
+            city=inc.city,
+        ))
+    for inc in expiring:
+        info = get_sla_info(inc, db)
+        items.append(SLAExpiringItem(
+            incident_id=inc.id,
+            status=SLAStatusEnum(info["status"]),
+            sla_deadline=info["sla_deadline"],
+            hours_remaining=info["hours_remaining"],
+            sla_hours=info["sla_hours"],
+            priority=info["priority"],
+            address=inc.address,
+            city=inc.city,
+        ))
+
+    return SLAExpiringResponse(
+        expiring_count=len(expiring),
+        overdue_count=len(overdue),
+        items=items,
+    )
+
+
+@router.get("/{incident_id:int}/sla", response_model=SLAStatusResponse)
+def get_incident_sla(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Estado SLA de un incidente específico."""
+    from services.sla_service import get_sla_info
+
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Incidente {incident_id} no encontrado")
+
+    info = get_sla_info(incident, db)
+    return SLAStatusResponse(
+        incident_id=info["incident_id"],
+        status=SLAStatusEnum(info["status"]),
+        sla_deadline=info["sla_deadline"],
+        hours_remaining=info["hours_remaining"],
+        sla_hours=info["sla_hours"],
+        priority=info["priority"],
+        started_at=info["started_at"],
+    )
+
+
+@router.get("/sla/config", response_model=SLAConfigResponse)
+def get_sla_config(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Obtiene la configuración activa de SLAs."""
+    from models.sla_config import SLAConfig
+    from services.sla_service import DEFAULT_SLA_HOURS, DEFAULT_WARNING_THRESHOLD
+    from models.incident import PriorityLevel
+
+    cfg = db.query(SLAConfig).order_by(SLAConfig.id.asc()).first()
+    if cfg is None:
+        # Retorna defaults sin persistir
+        from datetime import datetime as _dt
+        return SLAConfigResponse(
+            id=0,
+            sla_hours_baja=DEFAULT_SLA_HOURS[PriorityLevel.BAJA],
+            sla_hours_media=DEFAULT_SLA_HOURS[PriorityLevel.MEDIA],
+            sla_hours_alta=DEFAULT_SLA_HOURS[PriorityLevel.ALTA],
+            sla_hours_critica=DEFAULT_SLA_HOURS[PriorityLevel.CRITICA],
+            warning_threshold_pct=DEFAULT_WARNING_THRESHOLD,
+            updated_at=_dt.utcnow(),
+        )
+    return cfg
+
+
+@router.put("/sla/config", response_model=SLAConfigResponse)
+def update_sla_config(
+    request: UpdateSLAConfigRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Actualiza (o crea) la configuración de SLAs. Solo ADMIN."""
+    from models.user import UserRole
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Solo administradores pueden modificar la configuración SLA")
+
+    from models.sla_config import SLAConfig
+
+    cfg = db.query(SLAConfig).order_by(SLAConfig.id.asc()).first()
+    if cfg is None:
+        cfg = SLAConfig(updated_by=current_user.id)
+        db.add(cfg)
+
+    if request.sla_hours_baja is not None:
+        cfg.sla_hours_baja = request.sla_hours_baja
+    if request.sla_hours_media is not None:
+        cfg.sla_hours_media = request.sla_hours_media
+    if request.sla_hours_alta is not None:
+        cfg.sla_hours_alta = request.sla_hours_alta
+    if request.sla_hours_critica is not None:
+        cfg.sla_hours_critica = request.sla_hours_critica
+    if request.warning_threshold_pct is not None:
+        cfg.warning_threshold_pct = request.warning_threshold_pct
+    cfg.updated_by = current_user.id
+
+    db.commit()
+    db.refresh(cfg)
+    return cfg
+
+
+@router.post("/sla/check")
+def trigger_sla_check(
+    current_user: User = Depends(get_current_active_user),
+):
+    """Encola manualmente el job de verificación de SLAs. Solo ADMIN."""
+    from models.user import UserRole
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Solo administradores")
+
+    try:
+        from services.queue_service import get_queue_service
+        svc = get_queue_service()
+        job = svc.queue.enqueue("tasks.sla_tasks.check_sla_alerts")
+        return {"queued": True, "job_id": job.id if job else None}
+    except Exception as exc:
+        return {"queued": False, "error": str(exc)}

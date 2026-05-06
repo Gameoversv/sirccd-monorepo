@@ -232,6 +232,7 @@ uvicorn.log
 runs/
 checkpoints/
 models/
+!backend/models/
 !ml/models/
 !ml/models/baseline/
 !ml/models/baseline/*.json

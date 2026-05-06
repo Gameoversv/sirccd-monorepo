@@ -46,10 +46,17 @@ function Toast({ id, type, message, duration = 5000, onClose }: ToastProps) {
   };
 
   const colors = {
-    success: 'bg-success-50 border-success-200 dark:bg-success-500/15 dark:border-success-500/35',
-    error: 'bg-danger-50 border-danger-200 dark:bg-danger-500/15 dark:border-danger-500/35',
-    warning: 'bg-warning-50 border-warning-200 dark:bg-warning-500/15 dark:border-warning-500/35',
-    info: 'bg-primary-50 border-primary-200 dark:bg-primary-500/15 dark:border-primary-500/35',
+    success: 'bg-success-50 border-success-200 dark:bg-success-900/55 dark:border-success-700/70',
+    error: 'bg-danger-50 border-danger-200 dark:bg-danger-900/55 dark:border-danger-700/70',
+    warning: 'bg-warning-50 border-warning-200 dark:bg-warning-900/55 dark:border-warning-700/70',
+    info: 'bg-primary-50 border-primary-200 dark:bg-primary-900/55 dark:border-primary-700/70',
+  };
+
+  const messageColors = {
+    success: 'text-success-900 dark:text-success-100',
+    error: 'text-danger-900 dark:text-danger-100',
+    warning: 'text-warning-900 dark:text-warning-100',
+    info: 'text-primary-900 dark:text-primary-100',
   };
 
   return (
@@ -60,7 +67,7 @@ function Toast({ id, type, message, duration = 5000, onClose }: ToastProps) {
         <div className="flex items-start">
           <div className="flex-shrink-0">{icons[type]}</div>
           <div className="ml-3 w-0 flex-1 pt-0.5">
-            <p className="text-sm font-medium text-foreground">{message}</p>
+            <p className={`text-sm font-medium ${messageColors[type]}`}>{message}</p>
           </div>
           <div className="ml-4 flex flex-shrink-0">
             <button

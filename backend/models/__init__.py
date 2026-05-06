@@ -14,6 +14,7 @@ from .incident_audit_log import IncidentAuditLog
 from .poi import POI, POICategory
 from .metric import Metric
 from .priority_setting import PrioritySetting
+from .sla_config import SLAConfig
 from .zone import Zone
 
 __all__ = [
@@ -39,6 +40,8 @@ __all__ = [
     "Metric",
     # Priority settings
     "PrioritySetting",
+    # SLA config
+    "SLAConfig",
     # Zone
     "Zone",
 ]

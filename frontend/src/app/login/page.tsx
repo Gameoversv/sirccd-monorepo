@@ -48,7 +48,6 @@ export default function LoginPage() {
       </div>
 
       <div className="grid min-h-screen lg:grid-cols-2">
-        {/* Branding panel */}
         <div className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-brand text-white p-12">
           <div className="absolute inset-0 bg-gradient-mesh opacity-40" />
           <div className="relative z-10 flex items-center gap-3">
@@ -60,22 +59,21 @@ export default function LoginPage() {
 
           <div className="relative z-10 space-y-6">
             <h2 className="text-4xl font-bold tracking-tight text-balance leading-tight">
-              Reportes ciudadanos, calles más seguras.
+              {t('auth.login.heroTitle')}
             </h2>
             <p className="text-white/80 text-lg max-w-md">
-              Sistema inteligente para detectar, priorizar y resolver incidencias en la vía pública.
+              {t('auth.login.heroSubtitle')}
             </p>
             <ul className="space-y-3 text-sm text-white/90">
-              <li className="flex items-center gap-3"><MapPin className="h-4 w-4" /> Geolocalización automática</li>
-              <li className="flex items-center gap-3"><Activity className="h-4 w-4" /> Priorización con ML</li>
-              <li className="flex items-center gap-3"><BarChart3 className="h-4 w-4" /> Dashboards en tiempo real</li>
+              <li className="flex items-center gap-3"><MapPin className="h-4 w-4" /> {t('auth.login.featureGeo')}</li>
+              <li className="flex items-center gap-3"><Activity className="h-4 w-4" /> {t('auth.login.featureMl')}</li>
+              <li className="flex items-center gap-3"><BarChart3 className="h-4 w-4" /> {t('auth.login.featureDashboards')}</li>
             </ul>
           </div>
 
-          <div className="relative z-10 text-xs text-white/60">© {new Date().getFullYear()} SIRCCD</div>
+          <div className="relative z-10 text-xs text-white/60">&copy; {new Date().getFullYear()} SIRCCD</div>
         </div>
 
-        {/* Form panel */}
         <div className="flex items-center justify-center p-6 sm:p-12">
           <div className="w-full max-w-md animate-slide-up">
             <div className="mb-8 lg:hidden flex items-center gap-3">
@@ -141,9 +139,9 @@ export default function LoginPage() {
               </button>
 
               <p className="text-center text-sm text-muted-foreground">
-                ¿No tienes cuenta?{' '}
+                {t('auth.login.noAccount')}{' '}
                 <a href="/register" className="font-medium text-primary-600 hover:text-primary-500 hover:underline underline-offset-4">
-                  Regístrate
+                  {t('auth.login.registerCta')}
                 </a>
               </p>
             </form>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import {
   MapPin,
   AlertTriangle,
@@ -8,9 +9,18 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Clock,
 } from 'lucide-react';
+import { SLABadge } from '@/components/SLABadge';
+import type { SLAStatus } from '@/types';
 import type { IncidentStatus, SeverityLevel } from '@/types';
-import { getSeverityLabel, getStatusLabel, getSeverityColor, getStatusColor } from '@/utils';
+import {
+  getSeverityLabel,
+  getStatusLabel,
+  getSeverityColor,
+  getStatusColor,
+  getPriorityLabel,
+} from '@/utils';
 
 interface IncidentRow {
   id: number;
@@ -23,6 +33,9 @@ interface IncidentRow {
   priority_score?: number;
   status: string;
   created_at: string;
+  sla_deadline?: string | null;
+  sla_status?: SLAStatus | null;
+  sla_hours_remaining?: number | null;
 }
 
 interface IncidentsTableProps {
@@ -37,27 +50,18 @@ interface IncidentsTableProps {
   sortDir?: 'asc' | 'desc';
 }
 
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('es-ES', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
 function getPriorityBadge(priority: string, score?: number) {
   const colors: Record<string, string> = {
-    critica: 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-200',
-    alta: 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-200',
-    media: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200',
-    baja: 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-200',
+    critica: 'bg-red-100 text-red-800 dark:bg-red-500/35 dark:text-red-100',
+    alta: 'bg-orange-100 text-orange-800 dark:bg-orange-500/35 dark:text-orange-100',
+    media: 'bg-amber-100 text-amber-800 dark:bg-amber-500/35 dark:text-amber-100',
+    baja: 'bg-blue-100 text-blue-800 dark:bg-blue-500/35 dark:text-blue-100',
   };
   const cls = colors[priority.toLowerCase()] || 'bg-gray-100 text-gray-700 dark:bg-gray-700/40 dark:text-gray-100';
   return (
     <div className="flex items-center gap-1.5">
       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${cls}`}>
-        {priority}
+        {getPriorityLabel(priority)}
       </span>
       {score != null && score > 0 && (
         <span className="text-xs text-gray-500 font-mono">{score.toFixed(1)}</span>
@@ -77,6 +81,18 @@ export function IncidentsTable({
   sortField,
   sortDir,
 }: IncidentsTableProps) {
+  const { t, i18n } = useTranslation();
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-ES';
+    return date.toLocaleDateString(locale, {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
   const SortHeader = ({
     field,
     children,
@@ -115,9 +131,9 @@ export function IncidentsTable({
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
           <AlertTriangle className="h-6 w-6 text-muted-foreground" />
         </div>
-        <p className="text-sm font-medium">Sin resultados</p>
+        <p className="text-sm font-medium">{t('incidents.tableEmptyTitle', { defaultValue: 'Sin resultados' })}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          No se encontraron incidentes con los filtros seleccionados.
+          {t('incidents.tableEmptyHint', { defaultValue: 'No se encontraron incidentes con los filtros seleccionados.' })}
         </p>
       </div>
     );
@@ -131,14 +147,20 @@ export function IncidentsTable({
             <tr>
               <SortHeader field="id">ID</SortHeader>
               <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Ubicación
+                {t('incidents.columns.location', { defaultValue: 'Ubicación' })}
               </th>
-              <SortHeader field="severity">Severidad</SortHeader>
-              <SortHeader field="priority_score">Prioridad</SortHeader>
-              <SortHeader field="status">Estado</SortHeader>
-              <SortHeader field="created_at">Fecha</SortHeader>
+              <SortHeader field="severity">{t('incidents.columns.severity', { defaultValue: 'Severidad' })}</SortHeader>
+              <SortHeader field="priority_score">{t('incidents.columns.priority', { defaultValue: 'Prioridad' })}</SortHeader>
+              <SortHeader field="status">{t('incidents.columns.status', { defaultValue: 'Estado' })}</SortHeader>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  SLA
+                </span>
+              </th>
+              <SortHeader field="created_at">{t('incidents.columns.date', { defaultValue: 'Fecha' })}</SortHeader>
               <th className="px-4 py-3 text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Acciones
+                {t('incidents.columns.actions', { defaultValue: 'Acciones' })}
               </th>
             </tr>
           </thead>
@@ -154,7 +176,7 @@ export function IncidentsTable({
                 <td className="px-4 py-3 text-sm">
                   <div className="flex items-start gap-1.5 max-w-[220px]">
                     <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <span className="truncate">{inc.address || 'Sin dirección'}</span>
+                    <span className="truncate">{inc.address || t('incidents.noAddress', { defaultValue: 'Sin dirección' })}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
@@ -174,6 +196,17 @@ export function IncidentsTable({
                     {getStatusLabel(inc.status as IncidentStatus)}
                   </span>
                 </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  {inc.sla_status ? (
+                    <SLABadge
+                      status={inc.sla_status}
+                      hoursRemaining={inc.sla_hours_remaining}
+                      compact
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
                   {formatDate(inc.created_at)}
                 </td>
@@ -183,7 +216,7 @@ export function IncidentsTable({
                     className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground hover:bg-muted hover:border-primary-500/40 hover:text-primary-600 font-medium transition-colors"
                   >
                     <Eye className="h-3.5 w-3.5" />
-                    Ver
+                    {t('common.view', { defaultValue: 'Ver' })}
                   </Link>
                 </td>
               </tr>
@@ -192,11 +225,13 @@ export function IncidentsTable({
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
         <p className="text-xs text-muted-foreground">
-          Mostrando {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} de{' '}
-          <span className="font-semibold text-foreground">{total}</span> incidentes
+          {t('common.showingRange', {
+            from: (page - 1) * 20 + 1,
+            to: Math.min(page * 20, total),
+            total,
+          })}
         </p>
         <div className="flex items-center gap-1">
           <button
@@ -204,17 +239,19 @@ export function IncidentsTable({
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
             className="p-1.5 rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label={t('common.prevPage')}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="px-3 py-1 text-xs font-medium">
-            {page} <span className="text-muted-foreground">/</span> {totalPages || 1}
+            {t('common.page', { current: page, total: totalPages || 1 })}
           </span>
           <button
             type="button"
             disabled={page >= totalPages}
             onClick={() => onPageChange(page + 1)}
             className="p-1.5 rounded-md border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label={t('common.nextPage')}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
