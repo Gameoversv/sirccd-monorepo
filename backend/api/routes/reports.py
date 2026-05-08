@@ -388,16 +388,34 @@ async def create_report(
     
     # 1. Validar y subir imagen (con anonimización automática B-05)
     try:
-        image_url, image_width, image_height, anonymization_stats = await storage_service.upload_image(
+        image_url, image_width, image_height, anonymization_stats, exif_data = await storage_service.upload_image(
             file=image,
             folder="reports",
             anonymize=True  # B-05: SIEMPRE anonimizar antes de guardar
         )
-        
+
         # Log de anonimización
         if anonymization_stats.get('anonymized'):
             print(f" Imagen anonimizada: {anonymization_stats['regions_blurred']} regiones "
                   f"({anonymization_stats['faces_detected']} rostros, {anonymization_stats['plates_detected']} placas)")
+
+        # Coordenadas: EXIF GPS tiene prioridad sobre las del usuario al momento de subir.
+        # Razón: el usuario puede subir una foto tomada hace tiempo en otro lugar.
+        # EXIF GPS = dónde se tomó la foto = dónde está el bache real.
+        report_latitude = latitude
+        report_longitude = longitude
+        location_source = "user"
+
+        if exif_data.gps_latitude is not None and exif_data.gps_longitude is not None:
+            report_latitude = exif_data.gps_latitude
+            report_longitude = exif_data.gps_longitude
+            location_source = "exif"
+            print(
+                f"ℹ  Usando coordenadas EXIF ({report_latitude:.6f}, {report_longitude:.6f}) "
+                f"en lugar de coordenadas del usuario ({latitude:.6f}, {longitude:.6f})"
+            )
+        else:
+            print(f"ℹ  Sin GPS en EXIF — usando coordenadas del usuario ({latitude:.6f}, {longitude:.6f})")
     
     except HTTPException:
         raise
@@ -416,8 +434,8 @@ async def create_report(
         confidence = 0.0
         
         # Crear geometría PostGIS (POINT)
-        # Formato WKT: POINT(longitude latitude) - nota el orden!
-        location_wkt = f"POINT({longitude} {latitude})"
+        # Formato WKT: POINT(longitude latitude) — nota el orden lon/lat
+        location_wkt = f"POINT({report_longitude} {report_latitude})"
         location = WKTElement(location_wkt, srid=4326)
         
         new_report = Report(
@@ -480,8 +498,9 @@ async def create_report(
                 image_local_path = _tmp_file.name
 
             if image_local_path:
-                print(f" Ejecutando detección ML inline para reporte {new_report.id}")
-                result = ml_service.detect(image_local_path)
+                print(f" Ejecutando detección ML inline para reporte {new_report.id} "
+                      f"(zoom_factor={exif_data.zoom_scale_factor:.2f})")
+                result = ml_service.detect(image_local_path, focal_scale_factor=exif_data.zoom_scale_factor)
                 dedup_image = None
                 try:
                     from PIL import Image as _PILImage
@@ -622,8 +641,8 @@ async def create_report(
         severity=severity,
         confidence=confidence,
         image_url=_public_url(image_url),
-        latitude=latitude,
-        longitude=longitude,
+        latitude=report_latitude,
+        longitude=report_longitude,
         description=description,
         created_at=new_report.created_at,
         job_id=job_id

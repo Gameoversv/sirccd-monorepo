@@ -376,7 +376,8 @@
         "longitudeLabel": "Longitude",
         "latitudePlaceholder": "-90 to 90",
         "longitudePlaceholder": "-180 to 180",
-        "helpText": "The button detects your location and fills the address automatically. You can also enter coordinates manually."
+        "helpText": "The button detects your location and fills the address automatically. You can also enter coordinates manually.",
+        "exifLocation": "Location detected from photo"
       }
     }
   },

@@ -137,20 +137,20 @@ class StorageService:
         file: UploadFile,
         folder: str = "reports",
         anonymize: bool = True
-    ) -> Tuple[str, int, int, dict]:
+    ) -> Tuple:
         """
         Sube una imagen a MinIO o almacenamiento local
-        
-        IMPORTANTE: Anonimiza la imagen por defecto (B-05)
-        Aplica blur a rostros y placas antes de persistir
-        
+
+        IMPORTANTE: Anonimiza la imagen por defecto (B-05) y elimina EXIF (D-08)
+
         Args:
             file: Archivo subido por el usuario
             folder: Carpeta dentro del bucket (ej: 'reports', 'avatars')
             anonymize: Si True, anonimiza la imagen antes de guardar (default: True)
-        
+
         Returns:
-            Tuple[str, int, int, dict]: (URL, ancho, alto, stats de anonimización)
+            Tuple[str, int, int, dict, ExifData]:
+                (URL, ancho, alto, stats de anonimización, datos EXIF extraídos)
         
         Raises:
             HTTPException: Si hay errores de validación o carga
@@ -164,7 +164,16 @@ class StorageService:
         
         # Leer contenido del archivo
         content = await file.read()
-        
+
+        # D-08: Extraer EXIF técnico ANTES de cualquier transformación
+        from .exif_service import extract_exif, strip_exif, ExifData
+        exif_data: ExifData = extract_exif(content)
+        if exif_data.focal_length_35mm or exif_data.focal_length_mm:
+            print(
+                f"ℹ  EXIF focal: {exif_data.focal_length_35mm or exif_data.focal_length_mm:.0f} mm "
+                f"(zoom_factor={exif_data.zoom_scale_factor:.2f})"
+            )
+
         # B-05: Anonimizar imagen ANTES de guardar (blur rostros/placas)
         anonymization_stats = {
             'faces_detected': 0,
@@ -173,18 +182,18 @@ class StorageService:
             'anonymized': False,
             'error': None
         }
-        
+
         if anonymize:
             try:
                 from .anonymizer import image_anonymizer
-                
+
                 # Anonimizar (detectar y difuminar rostros/placas)
                 content, anonymization_stats = image_anonymizer.anonymize(
                     content,
                     detect_faces=True,
                     detect_plates=True
                 )
-                
+
                 if anonymization_stats.get('error'):
                     print(f"  Error en anonimización: {anonymization_stats['error']}")
                 elif anonymization_stats.get('anonymized'):
@@ -192,7 +201,7 @@ class StorageService:
                           f"({anonymization_stats['faces_detected']} rostros, {anonymization_stats['plates_detected']} placas)")
                 else:
                     print("ℹ  No se detectaron regiones sensibles en la imagen")
-            
+
             except Exception as e:
                 print(f" Error crítico en anonimización: {e}")
                 # POLÍTICA: En caso de error, NO guardar la imagen
@@ -201,6 +210,14 @@ class StorageService:
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=f"Error en proceso de anonimización: {str(e)}. Imagen no guardada por seguridad."
                 )
+
+        # D-08: Eliminar EXIF residual — siempre.
+        # El anonymizer ya hace un re-save via PIL.fromarray cuando el modelo
+        # está cargado, por lo que el EXIF ya fue eliminado en ese caso.
+        # Cuando el modelo no está disponible o anonymize=False, los bytes
+        # originales con EXIF estarían intactos; strip_exif los limpia.
+        # Si ya no hay EXIF, la función retorna rápido sin degradación adicional.
+        content = strip_exif(content)
         
         # Obtener dimensiones de la imagen (ya anonimizada)
         try:
@@ -219,7 +236,7 @@ class StorageService:
         else:
             url = await self._upload_to_local(object_name, content)
         
-        return url, width, height, anonymization_stats
+        return url, width, height, anonymization_stats, exif_data
     
     async def _upload_to_minio(
         self,

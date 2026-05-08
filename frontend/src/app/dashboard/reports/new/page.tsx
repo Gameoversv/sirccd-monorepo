@@ -13,6 +13,8 @@ import { LocationPicker, type Coordinates, type ResolvedAddress } from '@/compon
 import { reportsService } from '@/services/reportsService';
 import { useAuthStore } from '@/store';
 import { useToast } from '@/hooks';
+import { reverseGeocode } from '@/lib/geocode';
+import type { GpsCoords } from '@/lib/exifGps';
 
 interface FormErrors {
   image?: string;
@@ -32,13 +34,14 @@ export default function NewReportPage() {
 
   const [image, setImage] = useState<File | null>(null);
   const [coords, setCoords] = useState<Coordinates>({ latitude: null, longitude: null });
+  const [locationSource, setLocationSource] = useState<'exif' | 'gps' | null>(null);
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [province, setProvince] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     setIsHydrated(true);
@@ -99,6 +102,30 @@ export default function NewReportPage() {
     if (resolved.province) setProvince(resolved.province);
   };
 
+  const handleCoordsChange = (newCoords: Coordinates) => {
+    setCoords(newCoords);
+    setLocationSource(null);
+  };
+
+  const handleImageChange = (file: File | null) => {
+    setImage(file);
+    if (!file) {
+      setLocationSource(null);
+    }
+  };
+
+  const handleExifLocation = async (gps: GpsCoords) => {
+    setCoords({ latitude: gps.latitude, longitude: gps.longitude });
+    setLocationSource('exif');
+    try {
+      const lang = i18n.language?.toLowerCase().startsWith('en') ? 'en' : 'es';
+      const resolved = await reverseGeocode(gps.latitude, gps.longitude, lang);
+      handleAddressResolved(resolved);
+    } catch {
+      // Silently ignore — user can fill address manually
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -149,7 +176,12 @@ export default function NewReportPage() {
             {t('reports.new.imageSection')} <span className="text-danger-500">*</span>
           </h2>
           <p className="text-sm text-muted-foreground">{t('reports.new.imageHint')}</p>
-          <ImageUpload value={image} onChange={setImage} error={errors.image} />
+          <ImageUpload
+            value={image}
+            onChange={handleImageChange}
+            onExifLocation={handleExifLocation}
+            error={errors.image}
+          />
         </section>
 
         {/* Location */}
@@ -160,10 +192,11 @@ export default function NewReportPage() {
           <p className="text-sm text-muted-foreground">{t('reports.new.locationHint')}</p>
           <LocationPicker
             value={coords}
-            onChange={setCoords}
+            onChange={handleCoordsChange}
             onAddressResolved={handleAddressResolved}
             latError={errors.latitude}
             lngError={errors.longitude}
+            locationSource={locationSource}
           />
           {coords.latitude != null && coords.longitude != null && (
             <div className="mt-3 rounded-lg overflow-hidden border border-border">

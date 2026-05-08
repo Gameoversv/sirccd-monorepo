@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef, useState, useCallback } from 'react';
-import { ImageIcon, X, AlertCircle, ShieldAlert, ShieldCheck, Loader2 } from 'lucide-react';
+import { ImageIcon, X, AlertCircle, ShieldAlert, ShieldCheck, Loader2, MapPin, MapPinOff } from 'lucide-react';
 import { reportsService } from '@/services';
+import { readExifGps, type GpsCoords } from '@/lib/exifGps';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -10,6 +11,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_EXTENSIONS = 'JPG, PNG, WEBP';
 
 type PrivacyStatus = 'idle' | 'checking' | 'clean' | 'warning' | 'unavailable';
+type ExifStatus = 'idle' | 'checking' | 'found' | 'not_found';
 
 interface PrivacyResult {
   faces_detected: number;
@@ -22,15 +24,18 @@ interface ImageUploadProps {
   value: File | null;
   onChange: (file: File | null) => void;
   error?: string;
+  onExifLocation?: (coords: GpsCoords) => void;
 }
 
-export function ImageUpload({ value, onChange, error }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, error, onExifLocation }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [privacyStatus, setPrivacyStatus] = useState<PrivacyStatus>('idle');
   const [privacyResult, setPrivacyResult] = useState<PrivacyResult | null>(null);
+  const [exifStatus, setExifStatus] = useState<ExifStatus>('idle');
+  const [exifCoords, setExifCoords] = useState<GpsCoords | null>(null);
 
   const validate = (file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -74,10 +79,21 @@ export function ImageUpload({ value, onChange, error }: ImageUploadProps) {
       const reader = new FileReader();
       reader.onload = (e) => setPreview(e.target?.result as string);
       reader.readAsDataURL(file);
-      // Run privacy check in background after setting preview
+      // Run privacy check and EXIF GPS extraction in parallel
       checkPrivacy(file);
+      setExifStatus('checking');
+      setExifCoords(null);
+      readExifGps(file).then((coords) => {
+        if (coords) {
+          setExifStatus('found');
+          setExifCoords(coords);
+          onExifLocation?.(coords);
+        } else {
+          setExifStatus('not_found');
+        }
+      });
     },
-    [onChange, checkPrivacy]
+    [onChange, checkPrivacy, onExifLocation]
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,6 +114,8 @@ export function ImageUpload({ value, onChange, error }: ImageUploadProps) {
     setLocalError(null);
     setPrivacyStatus('idle');
     setPrivacyResult(null);
+    setExifStatus('idle');
+    setExifCoords(null);
     if (inputRef.current) inputRef.current.value = '';
   };
 
@@ -141,6 +159,25 @@ export function ImageUpload({ value, onChange, error }: ImageUploadProps) {
             <div className="absolute top-2 left-2 bg-amber-100/90 text-amber-700 text-xs px-2 py-1 rounded flex items-center gap-1 shadow">
               <ShieldAlert className="w-3 h-3" />
               Elementos sensibles detectados
+            </div>
+          )}
+          {/* EXIF GPS badge */}
+          {exifStatus === 'checking' && (
+            <div className="absolute bottom-8 left-2 bg-white/90 text-gray-700 text-xs px-2 py-1 rounded flex items-center gap-1 shadow">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Leyendo GPS...
+            </div>
+          )}
+          {exifStatus === 'found' && exifCoords && (
+            <div className="absolute bottom-8 left-2 bg-blue-100/90 text-blue-700 text-xs px-2 py-1 rounded flex items-center gap-1 shadow">
+              <MapPin className="w-3 h-3" />
+              GPS: {exifCoords.latitude.toFixed(4)}, {exifCoords.longitude.toFixed(4)}
+            </div>
+          )}
+          {exifStatus === 'not_found' && (
+            <div className="absolute bottom-8 left-2 bg-gray-100/90 text-gray-600 text-xs px-2 py-1 rounded flex items-center gap-1 shadow">
+              <MapPinOff className="w-3 h-3" />
+              Sin GPS en la imagen
             </div>
           )}
         </div>

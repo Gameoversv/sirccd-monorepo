@@ -1,19 +1,16 @@
 ﻿'use client';
 
 import { useState } from 'react';
-import { MapPin, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { MapPin, Loader2, AlertCircle, CheckCircle2, Camera } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { reverseGeocode, type ResolvedAddress } from '@/lib/geocode';
 
 export interface Coordinates {
   latitude: number | null;
   longitude: number | null;
 }
 
-export interface ResolvedAddress {
-  address: string;
-  city: string;
-  province: string;
-}
+export type { ResolvedAddress };
 
 interface LocationPickerProps {
   value: Coordinates;
@@ -21,25 +18,7 @@ interface LocationPickerProps {
   onAddressResolved?: (address: ResolvedAddress) => void;
   latError?: string;
   lngError?: string;
-}
-
-async function reverseGeocode(lat: number, lon: number, lang: string): Promise<ResolvedAddress> {
-  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
-  const res = await fetch(url, {
-    headers: { 'Accept-Language': lang, 'User-Agent': 'sirccd-app' },
-  });
-  if (!res.ok) throw new Error('reverse_geocode_failed');
-  const data = await res.json();
-  const a = data.address ?? {};
-
-  const road = [a.road, a.house_number].filter(Boolean).join(' ');
-  const suburb = a.suburb || a.neighbourhood || '';
-  const addressStr = [road, suburb].filter(Boolean).join(', ') || data.display_name?.split(',')[0] || '';
-
-  const city = a.city || a.town || a.village || a.municipality || a.county || '';
-  const province = a.state || a.region || a.province || '';
-
-  return { address: addressStr, city, province };
+  locationSource?: 'exif' | 'gps' | null;
 }
 
 export function LocationPicker({
@@ -48,6 +27,7 @@ export function LocationPicker({
   onAddressResolved,
   latError,
   lngError,
+  locationSource,
 }: LocationPickerProps) {
   const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -129,10 +109,17 @@ export function LocationPicker({
         {loading ? t('reports.new.geo.gettingLocation') : t('reports.new.geo.useMyLocation')}
       </button>
 
-      {success && !geoError && (
+      {success && !geoError && locationSource !== 'exif' && (
         <p className="text-green-600 text-sm flex items-center gap-1">
           <CheckCircle2 className="w-4 h-4" />
           {geocoding ? t('reports.new.geo.gettingAddress') : t('reports.new.geo.success')}
+        </p>
+      )}
+
+      {locationSource === 'exif' && (
+        <p className="text-blue-600 text-sm flex items-center gap-1">
+          <Camera className="w-4 h-4" />
+          {t('reports.new.geo.exifLocation')}
         </p>
       )}
 

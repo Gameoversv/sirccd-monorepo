@@ -118,7 +118,7 @@ function SLAConfigPanel({
 
 export default function SLADashboardPage() {
   const { user } = useAuthStore();
-  const { showToast } = useToast();
+  const toast = useToast();
   const [data, setData] = useState<SLAExpiringResponse | null>(null);
   const [config, setConfig] = useState<SLAConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -134,11 +134,11 @@ export default function SLADashboardPage() {
       setData(exp);
       setConfig(cfg);
     } catch {
-      showToast('Error al cargar datos SLA', 'error');
+      toast.error('Error al cargar datos SLA');
     } finally {
       setLoading(false);
     }
-  }, [withinHours, showToast]);
+  }, [withinHours, toast]);
 
   useEffect(() => {
     load();
@@ -148,9 +148,9 @@ export default function SLADashboardPage() {
     try {
       const updated = await incidentsService.updateSLAConfig(updates);
       setConfig(updated);
-      showToast('Configuración SLA guardada', 'success');
+      toast.success('Configuración SLA guardada');
     } catch {
-      showToast('Error al guardar configuración', 'error');
+      toast.error('Error al guardar configuración');
     }
   };
 

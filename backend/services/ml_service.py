@@ -215,12 +215,19 @@ class MLInferenceService:
         bounding_boxes: List[BoundingBox],
         image_width: int,
         image_height: int,
+        focal_scale_factor: float = 1.0,
     ) -> SeverityLevel:
         if not bounding_boxes:
             return SeverityLevel.BAJA
         image_area = image_width * image_height
         total_damage_area = sum(bb.area() for bb in bounding_boxes)
         damage_ratio = total_damage_area / image_area if image_area > 0 else 0
+
+        # D-08 / normalización por zoom: si la cámara tiene zoom (focal > referencia),
+        # el bache aparece más grande en píxeles de lo que es en realidad.
+        # focal_scale_factor = focal_referencia / focal_real < 1.0 → reduce el ratio.
+        damage_ratio *= focal_scale_factor
+
         # Detecciones ponderadas por confianza (evita que conf=45% cuente igual que conf=95%)
         weighted_detections = sum(bb.confidence for bb in bounding_boxes)
         if damage_ratio > 0.15 or weighted_detections >= 3.0:
@@ -230,7 +237,7 @@ class MLInferenceService:
         else:
             return SeverityLevel.BAJA
 
-    def _mock_detection(self, image_width: int, image_height: int) -> "DetectionResult":
+    def _mock_detection(self, image_width: int, image_height: int, focal_scale_factor: float = 1.0) -> "DetectionResult":
         import random
         bounding_boxes = []
         for _ in range(random.randint(1, 3)):
@@ -254,7 +261,7 @@ class MLInferenceService:
             confidence = 0.5
         return DetectionResult(
             damage_type=damage_type,
-            severity=self._calculate_severity(bounding_boxes, image_width, image_height),
+            severity=self._calculate_severity(bounding_boxes, image_width, image_height, focal_scale_factor),
             confidence=confidence,
             bounding_boxes=bounding_boxes,
             image_width=image_width,
@@ -262,7 +269,7 @@ class MLInferenceService:
             model_version="mock-v1.0",
         )
 
-    def _roboflow_detection(self, image_path: str) -> "DetectionResult":
+    def _roboflow_detection(self, image_path: str, focal_scale_factor: float = 1.0) -> "DetectionResult":
         import base64, requests
 
         img = Image.open(image_path)
@@ -329,7 +336,7 @@ class MLInferenceService:
 
         return DetectionResult(
             damage_type=dominant_type,
-            severity=self._calculate_severity(bounding_boxes, image_width, image_height),
+            severity=self._calculate_severity(bounding_boxes, image_width, image_height, focal_scale_factor),
             confidence=confidence,
             bounding_boxes=bounding_boxes,
             image_width=image_width,
@@ -337,7 +344,7 @@ class MLInferenceService:
             model_version=settings.ROBOFLOW_MODEL_ID,
         )
 
-    def detect(self, image_path: str) -> "DetectionResult":
+    def detect(self, image_path: str, focal_scale_factor: float = 1.0) -> "DetectionResult":
         logger.info(f"Ejecutando detección ML en: {image_path}")
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Imagen no encontrada: {image_path}")
@@ -346,13 +353,13 @@ class MLInferenceService:
         image_width, image_height = img.size
 
         if self.use_mock:
-            result = self._mock_detection(image_width, image_height)
+            result = self._mock_detection(image_width, image_height, focal_scale_factor)
         else:
             try:
-                result = self._roboflow_detection(image_path)
+                result = self._roboflow_detection(image_path, focal_scale_factor)
             except Exception as e:
                 logger.error(f"Error en Roboflow API: {e}. Usando mock.")
-                result = self._mock_detection(image_width, image_height)
+                result = self._mock_detection(image_width, image_height, focal_scale_factor)
 
         logger.info(
             f"Detección: {result.damage_type.value} ({result.severity.value}) "
