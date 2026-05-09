@@ -302,3 +302,7 @@ ml/baseline-yolov8m_*/
 Thumbs.db
 .vscode/
 .idea/
+
+# Flutter mobile — exclude from Python lib/ ignore
+!mobile/lib/
+!mobile/lib/**
