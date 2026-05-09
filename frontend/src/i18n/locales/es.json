@@ -463,5 +463,38 @@
     "incidents": "incidentes",
     "poiRisk": "POIs y riesgo peatonal",
     "activeBuffers": "Buffers activos"
+  },
+  "portal": {
+    "welcome": "Hola, {{name}}",
+    "subtitle": "Sistema de Reporte de Daños Viales",
+    "reportCta": "Reportar un Daño Vial",
+    "reportCtaHint": "Toma una foto y comparte la ubicación del daño",
+    "stats": {
+      "total": "Mis reportes",
+      "inProgress": "En proceso",
+      "approved": "Aprobados",
+      "rejected": "Rechazados"
+    },
+    "myReports": "Mis Reportes",
+    "loadMore": "Ver más",
+    "noReports": "Aún no tienes reportes",
+    "noReportsHint": "Sé el primero en reportar un daño vial en tu comunidad",
+    "mapTitle": "Ubicaciones de mis reportes",
+    "loading": "Cargando tus reportes...",
+    "damage": {
+      "bache": "Bache",
+      "grieta": "Grieta"
+    },
+    "severity": {
+      "baja": "Leve",
+      "media": "Moderado",
+      "alta": "Grave"
+    },
+    "status": {
+      "processing": "Analizando",
+      "pending": "Pendiente",
+      "approved": "Aprobado",
+      "rejected": "Rechazado"
+    }
   }
 }

@@ -12,6 +12,7 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { LocationPicker, type Coordinates, type ResolvedAddress } from '@/components/LocationPicker';
 import { reportsService } from '@/services/reportsService';
 import { useAuthStore } from '@/store';
+import { UserRole } from '@/types';
 import { useToast } from '@/hooks';
 import { reverseGeocode } from '@/lib/geocode';
 import type { GpsCoords } from '@/lib/exifGps';
@@ -28,7 +29,7 @@ interface FormErrors {
 
 export default function NewReportPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const toast = useToast();
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -147,7 +148,7 @@ export default function NewReportPage() {
 
       await reportsService.createReport(formData);
       toast.success(t('reports.new.success'));
-      router.push('/dashboard');
+      router.push(user?.role === UserRole.CIUDADANO ? '/portal' : '/dashboard');
     } catch (err: any) {
       const message = err?.detail ?? err?.message ?? t('reports.detail.approveError');
       toast.error(message);

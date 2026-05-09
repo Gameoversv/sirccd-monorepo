@@ -4,14 +4,19 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/store';
+import { UserRole } from '@/types';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
 
   useEffect(() => {
-    router.push(isAuthenticated ? '/dashboard' : '/login');
-  }, [isAuthenticated, router]);
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    router.push(user?.role === UserRole.CIUDADANO ? '/portal' : '/dashboard');
+  }, [isAuthenticated, user, router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background bg-gradient-mesh">

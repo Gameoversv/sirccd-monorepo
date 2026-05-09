@@ -465,5 +465,38 @@
     "incidents": "incidents",
     "poiRisk": "POIs and pedestrian risk",
     "activeBuffers": "Active buffers"
+  },
+  "portal": {
+    "welcome": "Hello, {{name}}",
+    "subtitle": "Road Damage Reporting System",
+    "reportCta": "Report Road Damage",
+    "reportCtaHint": "Take a photo and share the location of the damage",
+    "stats": {
+      "total": "My reports",
+      "inProgress": "In progress",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "myReports": "My Reports",
+    "loadMore": "Load more",
+    "noReports": "No reports yet",
+    "noReportsHint": "Be the first to report road damage in your community",
+    "mapTitle": "My report locations",
+    "loading": "Loading your reports...",
+    "damage": {
+      "bache": "Pothole",
+      "grieta": "Crack"
+    },
+    "severity": {
+      "baja": "Minor",
+      "media": "Moderate",
+      "alta": "Severe"
+    },
+    "status": {
+      "processing": "Analyzing",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
   }
 }

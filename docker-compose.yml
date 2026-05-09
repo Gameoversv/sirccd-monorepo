@@ -119,6 +119,8 @@ services:
       SECRET_KEY: "zK8vN3mQ1pR5tY9wX2cF6bH0jL4nM7sA1dE5gI9kO3pT6uW8zC2"
       ALGORITHM: "HS256"
       ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      # CORS
+      ALLOWED_ORIGINS: '["http://localhost:3000","http://localhost:3001","http://localhost:5173","http://localhost:8080"]'
       # Logging
       LOG_LEVEL: "INFO"
     depends_on:

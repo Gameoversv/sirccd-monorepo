@@ -7,6 +7,7 @@ import { ShieldCheck, Lock, User2, ArrowRight, MapPin, Activity, BarChart3 } fro
 import { useAuthStore } from '@/store';
 import { authService } from '@/services';
 import { useToast } from '@/hooks';
+import { UserRole } from '@/types';
 import type { LoginCredentials } from '@/types';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -29,7 +30,7 @@ export default function LoginPage() {
       const response = await authService.login(credentials);
       login(response);
       toast.success(t('auth.login.success'));
-      router.push('/dashboard');
+      router.push(response.role === UserRole.CIUDADANO ? '/portal' : '/dashboard');
     } catch (error: any) {
       const message = typeof error?.detail === 'string' ? error.detail : t('auth.login.error');
       setError(message);
