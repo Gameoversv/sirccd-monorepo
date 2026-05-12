@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>SIRCCD necesita la cámara para fotografiar daños en las vías.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>SIRCCD necesita tu ubicación para registrar con precisión dónde ocurre el daño.</string>
 </dict>
 </plist>

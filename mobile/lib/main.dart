@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:sirccd_mobile/core/di/injection.dart';
+import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:sirccd_mobile/presentation/router/app_router.dart';
 import 'package:sirccd_mobile/presentation/theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const SirccdApp());
+  await initDependencies();
+
+  final authCubit = di<AuthCubit>();
+  final appRouter = AppRouter(authCubit);
+
+  runApp(SirccdApp(authCubit: authCubit, router: appRouter.router));
 }
 
 class SirccdApp extends StatefulWidget {
-  const SirccdApp({super.key});
+  const SirccdApp({
+    required this.authCubit,
+    required this.router,
+    super.key,
+  });
+
+  final AuthCubit authCubit;
+  final GoRouter router;
 
   @override
   State<SirccdApp> createState() => _SirccdAppState();
@@ -26,16 +42,19 @@ class _SirccdAppState extends State<SirccdApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ThemeModeScope(
-      toggleTheme: _toggleTheme,
-      themeMode: _themeMode,
-      child: MaterialApp.router(
-        title: 'SIRCCD',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
+    return BlocProvider.value(
+      value: widget.authCubit,
+      child: ThemeModeScope(
+        toggleTheme: _toggleTheme,
         themeMode: _themeMode,
-        routerConfig: AppRouter.router,
+        child: MaterialApp.router(
+          title: 'SIRCCD',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: _themeMode,
+          routerConfig: widget.router,
+        ),
       ),
     );
   }

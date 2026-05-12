@@ -2,91 +2,101 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_state.dart';
 import 'package:sirccd_mobile/features/auth/presentation/pages/login_page.dart';
 import 'package:sirccd_mobile/features/auth/presentation/pages/splash_page.dart';
+import 'package:sirccd_mobile/features/permissions/presentation/pages/permission_rationale_page.dart';
 import 'package:sirccd_mobile/features/profile/presentation/pages/profile_page.dart';
 import 'package:sirccd_mobile/features/reports/presentation/pages/reports_page.dart';
 import 'package:sirccd_mobile/presentation/widgets/app_shell.dart';
 
-/// Route path constants.
 abstract final class AppRoutes {
   static const splash = '/';
   static const login = '/login';
+  static const permissions = '/permissions';
   static const home = '/home';
   static const reports = '/reports';
   static const profile = '/profile';
 }
 
-/// Listenable that notifies GoRouter when auth state changes.
-/// Replace [isAuthenticated] with real auth stream in future features.
-class _AuthNotifier extends ChangeNotifier {
-  bool _isAuthenticated = false;
+class AppRouter {
+  AppRouter(AuthCubit authCubit) : _authCubit = authCubit {
+    router = GoRouter(
+      initialLocation: AppRoutes.splash,
+      refreshListenable: _GoRouterRefreshStream(authCubit.stream),
+      redirect: _redirect,
+      routes: [
+        GoRoute(
+          path: AppRoutes.splash,
+          builder: (_, __) => const SplashPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.login,
+          builder: (_, __) => const LoginPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.permissions,
+          builder: (_, __) => const PermissionRationalePage(),
+        ),
+        ShellRoute(
+          builder: (context, state, child) => AppShell(child: child),
+          routes: [
+            GoRoute(
+              path: AppRoutes.home,
+              builder: (_, __) => const ReportsPage(),
+            ),
+            GoRoute(
+              path: AppRoutes.reports,
+              builder: (_, __) => const ReportsPage(),
+            ),
+            GoRoute(
+              path: AppRoutes.profile,
+              builder: (_, __) => const ProfilePage(),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
-  bool get isAuthenticated => _isAuthenticated;
+  final AuthCubit _authCubit;
+  late final GoRouter router;
 
-  // ignore: use_setters_to_change_properties
-  void setAuthenticated(bool value) {
-    _isAuthenticated = value;
-    notifyListeners();
+  FutureOr<String?> _redirect(BuildContext context, GoRouterState state) {
+    final authState = _authCubit.state;
+    final loc = state.matchedLocation;
+
+    // Splash waits for SplashPage to call checkStoredToken(); redirect only
+    // once auth state resolves.
+    if (loc == AppRoutes.splash) {
+      if (authState is AuthAuthenticated) return AppRoutes.permissions;
+      if (authState is AuthUnauthenticated || authState is AuthError) {
+        return AppRoutes.login;
+      }
+      return null;
+    }
+
+    final isAuth = authState is AuthAuthenticated;
+
+    if (!isAuth && loc != AppRoutes.login) return AppRoutes.login;
+    if (isAuth && loc == AppRoutes.login) return AppRoutes.permissions;
+
+    return null;
   }
 }
 
-/// Singleton auth notifier — wired in [AppRouter].
-/// Future features inject their AuthCubit here.
-final authNotifier = _AuthNotifier();
+class _GoRouterRefreshStream extends ChangeNotifier {
+  _GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _sub = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
 
-abstract final class AppRouter {
-  static GoRouter get router => _router;
+  late final StreamSubscription<dynamic> _sub;
 
-  static final _router = GoRouter(
-    initialLocation: AppRoutes.splash,
-    refreshListenable: authNotifier,
-    redirect: _redirect,
-    routes: [
-      GoRoute(
-        path: AppRoutes.splash,
-        builder: (_, __) => const SplashPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.login,
-        builder: (_, __) => const LoginPage(),
-      ),
-      ShellRoute(
-        builder: (context, state, child) => AppShell(child: child),
-        routes: [
-          GoRoute(
-            path: AppRoutes.home,
-            builder: (_, __) => const ReportsPage(),
-          ),
-          GoRoute(
-            path: AppRoutes.reports,
-            builder: (_, __) => const ReportsPage(),
-          ),
-          GoRoute(
-            path: AppRoutes.profile,
-            builder: (_, __) => const ProfilePage(),
-          ),
-        ],
-      ),
-    ],
-  );
-
-  static FutureOr<String?> _redirect(
-    BuildContext context,
-    GoRouterState state,
-  ) {
-    final isAuth = authNotifier.isAuthenticated;
-    final loc = state.matchedLocation;
-
-    // Still on splash — let SplashPage decide navigation
-    if (loc == AppRoutes.splash) return null;
-
-    // Unauthenticated trying to access protected route
-    if (!isAuth && loc != AppRoutes.login) return AppRoutes.login;
-
-    // Authenticated trying to access login
-    if (isAuth && loc == AppRoutes.login) return AppRoutes.home;
-
-    return null;
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
   }
 }

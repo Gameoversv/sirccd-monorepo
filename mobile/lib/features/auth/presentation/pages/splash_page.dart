@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:sirccd_mobile/presentation/router/app_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_cubit.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -13,14 +13,14 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
-    _navigate();
+    _checkAuth();
   }
 
-  Future<void> _navigate() async {
+  Future<void> _checkAuth() async {
     await Future<void>.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
-    // TODO(auth): check stored token — navigate to home if valid
-    context.go(AppRoutes.login);
+    // Router's refreshListenable handles navigation once state changes.
+    context.read<AuthCubit>().checkStoredToken();
   }
 
   @override

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:sirccd_mobile/presentation/router/app_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_cubit.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -17,10 +17,7 @@ class ProfilePage extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Cerrar sesión'),
-            onTap: () {
-              authNotifier.setAuthenticated(false);
-              context.go(AppRoutes.login);
-            },
+            onTap: () => context.read<AuthCubit>().logout(),
           ),
         ],
       ),

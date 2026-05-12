@@ -23,6 +23,15 @@ dependencies:
   # DI
   get_it: ^8.0.3
 
+  # HTTP client
+  dio: ^5.8.0
+
+  # Secure token storage
+  flutter_secure_storage: ^9.2.2
+
+  # Runtime permissions
+  permission_handler: ^11.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
