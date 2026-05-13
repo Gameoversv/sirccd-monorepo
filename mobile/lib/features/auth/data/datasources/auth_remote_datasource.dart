@@ -14,7 +14,7 @@ final class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<LoginResponse> login(String email, String password) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/auth/login',
-      data: {'email': email, 'password': password},
+      data: {'username': email, 'password': password},
     );
     return LoginResponse.fromJson(response.data!);
   }
