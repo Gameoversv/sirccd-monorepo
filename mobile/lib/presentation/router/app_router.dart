@@ -6,6 +6,7 @@ import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_state.dart';
 import 'package:sirccd_mobile/features/auth/presentation/pages/login_page.dart';
 import 'package:sirccd_mobile/features/auth/presentation/pages/splash_page.dart';
+import 'package:sirccd_mobile/features/camera/presentation/pages/camera_page.dart';
 import 'package:sirccd_mobile/features/permissions/presentation/pages/permission_rationale_page.dart';
 import 'package:sirccd_mobile/features/profile/presentation/pages/profile_page.dart';
 import 'package:sirccd_mobile/features/reports/presentation/pages/reports_page.dart';
@@ -18,6 +19,7 @@ abstract final class AppRoutes {
   static const home = '/home';
   static const reports = '/reports';
   static const profile = '/profile';
+  static const camera = '/camera';
 }
 
 class AppRouter {
@@ -38,6 +40,10 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.permissions,
           builder: (_, __) => const PermissionRationalePage(),
+        ),
+        GoRoute(
+          path: AppRoutes.camera,
+          builder: (_, __) => const CameraPage(),
         ),
         ShellRoute(
           builder: (context, state, child) => AppShell(child: child),

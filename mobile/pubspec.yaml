@@ -32,6 +32,12 @@ dependencies:
   # Runtime permissions
   permission_handler: ^11.3.1
 
+  # Camera
+  camera: ^0.11.1
+
+  # GPS / location metadata
+  geolocator: ^13.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

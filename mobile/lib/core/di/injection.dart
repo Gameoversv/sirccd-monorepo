@@ -10,6 +10,11 @@ import 'package:sirccd_mobile/features/auth/domain/usecases/get_stored_token_use
 import 'package:sirccd_mobile/features/auth/domain/usecases/login_usecase.dart';
 import 'package:sirccd_mobile/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:sirccd_mobile/features/camera/data/datasources/camera_datasource.dart';
+import 'package:sirccd_mobile/features/camera/data/repositories/camera_repository_impl.dart';
+import 'package:sirccd_mobile/features/camera/domain/repositories/camera_repository.dart';
+import 'package:sirccd_mobile/features/camera/domain/usecases/capture_photo_usecase.dart';
+import 'package:sirccd_mobile/features/camera/presentation/cubit/camera_cubit.dart';
 
 final di = GetIt.instance;
 
@@ -49,5 +54,12 @@ Future<void> initDependencies() async {
         di<LogoutUseCase>(),
         di<GetStoredTokenUseCase>(),
       ),
-    );
+    )
+    // Camera
+    ..registerSingleton<CameraDatasource>(CameraDatasourceImpl())
+    ..registerSingleton<CameraRepository>(
+      CameraRepositoryImpl(di<CameraDatasource>()),
+    )
+    ..registerSingleton(CapturePhotoUseCase(di<CameraRepository>()))
+    ..registerFactory(() => CameraCubit(di<CapturePhotoUseCase>()));
 }

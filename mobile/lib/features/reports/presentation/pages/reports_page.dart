@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:sirccd_mobile/presentation/router/app_router.dart';
 
 class ReportsPage extends StatelessWidget {
   const ReportsPage({super.key});
@@ -32,10 +34,8 @@ class ReportsPage extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO(reports): navigate to create report
-        },
-        icon: const Icon(Icons.add),
+        onPressed: () => context.push(AppRoutes.camera),
+        icon: const Icon(Icons.camera_alt_rounded),
         label: const Text('Nuevo reporte'),
       ),
     );
