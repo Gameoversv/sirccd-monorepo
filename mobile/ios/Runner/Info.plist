@@ -47,6 +47,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>SIRCCD necesita la cámara para fotografiar daños en las vías.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SIRCCD necesita acceso a tu galería para seleccionar fotos de daños viales.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SIRCCD necesita tu ubicación para registrar con precisión dónde ocurre el daño.</string>
 </dict>

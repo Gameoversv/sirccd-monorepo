@@ -28,3 +28,9 @@ final class CacheFailure extends Failure {
 final class UnknownFailure extends Failure {
   const UnknownFailure([super.message = 'Error inesperado.']);
 }
+
+final class OfflineFailure extends Failure {
+  const OfflineFailure(
+      [super.message =
+          'Sin conexión. El reporte se guardó y se enviará al reconectar.']);
+}

@@ -6,9 +6,11 @@ import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_state.dart';
 import 'package:sirccd_mobile/features/auth/presentation/pages/login_page.dart';
 import 'package:sirccd_mobile/features/auth/presentation/pages/splash_page.dart';
+import 'package:sirccd_mobile/features/camera/domain/entities/photo_capture.dart';
 import 'package:sirccd_mobile/features/camera/presentation/pages/camera_page.dart';
 import 'package:sirccd_mobile/features/permissions/presentation/pages/permission_rationale_page.dart';
 import 'package:sirccd_mobile/features/profile/presentation/pages/profile_page.dart';
+import 'package:sirccd_mobile/features/reports/presentation/pages/new_report_page.dart';
 import 'package:sirccd_mobile/features/reports/presentation/pages/reports_page.dart';
 import 'package:sirccd_mobile/presentation/widgets/app_shell.dart';
 
@@ -18,6 +20,7 @@ abstract final class AppRoutes {
   static const permissions = '/permissions';
   static const home = '/home';
   static const reports = '/reports';
+  static const newReport = '/reports/new';
   static const profile = '/profile';
   static const camera = '/camera';
 }
@@ -44,6 +47,12 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.camera,
           builder: (_, __) => const CameraPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.newReport,
+          builder: (context, state) => NewReportPage(
+            capture: state.extra! as PhotoCapture,
+          ),
         ),
         ShellRoute(
           builder: (context, state, child) => AppShell(child: child),
@@ -73,8 +82,6 @@ class AppRouter {
     final authState = _authCubit.state;
     final loc = state.matchedLocation;
 
-    // Splash waits for SplashPage to call checkStoredToken(); redirect only
-    // once auth state resolves.
     if (loc == AppRoutes.splash) {
       if (authState is AuthAuthenticated) return AppRoutes.permissions;
       if (authState is AuthUnauthenticated || authState is AuthError) {

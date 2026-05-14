@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
+import 'package:sirccd_mobile/core/services/connectivity_service.dart';
+import 'package:sirccd_mobile/core/services/database_service.dart';
 import 'package:sirccd_mobile/core/services/permission_service.dart';
 import 'package:sirccd_mobile/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:sirccd_mobile/features/auth/data/datasources/auth_remote_datasource.dart';
@@ -15,6 +17,14 @@ import 'package:sirccd_mobile/features/camera/data/repositories/camera_repositor
 import 'package:sirccd_mobile/features/camera/domain/repositories/camera_repository.dart';
 import 'package:sirccd_mobile/features/camera/domain/usecases/capture_photo_usecase.dart';
 import 'package:sirccd_mobile/features/camera/presentation/cubit/camera_cubit.dart';
+import 'package:sirccd_mobile/features/reports/data/datasources/report_local_datasource.dart';
+import 'package:sirccd_mobile/features/reports/data/datasources/report_remote_datasource.dart';
+import 'package:sirccd_mobile/features/reports/data/repositories/report_repository_impl.dart';
+import 'package:sirccd_mobile/features/reports/domain/repositories/report_repository.dart';
+import 'package:sirccd_mobile/features/reports/domain/usecases/create_pending_report_usecase.dart';
+import 'package:sirccd_mobile/features/reports/domain/usecases/get_all_reports_usecase.dart';
+import 'package:sirccd_mobile/features/reports/domain/usecases/sync_pending_reports_usecase.dart';
+import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_cubit.dart';
 
 final di = GetIt.instance;
 
@@ -36,6 +46,7 @@ Future<void> initDependencies() async {
   );
 
   di
+    // ── Core ────────────────────────────────────────────────────────────────
     ..registerSingleton<AuthLocalDataSource>(AuthLocalDataSourceImpl(storage))
     ..registerSingleton<AuthRemoteDataSource>(AuthRemoteDataSourceImpl(dio))
     ..registerSingleton<AuthRepository>(
@@ -48,6 +59,8 @@ Future<void> initDependencies() async {
     ..registerSingleton(LogoutUseCase(di<AuthRepository>()))
     ..registerSingleton(GetStoredTokenUseCase(di<AuthRepository>()))
     ..registerSingleton(PermissionService())
+    ..registerSingleton<DatabaseService>(DatabaseServiceImpl())
+    ..registerSingleton<ConnectivityService>(ConnectivityServiceImpl())
     ..registerFactory(
       () => AuthCubit(
         di<LoginUseCase>(),
@@ -55,11 +68,39 @@ Future<void> initDependencies() async {
         di<GetStoredTokenUseCase>(),
       ),
     )
-    // Camera
+
+    // ── Camera ───────────────────────────────────────────────────────────────
     ..registerSingleton<CameraDatasource>(CameraDatasourceImpl())
     ..registerSingleton<CameraRepository>(
       CameraRepositoryImpl(di<CameraDatasource>()),
     )
     ..registerSingleton(CapturePhotoUseCase(di<CameraRepository>()))
-    ..registerFactory(() => CameraCubit(di<CapturePhotoUseCase>()));
+    ..registerFactory(() => CameraCubit(di<CapturePhotoUseCase>()))
+
+    // ── Reports ──────────────────────────────────────────────────────────────
+    ..registerSingleton<ReportLocalDataSource>(
+      ReportLocalDataSourceImpl(di<DatabaseService>()),
+    )
+    ..registerSingleton<ReportRemoteDataSource>(
+      ReportRemoteDataSourceImpl(dio),
+    )
+    ..registerSingleton<ReportRepository>(
+      ReportRepositoryImpl(
+        di<ReportLocalDataSource>(),
+        di<ReportRemoteDataSource>(),
+        di<AuthLocalDataSource>(),
+        di<ConnectivityService>(),
+      ),
+    )
+    ..registerSingleton(CreatePendingReportUseCase(di<ReportRepository>()))
+    ..registerSingleton(GetAllReportsUseCase(di<ReportRepository>()))
+    ..registerSingleton(SyncPendingReportsUseCase(di<ReportRepository>()))
+    ..registerFactory(
+      () => ReportsCubit(
+        di<CreatePendingReportUseCase>(),
+        di<GetAllReportsUseCase>(),
+        di<SyncPendingReportsUseCase>(),
+        di<ConnectivityService>(),
+      ),
+    );
 }

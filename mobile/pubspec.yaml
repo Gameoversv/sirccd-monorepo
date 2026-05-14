@@ -38,6 +38,19 @@ dependencies:
   # GPS / location metadata
   geolocator: ^13.0.1
 
+  # Offline-first storage
+  sqflite: ^2.4.1
+  path: ^1.9.0
+  uuid: ^4.5.1
+  connectivity_plus: ^6.1.4
+
+  # Image picker (camera + gallery)
+  image_picker: ^1.1.2
+
+  # Map preview
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
