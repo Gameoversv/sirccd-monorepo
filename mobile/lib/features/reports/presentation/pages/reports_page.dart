@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:sirccd_mobile/core/di/injection.dart';
-import 'package:sirccd_mobile/features/camera/domain/entities/photo_capture.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_cubit.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_state.dart';
 import 'package:sirccd_mobile/features/reports/presentation/widgets/pending_report_card.dart';
@@ -25,170 +21,30 @@ class ReportsPage extends StatelessWidget {
   }
 }
 
-class _ReportsView extends StatefulWidget {
+class _ReportsView extends StatelessWidget {
   const _ReportsView();
 
   @override
-  State<_ReportsView> createState() => _ReportsViewState();
-}
-
-class _ReportsViewState extends State<_ReportsView> {
-  bool _gettingLocation = false;
-
-  void _showSourcePicker() {
-    showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Text(
-                'Agregar foto',
-                style: Theme.of(ctx).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: AppColors.primaryContainer,
-                  child: Icon(Icons.camera_alt_rounded, color: AppColors.primary),
-                ),
-                title: const Text('Tomar foto'),
-                subtitle: const Text('Abrir cámara'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _openCamera();
-                },
-              ),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: AppColors.secondaryContainer,
-                  child: Icon(Icons.photo_library_rounded, color: AppColors.secondary),
-                ),
-                title: const Text('Elegir de galería'),
-                subtitle: const Text('Seleccionar foto existente'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _openGallery();
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openCamera() async {
-    final capture = await context.push<PhotoCapture>(AppRoutes.camera);
-    if (capture == null || !mounted) return;
-    context.push(AppRoutes.newReport, extra: capture);
-  }
-
-  Future<void> _openGallery() async {
-    final picker = ImagePicker();
-    final xFile = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 90,
-    );
-    if (xFile == null || !mounted) return;
-
-    setState(() => _gettingLocation = true);
-
-    Position? position;
-    try {
-      position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 8),
-        ),
-      );
-    } catch (_) {
-      // GPS unavailable — user sees warning on next page
-    }
-
-    if (!mounted) return;
-    setState(() => _gettingLocation = false);
-
-    final capture = PhotoCapture(
-      imagePath: xFile.path,
-      timestamp: DateTime.now(),
-      orientation: DeviceOrientation.portraitUp,
-      latitude: position?.latitude,
-      longitude: position?.longitude,
-      accuracyMeters: position?.accuracy,
-    );
-
-    if (mounted) context.push(AppRoutes.newReport, extra: capture);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Scaffold(
-          appBar: AppBar(title: const Text('Mis reportes')),
-          body: BlocBuilder<ReportsCubit, ReportsState>(
-            builder: (context, state) {
-              return switch (state) {
-                ReportsInitial() =>
-                  const Center(child: CircularProgressIndicator()),
-                ReportsError(:final message) => _ErrorBody(message: message),
-                ReportsLoaded() => _LoadedBody(
-                    state: state,
-                    onRetry: context.read<ReportsCubit>().retryFailed,
-                  ),
-              };
-            },
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: _gettingLocation ? null : _showSourcePicker,
-            icon: const Icon(Icons.add_a_photo_rounded),
-            label: const Text('Nuevo reporte'),
-          ),
-        ),
-        if (_gettingLocation) _LocationLoadingOverlay(),
-      ],
-    );
-  }
-}
-
-class _LocationLoadingOverlay extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black26,
-      child: Center(
-        child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(color: AppColors.primary),
-                SizedBox(height: 16),
-                Text('Obteniendo ubicación…'),
-              ],
-            ),
-          ),
-        ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Mis reportes')),
+      body: BlocBuilder<ReportsCubit, ReportsState>(
+        builder: (context, state) {
+          return switch (state) {
+            ReportsInitial() =>
+              const Center(child: CircularProgressIndicator()),
+            ReportsError(:final message) => _ErrorBody(message: message),
+            ReportsLoaded() => _LoadedBody(
+                state: state,
+                onRetry: context.read<ReportsCubit>().retryFailed,
+              ),
+          };
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push(AppRoutes.newReport),
+        icon: const Icon(Icons.add_a_photo_rounded),
+        label: const Text('Nuevo reporte'),
       ),
     );
   }

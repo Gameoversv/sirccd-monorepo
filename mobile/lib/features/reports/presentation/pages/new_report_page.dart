@@ -1,18 +1,24 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sirccd_mobile/features/camera/domain/entities/photo_capture.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_cubit.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_state.dart';
+import 'package:sirccd_mobile/presentation/router/app_router.dart';
 import 'package:sirccd_mobile/presentation/theme/app_colors.dart';
 
 class NewReportPage extends StatefulWidget {
-  const NewReportPage({super.key, required this.capture});
+  const NewReportPage({super.key, this.capture});
 
-  final PhotoCapture capture;
+  final PhotoCapture? capture;
 
   @override
   State<NewReportPage> createState() => _NewReportPageState();
@@ -25,6 +31,14 @@ class _NewReportPageState extends State<NewReportPage> {
   final _cityController = TextEditingController();
   final _provinceController = TextEditingController();
   bool _submitting = false;
+  bool _gettingLocation = false;
+  PhotoCapture? _capture;
+
+  @override
+  void initState() {
+    super.initState();
+    _capture = widget.capture;
+  }
 
   @override
   void dispose() {
@@ -35,16 +49,146 @@ class _NewReportPageState extends State<NewReportPage> {
     super.dispose();
   }
 
-  bool get _hasLocation =>
-      widget.capture.hasLocation &&
-      widget.capture.latitude != null &&
-      widget.capture.longitude != null &&
-      widget.capture.latitude! >= -90 &&
-      widget.capture.latitude! <= 90 &&
-      widget.capture.longitude! >= -180 &&
-      widget.capture.longitude! <= 180;
+  bool get _hasLocation {
+    final c = _capture;
+    if (c == null) return false;
+    return c.hasLocation &&
+        c.latitude != null &&
+        c.longitude != null &&
+        c.latitude! >= -90 &&
+        c.latitude! <= 90 &&
+        c.longitude! >= -180 &&
+        c.longitude! <= 180;
+  }
+
+  Future<void> _reverseGeocode(double lat, double lng) async {
+    try {
+      final client = HttpClient();
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lng&format=json&accept-language=es',
+      );
+      final request = await client.getUrl(uri);
+      request.headers.set('User-Agent', 'sirccd-mobile/1.0');
+      final response = await request.close();
+      final body = await response.transform(utf8.decoder).join();
+      client.close();
+
+      if (!mounted) return;
+      final data = jsonDecode(body) as Map<String, dynamic>;
+      final addr = data['address'] as Map<String, dynamic>?;
+      if (addr == null) return;
+
+      final road = addr['road'] as String? ?? addr['pedestrian'] as String? ?? '';
+      final number = addr['house_number'] as String? ?? '';
+      final street = number.isNotEmpty ? '$road $number'.trim() : road;
+      final city = addr['city'] as String? ??
+          addr['town'] as String? ??
+          addr['village'] as String? ??
+          addr['municipality'] as String? ??
+          '';
+      final province = addr['state'] as String? ?? addr['county'] as String? ?? '';
+
+      if (street.isNotEmpty && _addressController.text.isEmpty) {
+        _addressController.text = street;
+      }
+      if (city.isNotEmpty && _cityController.text.isEmpty) {
+        _cityController.text = city;
+      }
+      if (province.isNotEmpty && _provinceController.text.isEmpty) {
+        _provinceController.text = province;
+      }
+    } on Exception catch (_) {
+      // Geocoding unavailable — user fills manually
+    }
+  }
+
+  Future<void> _getLocationAndGeocode() async {
+    if (_capture == null) return;
+    setState(() => _gettingLocation = true);
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      if (!mounted) return;
+      setState(() {
+        _gettingLocation = false;
+        _capture = PhotoCapture(
+          imagePath: _capture!.imagePath,
+          timestamp: _capture!.timestamp,
+          orientation: _capture!.orientation,
+          latitude: position.latitude,
+          longitude: position.longitude,
+          accuracyMeters: position.accuracy,
+        );
+      });
+      await _reverseGeocode(position.latitude, position.longitude);
+    } on Exception catch (_) {
+      if (mounted) setState(() => _gettingLocation = false);
+    }
+  }
+
+  Future<void> _openCamera() async {
+    final capture = await context.push<PhotoCapture>(AppRoutes.camera);
+    if (capture == null || !mounted) return;
+    setState(() => _capture = capture);
+    if (capture.latitude != null && capture.longitude != null) {
+      await _reverseGeocode(capture.latitude!, capture.longitude!);
+    }
+  }
+
+  Future<void> _openGallery() async {
+    final picker = ImagePicker();
+    final xFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
+    if (xFile == null || !mounted) return;
+
+    setState(() => _gettingLocation = true);
+
+    Position? position;
+    try {
+      position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+    } on Exception catch (_) {
+      // GPS unavailable — user sees warning in form
+    }
+
+    if (!mounted) return;
+    final newCapture = PhotoCapture(
+      imagePath: xFile.path,
+      timestamp: DateTime.now(),
+      orientation: DeviceOrientation.portraitUp,
+      latitude: position?.latitude,
+      longitude: position?.longitude,
+      accuracyMeters: position?.accuracy,
+    );
+    setState(() {
+      _gettingLocation = false;
+      _capture = newCapture;
+    });
+    if (position != null) {
+      await _reverseGeocode(position.latitude, position.longitude);
+    }
+  }
 
   Future<void> _submit() async {
+    if (_capture == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debes agregar una fotografía antes de enviar.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
     if (!_hasLocation) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -60,9 +204,9 @@ class _NewReportPageState extends State<NewReportPage> {
     setState(() => _submitting = true);
     try {
       await context.read<ReportsCubit>().create(
-            imagePath: widget.capture.imagePath,
-            latitude: widget.capture.latitude!,
-            longitude: widget.capture.longitude!,
+            imagePath: _capture!.imagePath,
+            latitude: _capture!.latitude!,
+            longitude: _capture!.longitude!,
             description: _descriptionController.text.trim().isEmpty
                 ? null
                 : _descriptionController.text.trim(),
@@ -121,7 +265,17 @@ class _NewReportPageState extends State<NewReportPage> {
               _SectionCard(
                 title: 'Fotografía',
                 required: true,
-                child: _PhotoPreview(imagePath: widget.capture.imagePath),
+                child: _capture != null
+                    ? _PhotoPreviewWithChange(
+                        imagePath: _capture!.imagePath,
+                        onCamera: _gettingLocation ? null : _openCamera,
+                        onGallery: _gettingLocation ? null : _openGallery,
+                      )
+                    : _PhotoPicker(
+                        onCamera: _gettingLocation ? null : _openCamera,
+                        onGallery: _gettingLocation ? null : _openGallery,
+                        isLoading: _gettingLocation,
+                      ),
               ),
               const SizedBox(height: 12),
 
@@ -130,8 +284,12 @@ class _NewReportPageState extends State<NewReportPage> {
                 title: 'Ubicación',
                 required: true,
                 child: _hasLocation
-                    ? _LocationContent(capture: widget.capture)
-                    : const _NoLocationWarning(),
+                    ? _LocationContent(capture: _capture!)
+                    : _NoLocationWarning(
+                        showButton: _capture != null,
+                        isLoading: _gettingLocation,
+                        onGetLocation: _getLocationAndGeocode,
+                      ),
               ),
               const SizedBox(height: 12),
 
@@ -322,26 +480,105 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _PhotoPreview extends StatelessWidget {
-  const _PhotoPreview({required this.imagePath});
+class _PhotoPicker extends StatelessWidget {
+  const _PhotoPicker({
+    required this.onCamera,
+    required this.onGallery,
+    required this.isLoading,
+  });
 
-  final String imagePath;
+  final VoidCallback? onCamera;
+  final VoidCallback? onGallery;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Image.file(
-        File(imagePath),
-        height: 200,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          height: 200,
-          color: AppColors.surfaceVariant,
-          child: const Icon(Icons.image_not_supported_outlined, size: 48),
+    if (isLoading) {
+      return const SizedBox(
+        height: 80,
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: AppColors.primary),
+              SizedBox(width: 12),
+              Text('Obteniendo ubicación…'),
+            ],
+          ),
         ),
-      ),
+      );
+    }
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: onCamera,
+            icon: const Icon(Icons.camera_alt_rounded),
+            label: const Text('Cámara'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: onGallery,
+            icon: const Icon(Icons.photo_library_rounded),
+            label: const Text('Galería'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PhotoPreviewWithChange extends StatelessWidget {
+  const _PhotoPreviewWithChange({
+    required this.imagePath,
+    required this.onCamera,
+    required this.onGallery,
+  });
+
+  final String imagePath;
+  final VoidCallback? onCamera;
+  final VoidCallback? onGallery;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(
+            File(imagePath),
+            height: 200,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              height: 200,
+              color: AppColors.surfaceVariant,
+              child: const Icon(Icons.image_not_supported_outlined, size: 48),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextButton.icon(
+                onPressed: onCamera,
+                icon: const Icon(Icons.camera_alt_rounded, size: 18),
+                label: const Text('Retomar'),
+              ),
+            ),
+            Expanded(
+              child: TextButton.icon(
+                onPressed: onGallery,
+                icon: const Icon(Icons.photo_library_rounded, size: 18),
+                label: const Text('Cambiar'),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -432,23 +669,53 @@ class _LocationContent extends StatelessWidget {
 }
 
 class _NoLocationWarning extends StatelessWidget {
-  const _NoLocationWarning();
+  const _NoLocationWarning({
+    required this.showButton,
+    required this.isLoading,
+    required this.onGetLocation,
+  });
+
+  final bool showButton;
+  final bool isLoading;
+  final VoidCallback onGetLocation;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.location_off_rounded,
-            size: 20, color: AppColors.warning),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            'Ubicación GPS no disponible. Activa el GPS e intenta de nuevo.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.warning,
-                ),
-          ),
+        Row(
+          children: [
+            const Icon(Icons.location_off_rounded,
+                size: 20, color: AppColors.warning),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Sin ubicación GPS. Activa el GPS y obtén la ubicación.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.warning,
+                    ),
+              ),
+            ),
+          ],
         ),
+        if (showButton) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: isLoading ? null : onGetLocation,
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.my_location_rounded, size: 18),
+              label: Text(isLoading ? 'Obteniendo ubicación…' : 'Obtener ubicación'),
+            ),
+          ),
+        ],
       ],
     );
   }

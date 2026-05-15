@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sirccd_mobile/core/di/injection.dart';
 import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_cubit.dart';
 import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_state.dart';
 import 'package:sirccd_mobile/features/auth/presentation/pages/login_page.dart';
 import 'package:sirccd_mobile/features/auth/presentation/pages/splash_page.dart';
@@ -50,8 +53,11 @@ class AppRouter {
         ),
         GoRoute(
           path: AppRoutes.newReport,
-          builder: (context, state) => NewReportPage(
-            capture: state.extra! as PhotoCapture,
+          builder: (context, state) => BlocProvider(
+            create: (_) => di<ReportsCubit>()..init(),
+            child: NewReportPage(
+              capture: state.extra as PhotoCapture?,
+            ),
           ),
         ),
         ShellRoute(
