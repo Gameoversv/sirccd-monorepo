@@ -7,8 +7,13 @@ import 'package:sirccd_mobile/features/auth/data/datasources/auth_local_datasour
 import 'package:sirccd_mobile/features/reports/data/datasources/report_local_datasource.dart';
 import 'package:sirccd_mobile/features/reports/data/datasources/report_remote_datasource.dart';
 import 'package:sirccd_mobile/features/reports/data/models/pending_report_model.dart';
+import 'package:sirccd_mobile/features/reports/domain/entities/damage_type.dart';
+import 'package:sirccd_mobile/features/reports/domain/entities/paginated_reports.dart';
 import 'package:sirccd_mobile/features/reports/domain/entities/pending_report.dart';
+import 'package:sirccd_mobile/features/reports/domain/entities/report_status.dart';
+import 'package:sirccd_mobile/features/reports/domain/entities/severity_level.dart';
 import 'package:sirccd_mobile/features/reports/domain/entities/sync_status.dart';
+import 'package:sirccd_mobile/features/reports/domain/entities/user_report.dart';
 import 'package:sirccd_mobile/features/reports/domain/repositories/report_repository.dart';
 
 final class ReportRepositoryImpl implements ReportRepository {
@@ -104,6 +109,39 @@ final class ReportRepositoryImpl implements ReportRepository {
     } finally {
       await _notifyRefresh();
     }
+  }
+
+  @override
+  Future<PaginatedReports> getUserReports({
+    int page = 1,
+    int perPage = 20,
+    ReportStatus? status,
+    DamageType? damageType,
+    SeverityLevel? severity,
+    String? search,
+    String sortOrder = 'desc',
+  }) async {
+    final token = await _auth.getToken();
+    if (token == null) throw Exception('No autenticado');
+
+    return _remote.getUserReports(
+      token: token,
+      page: page,
+      perPage: perPage,
+      status: status,
+      damageType: damageType,
+      severity: severity,
+      search: search,
+      sortOrder: sortOrder,
+    );
+  }
+
+  @override
+  Future<UserReport> getReportDetail(int id) async {
+    final token = await _auth.getToken();
+    if (token == null) throw Exception('No autenticado');
+
+    return _remote.getReportDetail(id: id, token: token);
   }
 
   Future<void> _notifyRefresh() async {

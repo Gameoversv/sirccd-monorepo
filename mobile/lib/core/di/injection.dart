@@ -23,7 +23,11 @@ import 'package:sirccd_mobile/features/reports/data/repositories/report_reposito
 import 'package:sirccd_mobile/features/reports/domain/repositories/report_repository.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/create_pending_report_usecase.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/get_all_reports_usecase.dart';
+import 'package:sirccd_mobile/features/reports/domain/usecases/get_report_detail_usecase.dart';
+import 'package:sirccd_mobile/features/reports/domain/usecases/get_user_reports_usecase.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/sync_pending_reports_usecase.dart';
+import 'package:sirccd_mobile/features/reports/presentation/cubit/report_detail_cubit.dart';
+import 'package:sirccd_mobile/features/reports/presentation/cubit/report_history_cubit.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_cubit.dart';
 
 final di = GetIt.instance;
@@ -95,6 +99,8 @@ Future<void> initDependencies() async {
     ..registerSingleton(CreatePendingReportUseCase(di<ReportRepository>()))
     ..registerSingleton(GetAllReportsUseCase(di<ReportRepository>()))
     ..registerSingleton(SyncPendingReportsUseCase(di<ReportRepository>()))
+    ..registerSingleton(GetUserReportsUseCase(di<ReportRepository>()))
+    ..registerSingleton(GetReportDetailUseCase(di<ReportRepository>()))
     ..registerFactory(
       () => ReportsCubit(
         di<CreatePendingReportUseCase>(),
@@ -102,5 +108,9 @@ Future<void> initDependencies() async {
         di<SyncPendingReportsUseCase>(),
         di<ConnectivityService>(),
       ),
+    )
+    ..registerFactory(() => ReportHistoryCubit(di<GetUserReportsUseCase>()))
+    ..registerFactory(
+      () => ReportDetailCubit(di<GetReportDetailUseCase>()),
     );
 }

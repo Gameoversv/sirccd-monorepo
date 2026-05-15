@@ -27,7 +27,16 @@ class _ReportsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis reportes')),
+      appBar: AppBar(
+        title: const Text('Mis reportes'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history_rounded),
+            tooltip: 'Historial',
+            onPressed: () => context.push(AppRoutes.reportHistory),
+          ),
+        ],
+      ),
       body: BlocBuilder<ReportsCubit, ReportsState>(
         builder: (context, state) {
           return switch (state) {

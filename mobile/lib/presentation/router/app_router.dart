@@ -14,6 +14,8 @@ import 'package:sirccd_mobile/features/camera/presentation/pages/camera_page.dar
 import 'package:sirccd_mobile/features/permissions/presentation/pages/permission_rationale_page.dart';
 import 'package:sirccd_mobile/features/profile/presentation/pages/profile_page.dart';
 import 'package:sirccd_mobile/features/reports/presentation/pages/new_report_page.dart';
+import 'package:sirccd_mobile/features/reports/presentation/pages/report_detail_page.dart';
+import 'package:sirccd_mobile/features/reports/presentation/pages/report_history_page.dart';
 import 'package:sirccd_mobile/features/reports/presentation/pages/reports_page.dart';
 import 'package:sirccd_mobile/presentation/widgets/app_shell.dart';
 
@@ -24,8 +26,12 @@ abstract final class AppRoutes {
   static const home = '/home';
   static const reports = '/reports';
   static const newReport = '/reports/new';
+  static const reportHistory = '/reports/history';
+  static const _reportDetailBase = '/reports/detail';
   static const profile = '/profile';
   static const camera = '/camera';
+
+  static String reportDetail(int id) => '$_reportDetailBase/$id';
 }
 
 class AppRouter {
@@ -58,6 +64,16 @@ class AppRouter {
             child: NewReportPage(
               capture: state.extra as PhotoCapture?,
             ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.reportHistory,
+          builder: (_, __) => const ReportHistoryPage(),
+        ),
+        GoRoute(
+          path: '${AppRoutes._reportDetailBase}/:id',
+          builder: (_, state) => ReportDetailPage(
+            reportId: int.parse(state.pathParameters['id']!),
           ),
         ),
         ShellRoute(

@@ -3,8 +3,13 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sirccd_mobile/core/services/connectivity_service.dart';
+import 'package:sirccd_mobile/features/reports/domain/entities/damage_type.dart';
+import 'package:sirccd_mobile/features/reports/domain/entities/paginated_reports.dart';
 import 'package:sirccd_mobile/features/reports/domain/entities/pending_report.dart';
+import 'package:sirccd_mobile/features/reports/domain/entities/report_status.dart';
+import 'package:sirccd_mobile/features/reports/domain/entities/severity_level.dart';
 import 'package:sirccd_mobile/features/reports/domain/entities/sync_status.dart';
+import 'package:sirccd_mobile/features/reports/domain/entities/user_report.dart';
 import 'package:sirccd_mobile/features/reports/domain/repositories/report_repository.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/create_pending_report_usecase.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/get_all_reports_usecase.dart';
@@ -63,6 +68,28 @@ class _FakeRepo implements ReportRepository {
   Future<void> syncPendingReports() async {
     syncCalled = true;
   }
+
+  @override
+  Future<PaginatedReports> getUserReports({
+    int page = 1,
+    int perPage = 20,
+    ReportStatus? status,
+    DamageType? damageType,
+    SeverityLevel? severity,
+    String? search,
+    String sortOrder = 'desc',
+  }) async =>
+      const PaginatedReports(
+        items: [],
+        total: 0,
+        page: 1,
+        perPage: 20,
+        totalPages: 0,
+      );
+
+  @override
+  Future<UserReport> getReportDetail(int id) async =>
+      throw UnimplementedError();
 }
 
 class _FakeConnectivity implements ConnectivityService {
