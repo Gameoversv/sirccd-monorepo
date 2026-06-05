@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, date
 import math
 
 from db.session import get_db
-from api.deps import get_current_active_user
+from api.deps import get_current_active_user, require_supervisor, require_admin
 from models.user import User
 from models.incident import Incident, IncidentStatus, PriorityLevel
 from schemas.incident import (
@@ -77,7 +77,7 @@ def list_incidents(
     
     # Dependencias
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_supervisor)
 ):
     """
     Lista incidentes con filtros avanzados y paginación
@@ -200,7 +200,7 @@ def list_incidents(
 def get_incident(
     incident_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_supervisor)
 ):
     """
     Obtiene el detalle completo de un incidente
@@ -253,7 +253,7 @@ def update_incident_status(
     incident_id: int,
     request: UpdateIncidentStatusRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_supervisor)
 ):
     """
     Actualiza el estado de un incidente con validación de transiciones
@@ -299,7 +299,7 @@ def update_incident_details(
     estimated_repair_hours: Optional[float] = Form(None),
     after_image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_supervisor)
 ):
     """Actualiza tiempo estimado y/o foto después del incidente"""
     incident = db.query(Incident).filter(Incident.id == incident_id).first()
@@ -327,7 +327,7 @@ async def upload_after_image(
     incident_id: int,
     image: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_supervisor)
 ):
     """Sube la foto 'después' de un incidente"""
     incident = db.query(Incident).filter(Incident.id == incident_id).first()
@@ -354,7 +354,7 @@ async def upload_after_image(
 def recalculate_priority(
     incident_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_supervisor)
 ):
     """
     Recalcula el score de prioridad de un incidente
@@ -419,7 +419,7 @@ def recalculate_priority(
 def get_priority_breakdown(
     incident_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_supervisor)
 ):
     """Obtiene el desglose de prioridad sin recalcular ni guardar en BD"""
     priority_service = get_priority_service(db)
@@ -436,7 +436,7 @@ def get_priority_breakdown(
 @router.get("/stats/overview", response_model=IncidentStatsResponse)
 def get_incident_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_supervisor)
 ):
     """
     Obtiene estadísticas generales de incidentes
@@ -573,7 +573,7 @@ def get_incident_stats(
 def get_incident_audit_log(
     incident_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_supervisor),
 ):
     """Retorna la bitácora completa de cambios de un incidente"""
     incident = db.query(Incident).filter(Incident.id == incident_id).first()
@@ -676,7 +676,7 @@ def get_heatmap_data(
 def get_sla_expiring(
     within_hours: float = Query(4.0, gt=0, description="Ventana de tiempo en horas"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_supervisor),
 ):
     """
     Incidentes que vencerán su SLA dentro de `within_hours` horas,
@@ -724,7 +724,7 @@ def get_sla_expiring(
 def get_incident_sla(
     incident_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_supervisor),
 ):
     """Estado SLA de un incidente específico."""
     from services.sla_service import get_sla_info
@@ -748,7 +748,7 @@ def get_incident_sla(
 @router.get("/sla/config", response_model=SLAConfigResponse)
 def get_sla_config(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_supervisor),
 ):
     """Obtiene la configuración activa de SLAs."""
     from models.sla_config import SLAConfig
@@ -775,12 +775,9 @@ def get_sla_config(
 def update_sla_config(
     request: UpdateSLAConfigRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_admin),
 ):
     """Actualiza (o crea) la configuración de SLAs. Solo ADMIN."""
-    from models.user import UserRole
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Solo administradores pueden modificar la configuración SLA")
 
     from models.sla_config import SLAConfig
 
@@ -808,12 +805,9 @@ def update_sla_config(
 
 @router.post("/sla/check")
 def trigger_sla_check(
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_admin),
 ):
     """Encola manualmente el job de verificación de SLAs. Solo ADMIN."""
-    from models.user import UserRole
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Solo administradores")
 
     try:
         from services.queue_service import get_queue_service

@@ -669,7 +669,13 @@ async def get_report(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Reporte {report_id} no encontrado"
         )
-    
+
+    if current_user.role.value == "ciudadano" and report.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para ver este reporte"
+        )
+
     # Extraer coordenadas del campo Geography
     # report.location es un WKBElement, necesitamos convertirlo
     point = to_shape(report.location)
@@ -708,7 +714,7 @@ async def get_report(
 )
 async def get_job_status(
     job_id: str,
-    current_user: ActiveUser,
+    current_user: SupervisorUser,
 ) -> dict:
     """
     Obtiene el estado de un job de procesamiento ML
