@@ -73,8 +73,7 @@ services:
       mc alias set local http://minio:9000 sirccd_admin sirccd_password_2026 &&
       mc mb --ignore-existing local/sirccd-images &&
       mc mb --ignore-existing local/sirccd-models &&
-      mc anonymous set public local/sirccd-images &&
-      echo 'MinIO buckets configurados y bucket publico'
+      echo 'MinIO buckets configurados (acceso privado, sin anonimo publico)'
       "
     networks:
       - sirccd-network

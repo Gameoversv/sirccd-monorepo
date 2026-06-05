@@ -244,17 +244,20 @@ class StorageService:
         content: bytes,
         content_type: Optional[str]
     ) -> str:
-        """Sube archivo a MinIO"""
+        """Sube archivo a MinIO con SSE-S3 si está habilitado (S-03)."""
         try:
             import io
-            
-            # Subir archivo
+            from minio.sse import SseS3
+
+            sse = SseS3() if settings.MINIO_SSE_ENABLED else None
+
             self.client.put_object(
                 bucket_name=settings.MINIO_BUCKET_IMAGES,
                 object_name=object_name,
                 data=io.BytesIO(content),
                 length=len(content),
-                content_type=content_type or "application/octet-stream"
+                content_type=content_type or "application/octet-stream",
+                sse=sse,
             )
             
             # Construir URL pública

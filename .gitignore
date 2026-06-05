@@ -263,6 +263,12 @@ docker-cache/
 *.img
 compose.yaml.override
 
+# S-03: certificados TLS (nunca commitear claves privadas)
+infra/nginx/certs/
+*.key
+*.crt
+*.pem
+
 ###########################
 # DEV RUNTIME ARTIFACTS
 ###########################

@@ -8,6 +8,7 @@ from sqlalchemy.orm import relationship
 import enum
 
 from db.base import Base
+from core.field_encryption import EncryptedString
 
 
 class UserRole(str, enum.Enum):
@@ -32,7 +33,7 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     username = Column(String(100), unique=True, index=True, nullable=False)
     full_name = Column(String(255), nullable=True)
-    phone = Column(String(20), nullable=True)
+    phone = Column(EncryptedString(200), nullable=True)  # S-03: cifrado en BD
     
     # Autenticación
     hashed_password = Column(String(255), nullable=False)

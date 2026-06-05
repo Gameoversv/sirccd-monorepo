@@ -61,6 +61,8 @@ class Settings(BaseSettings):
     MINIO_SECURE: bool = False
     MINIO_BUCKET_IMAGES: str = "sirccd-images"
     MINIO_BUCKET_MODELS: str = "sirccd-models"
+    # S-03: SSE-S3 server-side encryption para objetos en MinIO
+    MINIO_SSE_ENABLED: bool = False
     
     # Roboflow Inference API
     ROBOFLOW_API_KEY: str = "2Mn6nf96sMJnX7Lj7khX"
@@ -94,6 +96,14 @@ class Settings(BaseSettings):
     PRIORITY_DUPLICATE_RADIUS_METERS: int = 100  # Radio para buscar duplicados
     PRIORITY_DUPLICATE_TIME_WINDOW_DAYS: int = 30  # Ventana temporal para duplicados
     
+    # S-03: Cifrado de campos sensibles en BD (Fernet AES-128 CBC)
+    # Generar con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    # Si no se configura, los campos se almacenan sin cifrar (solo para desarrollo)
+    FIELD_ENCRYPTION_KEY: Optional[str] = None
+
+    # Redis
+    REDIS_PASSWORD: Optional[str] = None
+
     # JWT
     SECRET_KEY: str = "zK8vN3mQ1pR5tY9wX2cF6bH0jL4nM7sA1dE5gI9kO3pT6uW8zC2"  # CAMBIAR en producción!
     ALGORITHM: str = "HS256"
