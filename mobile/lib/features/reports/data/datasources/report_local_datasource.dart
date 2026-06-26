@@ -12,6 +12,7 @@ abstract interface class ReportLocalDataSource {
     int? serverId,
     String? error,
   });
+  Future<void> deleteAll();
 }
 
 final class ReportLocalDataSourceImpl implements ReportLocalDataSource {
@@ -68,5 +69,11 @@ final class ReportLocalDataSourceImpl implements ReportLocalDataSource {
       where: 'local_id = ?',
       whereArgs: [localId],
     );
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    final db = await _db.database;
+    await db.delete(_table);
   }
 }

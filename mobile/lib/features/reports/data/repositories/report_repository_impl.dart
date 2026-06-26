@@ -144,6 +144,12 @@ final class ReportRepositoryImpl implements ReportRepository {
     return _remote.getReportDetail(id: id, token: token);
   }
 
+  @override
+  Future<void> deleteAllLocal() async {
+    await _local.deleteAll();
+    await _notifyRefresh();
+  }
+
   Future<void> _notifyRefresh() async {
     if (_refreshController.isClosed) return;
     final reports = await _local.getAll();

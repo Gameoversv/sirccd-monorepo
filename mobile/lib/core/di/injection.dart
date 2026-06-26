@@ -25,6 +25,7 @@ import 'package:sirccd_mobile/features/reports/domain/usecases/create_pending_re
 import 'package:sirccd_mobile/features/reports/domain/usecases/get_all_reports_usecase.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/get_report_detail_usecase.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/get_user_reports_usecase.dart';
+import 'package:sirccd_mobile/features/reports/domain/usecases/delete_all_local_reports_usecase.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/sync_pending_reports_usecase.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/report_detail_cubit.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/report_history_cubit.dart';
@@ -101,12 +102,14 @@ Future<void> initDependencies() async {
     ..registerSingleton(SyncPendingReportsUseCase(di<ReportRepository>()))
     ..registerSingleton(GetUserReportsUseCase(di<ReportRepository>()))
     ..registerSingleton(GetReportDetailUseCase(di<ReportRepository>()))
+    ..registerSingleton(DeleteAllLocalReportsUseCase(di<ReportRepository>()))
     ..registerFactory(
       () => ReportsCubit(
         di<CreatePendingReportUseCase>(),
         di<GetAllReportsUseCase>(),
         di<SyncPendingReportsUseCase>(),
         di<ConnectivityService>(),
+        di<DeleteAllLocalReportsUseCase>(),
       ),
     )
     ..registerFactory(() => ReportHistoryCubit(di<GetUserReportsUseCase>()))

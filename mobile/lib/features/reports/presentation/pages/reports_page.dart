@@ -21,6 +21,36 @@ class ReportsPage extends StatelessWidget {
   }
 }
 
+Future<void> _confirmDeleteAll(BuildContext context) async {
+  final cubit = context.read<ReportsCubit>();
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Borrar reportes locales'),
+      content: const Text(
+        '¿Eliminar todos los reportes pendientes del dispositivo? '
+        'Esta acción no se puede deshacer.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.error,
+          ),
+          child: const Text('Eliminar'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed == true) {
+    await cubit.deleteAllLocal();
+  }
+}
+
 class _ReportsView extends StatelessWidget {
   const _ReportsView();
 
@@ -30,6 +60,11 @@ class _ReportsView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Mis reportes'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_sweep_rounded),
+            tooltip: 'Borrar todos',
+            onPressed: () => _confirmDeleteAll(context),
+          ),
           IconButton(
             icon: const Icon(Icons.history_rounded),
             tooltip: 'Historial',

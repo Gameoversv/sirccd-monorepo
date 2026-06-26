@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sirccd_mobile/core/services/connectivity_service.dart';
 import 'package:sirccd_mobile/features/reports/domain/entities/pending_report.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/create_pending_report_usecase.dart';
+import 'package:sirccd_mobile/features/reports/domain/usecases/delete_all_local_reports_usecase.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/get_all_reports_usecase.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/sync_pending_reports_usecase.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_state.dart';
@@ -14,12 +15,14 @@ final class ReportsCubit extends Cubit<ReportsState> {
     this._getAllReports,
     this._syncReports,
     this._connectivity,
+    this._deleteAllLocal,
   ) : super(const ReportsInitial());
 
   final CreatePendingReportUseCase _createReport;
   final GetAllReportsUseCase _getAllReports;
   final SyncPendingReportsUseCase _syncReports;
   final ConnectivityService _connectivity;
+  final DeleteAllLocalReportsUseCase _deleteAllLocal;
 
   StreamSubscription<List<PendingReport>>? _reportsSub;
   StreamSubscription<bool>? _connectivitySub;
@@ -79,6 +82,14 @@ final class ReportsCubit extends Cubit<ReportsState> {
 
   Future<void> retryFailed() async {
     if (_isOnline) await _sync();
+  }
+
+  Future<void> deleteAllLocal() async {
+    try {
+      await _deleteAllLocal();
+    } catch (e) {
+      emit(ReportsError('No se pudieron eliminar los reportes: $e'));
+    }
   }
 
   Future<void> _sync() async {

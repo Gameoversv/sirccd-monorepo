@@ -31,4 +31,6 @@ abstract interface class ReportRepository {
   });
 
   Future<UserReport> getReportDetail(int id);
+
+  Future<void> deleteAllLocal();
 }
