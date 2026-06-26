@@ -86,3 +86,8 @@ models/*.tflite
 uploads/
 temp/
 tmp/
+
+# FAISS indexes (generados en runtime)
+storage/*.faiss
+storage/*.faiss.ids
+storage/images/
