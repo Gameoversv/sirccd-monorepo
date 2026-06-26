@@ -12,6 +12,7 @@ import 'package:sirccd_mobile/features/reports/domain/entities/sync_status.dart'
 import 'package:sirccd_mobile/features/reports/domain/entities/user_report.dart';
 import 'package:sirccd_mobile/features/reports/domain/repositories/report_repository.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/create_pending_report_usecase.dart';
+import 'package:sirccd_mobile/features/reports/domain/usecases/delete_all_local_reports_usecase.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/get_all_reports_usecase.dart';
 import 'package:sirccd_mobile/features/reports/domain/usecases/sync_pending_reports_usecase.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_cubit.dart';
@@ -90,6 +91,9 @@ class _FakeRepo implements ReportRepository {
   @override
   Future<UserReport> getReportDetail(int id) async =>
       throw UnimplementedError();
+
+  @override
+  Future<void> deleteAllLocal() async {}
 }
 
 class _FakeConnectivity implements ConnectivityService {
@@ -118,6 +122,7 @@ ReportsCubit _cubit(_FakeRepo repo, _FakeConnectivity conn) => ReportsCubit(
       GetAllReportsUseCase(repo),
       SyncPendingReportsUseCase(repo),
       conn,
+      DeleteAllLocalReportsUseCase(repo),
     );
 
 // ── Tests ──────────────────────────────────────────────────────────────────

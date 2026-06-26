@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sirccd_mobile/features/reports/data/datasources/report_local_datasource.dart';
 import 'package:sirccd_mobile/features/reports/data/models/pending_report_model.dart';
-import 'package:sirccd_mobile/features/reports/data/repositories/report_repository_impl.dart';
-import 'package:sirccd_mobile/features/reports/domain/entities/pending_report.dart';
 import 'package:sirccd_mobile/features/reports/domain/entities/sync_status.dart';
 
 // ── Fakes ──────────────────────────────────────────────────────────────────
@@ -47,70 +45,14 @@ class _FakeLocalDataSource implements ReportLocalDataSource {
       createdAt: old.createdAt,
     );
   }
-}
-
-class _FakeRemoteDataSource
-    implements
-        // ignore: avoid_implementing_value_types
-        _RemoteDataSourceLike {
-  int? returnServerId;
-  Object? throwError;
-  final List<PendingReport> submitted = [];
 
   @override
-  Future<int> submitReport(PendingReport report, String token) async {
-    if (throwError != null) throw throwError!;
-    submitted.add(report);
-    return returnServerId ?? 42;
-  }
-}
-
-// ignore: one_member_abstracts
-abstract interface class _RemoteDataSourceLike {
-  Future<int> submitReport(PendingReport report, String token);
-}
-
-class _FakeAuthLocal
-    implements
-        // ignore: avoid_implementing_value_types
-        _AuthLocalLike {
-  String? token;
-
-  @override
-  Future<String?> getToken() async => token;
-}
-
-abstract interface class _AuthLocalLike {
-  Future<String?> getToken();
-}
-
-class _FakeConnectivity implements _ConnectivityLike {
-  bool online;
-  _FakeConnectivity({this.online = true});
-
-  @override
-  Future<bool> isConnected() async => online;
-
-  @override
-  Stream<bool> get isConnectedStream => const Stream.empty();
-}
-
-abstract interface class _ConnectivityLike {
-  Future<bool> isConnected();
-  Stream<bool> get isConnectedStream;
+  Future<void> deleteAll() async => _store.clear();
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-// We test ReportRepositoryImpl by reaching through its public interface.
-// Because the fakes above are not exactly the injected types, we build a
-// lightweight harness that calls the same logic.
-
 _FakeLocalDataSource _local() => _FakeLocalDataSource();
-_FakeRemoteDataSource _remote() => _FakeRemoteDataSource()..returnServerId = 7;
-_FakeAuthLocal _auth({String? token = 'tok'}) => _FakeAuthLocal()..token = token;
-_FakeConnectivity _conn({bool online = false}) =>
-    _FakeConnectivity(online: online);
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 

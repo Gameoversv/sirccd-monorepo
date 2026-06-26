@@ -43,6 +43,7 @@ sys.modules['services.anonymizer'] = MagicMock()
 sys.modules['services.storage'] = MagicMock()
 sys.modules['services.ml_service'] = MagicMock()
 sys.modules['services.queue_service'] = MagicMock()
+sys.modules['services.deduplication_service'] = MagicMock()
 
 # boto3 is not in requirements (MinIO client uses minio-py), stub it out
 if 'boto3' not in sys.modules:
