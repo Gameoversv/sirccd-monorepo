@@ -130,6 +130,11 @@ class MLInferenceService:
             self._init_client()
 
     def _init_client(self):
+        if not settings.ROBOFLOW_API_KEY:
+            logger.warning("ROBOFLOW_API_KEY no configurada. Usando mock.")
+            self.use_mock = True
+            return
+
         try:
             import requests
             logger.info(f"Roboflow API lista. Modelo: {settings.ROBOFLOW_MODEL_ID}")

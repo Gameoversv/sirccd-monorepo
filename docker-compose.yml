@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   # ── Infraestructura ──────────────────────────────────────────────
@@ -85,6 +83,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: sirccd-backend
+    init: true
     ports:
       - "8000:8000"
     environment:
@@ -110,8 +109,8 @@ services:
       MINIO_BUCKET_IMAGES: sirccd-images
       MINIO_BUCKET_MODELS: sirccd-models
       # Roboflow
-      ROBOFLOW_API_KEY: "2Mn6nf96sMJnX7Lj7khX"
-      ROBOFLOW_MODEL_ID: "rd-roaddataset/5"
+      ROBOFLOW_API_KEY: ${ROBOFLOW_API_KEY:-}
+      ROBOFLOW_MODEL_ID: ${ROBOFLOW_MODEL_ID:-rd-roaddataset/5}
       CONFIDENCE_THRESHOLD: "0.4"
       IOU_THRESHOLD: "0.4"
       # JWT

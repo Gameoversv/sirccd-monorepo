@@ -65,7 +65,8 @@ class Settings(BaseSettings):
     MINIO_SSE_ENABLED: bool = False
     
     # Roboflow Inference API
-    ROBOFLOW_API_KEY: str = "2Mn6nf96sMJnX7Lj7khX"
+    # Configure via environment/.env. Leave empty in local dev to use ML mock fallback.
+    ROBOFLOW_API_KEY: str = ""
     ROBOFLOW_MODEL_ID: str = "rd-roaddataset/5"
     CONFIDENCE_THRESHOLD: float = 0.4
     IOU_THRESHOLD: float = 0.4
