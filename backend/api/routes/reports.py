@@ -33,6 +33,14 @@ from services.priority_service import get_priority_service
 router = APIRouter(prefix="/reportes", tags=["Reportes"])
 
 
+def _resolve_focal_scale_factor(exif_data, fallback: Optional[float]) -> float:
+    """Usa EXIF cuando hay focal; si no, usa el factor enviado por la app."""
+    has_exif_focal = bool(exif_data.focal_length_35mm or exif_data.focal_length_mm)
+    if has_exif_focal or fallback is None:
+        return exif_data.zoom_scale_factor
+    return max(0.25, min(2.0, float(fallback)))
+
+
 def _resolve_incident_dedup(db, report, report_image, log):
     """
     Busca un Incident existente para fusionar con el reporte dado.
@@ -381,6 +389,12 @@ async def create_report(
         max_length=100,
         description="Provincia/Estado"
     ),
+    focal_scale_factor: Optional[float] = Form(
+        None,
+        ge=0.25,
+        le=2.0,
+        description="Factor opcional de normalizacion por zoom enviado por la app movil"
+    ),
 ) -> CreateReportResponse:
     """
     Crea un nuevo reporte con imagen, GPS y descripción
@@ -498,9 +512,18 @@ async def create_report(
                 image_local_path = _tmp_file.name
 
             if image_local_path:
-                print(f" Ejecutando detección ML inline para reporte {new_report.id} "
-                      f"(zoom_factor={exif_data.zoom_scale_factor:.2f})")
-                result = ml_service.detect(image_local_path, focal_scale_factor=exif_data.zoom_scale_factor)
+                ml_focal_scale_factor = _resolve_focal_scale_factor(
+                    exif_data,
+                    focal_scale_factor,
+                )
+                print(
+                    f" Ejecutando detección ML inline para reporte {new_report.id} "
+                    f"(zoom_factor={ml_focal_scale_factor:.2f})"
+                )
+                result = ml_service.detect(
+                    image_local_path,
+                    focal_scale_factor=ml_focal_scale_factor,
+                )
                 dedup_image = None
                 try:
                     from PIL import Image as _PILImage

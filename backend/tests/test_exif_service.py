@@ -61,8 +61,7 @@ def _jpeg_with_gps(lat_decimal: float, lon_decimal: float) -> bytes:
     JPEG con GPS embebido.  Intenta vía Pillow IFD nativo; si falla por
     limitaciones de versión, construye los bytes EXIF mínimos manualmente.
     """
-    from PIL import Image
-    import struct
+    from PIL import Image, TiffImagePlugin
 
     img = Image.new("RGB", (200, 200), color=(200, 100, 50))
     exif = img.getexif()
@@ -72,7 +71,11 @@ def _jpeg_with_gps(lat_decimal: float, lon_decimal: float) -> bytes:
         d = int(value)
         m = int((value - d) * 60)
         s = round(((value - d) * 60 - m) * 60 * 10000)
-        return ((d, 1), (m, 1), (s, 10000))
+        return (
+            TiffImagePlugin.IFDRational(d, 1),
+            TiffImagePlugin.IFDRational(m, 1),
+            TiffImagePlugin.IFDRational(s, 10000),
+        )
 
     gps_ifd = exif.get_ifd(0x8825)
     gps_ifd[1] = b"N\x00" if lat_decimal >= 0 else b"S\x00"
