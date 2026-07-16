@@ -802,9 +802,17 @@ def load_image_from_url(image_url: Optional[str]) -> Optional[Image.Image]:
             return None
 
         if image_url.startswith("http://") or image_url.startswith("https://"):
-            # Dentro del container Docker, minio:9000 es el hostname correcto (no localhost)
-            url = image_url
-            resp = requests.get(url, timeout=10)
+            # MinIO primero, via SDK: el bucket no permite lectura anonima, asi
+            # que pedir la URL por HTTP directo devuelve 403 y la dedup se
+            # quedaba sin indexar.
+            from services.storage import storage_service
+
+            content = storage_service.download_image_bytes(image_url)
+            if content is not None:
+                return Image.open(_io.BytesIO(content)).convert("RGB")
+
+            # URLs ajenas a MinIO (o MinIO deshabilitado): HTTP directo.
+            resp = requests.get(image_url, timeout=10)
             resp.raise_for_status()
             return Image.open(_io.BytesIO(resp.content)).convert("RGB")
 

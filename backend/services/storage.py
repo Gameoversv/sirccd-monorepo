@@ -313,6 +313,35 @@ class StorageService:
         else:
             return await self._delete_from_local(image_url)
     
+    def download_image_bytes(self, image_url: str) -> Optional[bytes]:
+        """
+        Descarga una imagen de MinIO usando el SDK (con credenciales).
+
+        El bucket no permite lectura anónima, así que pedir la URL por HTTP
+        directo devuelve 403. Devuelve None si la URL no es de MinIO o falla.
+        """
+        if not self.use_minio or not image_url:
+            return None
+
+        parts = image_url.split(f"/{settings.MINIO_BUCKET_IMAGES}/")
+        if len(parts) != 2:
+            return None
+
+        response = None
+        try:
+            response = self.client.get_object(
+                bucket_name=settings.MINIO_BUCKET_IMAGES,
+                object_name=parts[1],
+            )
+            return response.read()
+        except S3Error as e:
+            print(f"  Error al descargar '{image_url}' de MinIO: {e}")
+            return None
+        finally:
+            if response is not None:
+                response.close()
+                response.release_conn()
+
     async def _delete_from_minio(self, image_url: str) -> bool:
         """Elimina imagen de MinIO"""
         try:
