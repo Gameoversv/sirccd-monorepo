@@ -156,6 +156,23 @@ class ReportResponse(BaseModel):
     model_precision: Optional[float] = Field(None, description="Precisión del modelo en validación")
     model_recall: Optional[float] = Field(None, description="Recall del modelo en validación")
     model_map50: Optional[float] = Field(None, description="mAP50 del modelo en validación")
+
+    # Desglose de severidad: explica por qué el reporte salió BAJA/MEDIA/ALTA
+    damage_ratio_raw: Optional[float] = Field(
+        None, description="Área detectada / área de la imagen, sin corregir por zoom"
+    )
+    damage_ratio_normalized: Optional[float] = Field(
+        None, description="Ratio corregido por zoom — es el que decide la severidad"
+    )
+    focal_scale_factor: Optional[float] = Field(
+        None, description="Razón lineal focal_ref/focal_real (1.0 sin zoom, 0.5 a 2x)"
+    )
+    area_scale_factor: Optional[float] = Field(
+        None, description="Corrección aplicada al ratio de área (focal_scale_factor²)"
+    )
+    weighted_detections: Optional[float] = Field(
+        None, description="Suma de confianzas — vía alternativa a ALTA/MEDIA"
+    )
     
     # Estado
     status: ReportStatusEnum = Field(..., description="Estado actual del reporte")
@@ -180,6 +197,17 @@ class ReportResponse(BaseModel):
                     self.model_recall = det.get('model_recall')
                 if self.model_map50 is None:
                     self.model_map50 = det.get('model_map50')
+                # Ausentes en reportes procesados antes de persistir el desglose
+                if self.damage_ratio_raw is None:
+                    self.damage_ratio_raw = det.get('damage_ratio_raw')
+                if self.damage_ratio_normalized is None:
+                    self.damage_ratio_normalized = det.get('damage_ratio_normalized')
+                if self.focal_scale_factor is None:
+                    self.focal_scale_factor = det.get('focal_scale_factor')
+                if self.area_scale_factor is None:
+                    self.area_scale_factor = det.get('area_scale_factor')
+                if self.weighted_detections is None:
+                    self.weighted_detections = det.get('weighted_detections')
             except Exception:
                 pass
         return self

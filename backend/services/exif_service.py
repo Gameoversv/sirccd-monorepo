@@ -54,17 +54,27 @@ class ExifData:
     @property
     def zoom_scale_factor(self) -> float:
         """
-        Factor de normalización para compensar zoom/distancia al calcular severidad.
+        Razón LINEAL focal_referencia/focal_real, para normalizar por zoom.
 
         Problema: damage_ratio = bbox_area / image_area
           - Zoom 2x (56 mm) → bache ocupa 4x más píxeles → ratio inflado → severidad ALTA falsa
           - Ultrawide 0.5x (14 mm) → bache ocupa menos píxeles → ratio deflado → severidad BAJA falsa
 
-        Corrección: ratio_normalizado = ratio_raw × (focal_ref / focal_real)
-          - 28 mm (estándar 1x): factor = 1.0 → sin cambio
-          - 56 mm (2x zoom):     factor = 0.5 → ratio se reduce a la mitad
-          - 14 mm (0.5x wide):   factor = 2.0 → ratio se duplica
-          - 140 mm (5x zoom):    factor clamped a 0.25
+        Esta propiedad devuelve la razón lineal:
+          - 28 mm (estándar 1x): 1.00
+          - 56 mm (2x zoom):     0.50
+          - 14 mm (0.5x wide):   2.00
+          - 140 mm (5x zoom):    clamped a 0.25
+
+        IMPORTANTE: es lineal, no de área. Quien la use para corregir un ratio
+        de área debe elevarla al cuadrado (a 2x el bache mide el doble de ancho
+        Y el doble de alto = 4x los píxeles). Eso lo hace
+        MLInferenceService._evaluate_severity; aplicarla lineal dejaba el ratio
+        inflado 2x en cada foto con zoom.
+
+        El clamp acota la razón lineal a ópticas de teléfono realistas (5x tele
+        a 0.5x ultrawide), lo que al cuadrado equivale a corregir el área entre
+        0.0625x y 4x.
 
         `FocalLengthIn35mmFilm` ya incluye crop factor del sensor y zoom digital,
         por eso se prefiere sobre `FocalLength` (que es solo la óptica física).

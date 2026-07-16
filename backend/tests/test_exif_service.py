@@ -7,7 +7,7 @@ Cubre:
 - extract_exif() sin EXIF → valores None/False
 - strip_exif() elimina EXIF y hace early-return si ya está limpia
 - GPS DMS → decimal helpers (_dms_to_decimal, _rational_to_float)
-- _calculate_severity() con focal_scale_factor (import real, bypasa mock global)
+- _evaluate_severity() con focal_scale_factor (import real, bypasa mock global)
 - Prioridad coordenadas: EXIF GPS > usuario (lógica pura, sin imagen)
 """
 
@@ -334,7 +334,7 @@ class TestStripExif:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# MLInferenceService._calculate_severity con focal_scale_factor
+# MLInferenceService._evaluate_severity con focal_scale_factor
 # (importa el módulo real desde disco, bypaseando el mock de conftest)
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -358,60 +358,109 @@ def make_bbox(real_ml_module):
     return _make
 
 
-class TestCalculateSeverityWithZoom:
+class TestEvaluateSeverityWithZoom:
 
-    def test_no_bboxes_returns_baja(self, ml_service_instance, real_ml_module):
-        SeverityLevel = real_ml_module.SeverityLevel if hasattr(real_ml_module, 'SeverityLevel') else None
+    def test_no_bboxes_returns_baja(self, ml_service_instance):
         from models.report import SeverityLevel
-        result = ml_service_instance._calculate_severity([], 640, 480, focal_scale_factor=1.0)
-        assert result == SeverityLevel.BAJA
+        result = ml_service_instance._evaluate_severity([], 640, 480, focal_scale_factor=1.0)
+        assert result.severity == SeverityLevel.BAJA
+        assert result.damage_ratio_raw == 0.0
 
     def test_factor_1_identical_to_default(self, ml_service_instance, make_bbox):
         bbox = make_bbox(width=150, height=150, conf=0.7)
-        default = ml_service_instance._calculate_severity([bbox], 640, 480)
-        explicit = ml_service_instance._calculate_severity([bbox], 640, 480, focal_scale_factor=1.0)
-        assert default == explicit
+        default = ml_service_instance._evaluate_severity([bbox], 640, 480)
+        explicit = ml_service_instance._evaluate_severity([bbox], 640, 480, focal_scale_factor=1.0)
+        assert default.severity == explicit.severity
+        assert default.damage_ratio_normalized == explicit.damage_ratio_normalized
 
-    def test_2x_zoom_reduces_or_keeps_severity(self, ml_service_instance, make_bbox):
-        """Con zoom 2x el factor=0.5 reduce damage_ratio — severidad igual o menor."""
-        from models.report import SeverityLevel
-        severity_order = {SeverityLevel.BAJA: 0, SeverityLevel.MEDIA: 1, SeverityLevel.ALTA: 2}
-        bbox = make_bbox(width=200, height=200, conf=0.4)  # conf baja para que no domine
-        r_1x = ml_service_instance._calculate_severity([bbox], 640, 480, focal_scale_factor=1.0)
-        r_2x = ml_service_instance._calculate_severity([bbox], 640, 480, focal_scale_factor=0.5)
-        assert severity_order[r_2x] <= severity_order[r_1x]
+    def test_factor_1_leaves_the_ratio_untouched(self, ml_service_instance, make_bbox):
+        bbox = make_bbox(width=150, height=150, conf=0.7)
+        result = ml_service_instance._evaluate_severity([bbox], 640, 480, focal_scale_factor=1.0)
+        assert result.area_scale_factor == 1.0
+        assert result.damage_ratio_normalized == result.damage_ratio_raw
 
-    def test_ultrawide_raises_or_keeps_severity(self, ml_service_instance, make_bbox):
-        """Factor > 1 (ultrawide) puede subir severidad o mantenerla."""
+    def test_correction_is_quadratic_not_linear(self, ml_service_instance, make_bbox):
+        """
+        damage_ratio es area: a 2x el bache ocupa 4x los pixeles, asi que la
+        correccion debe ser factor**2 (0.25), no factor (0.5).
+        """
+        bbox = make_bbox(width=200, height=200, conf=0.4)
+        result = ml_service_instance._evaluate_severity([bbox], 640, 480, focal_scale_factor=0.5)
+
+        assert result.area_scale_factor == 0.25
+        assert result.damage_ratio_normalized == pytest.approx(
+            result.damage_ratio_raw * 0.25
+        )
+
+    def test_zoomed_photo_of_a_small_pothole_stays_baja(self, ml_service_instance, make_bbox):
+        """
+        El bug que motivo el cambio: bache fotografiado a 2x.
+
+        240x240 sobre 640x480 → ratio bruto 0.1875. El bache real ocupa un
+        cuarto de eso (0.0469, BAJA), pero la correccion lineal solo bajaba a
+        0.0938 y lo clasificaba MEDIA. Con la correccion de area da BAJA.
+        """
         from models.report import SeverityLevel
-        severity_order = {SeverityLevel.BAJA: 0, SeverityLevel.MEDIA: 1, SeverityLevel.ALTA: 2}
-        # Bache pequeño que a 1x sería BAJA
+        bbox = make_bbox(width=240, height=240, conf=0.4)  # conf baja: no dispara la via ponderada
+
+        result = ml_service_instance._evaluate_severity([bbox], 640, 480, focal_scale_factor=0.5)
+
+        assert result.damage_ratio_raw == pytest.approx(0.1875)
+        assert result.damage_ratio_normalized == pytest.approx(0.046875)
+        assert result.severity == SeverityLevel.BAJA
+
+    def test_same_pothole_without_zoom_is_unaffected(self, ml_service_instance, make_bbox):
+        """Contraparte: sin zoom, ese mismo ratio bruto sigue siendo MEDIA."""
+        from models.report import SeverityLevel
+        bbox = make_bbox(width=240, height=240, conf=0.4)
+
+        result = ml_service_instance._evaluate_severity([bbox], 640, 480, focal_scale_factor=1.0)
+
+        assert result.damage_ratio_normalized == pytest.approx(0.1875)
+        assert result.severity == SeverityLevel.ALTA
+
+    def test_ultrawide_inflates_the_ratio_quadratically(self, ml_service_instance, make_bbox):
+        """Factor 2.0 (ultrawide 0.5x) → el area se corrige ×4."""
         bbox = make_bbox(width=40, height=40, conf=0.4)
-        r_1x = ml_service_instance._calculate_severity([bbox], 640, 480, focal_scale_factor=1.0)
-        r_wide = ml_service_instance._calculate_severity([bbox], 640, 480, focal_scale_factor=2.0)
-        assert severity_order[r_wide] >= severity_order[r_1x]
+        result = ml_service_instance._evaluate_severity([bbox], 640, 480, focal_scale_factor=2.0)
+
+        assert result.area_scale_factor == 4.0
+        assert result.damage_ratio_normalized == pytest.approx(result.damage_ratio_raw * 4)
 
     def test_high_ratio_at_1x_returns_alta_or_media(self, ml_service_instance, make_bbox):
         from models.report import SeverityLevel
         # 350x350 en 640x480 → ratio≈0.398 → ALTA
         bbox = make_bbox(width=350, height=350, conf=0.9)
-        result = ml_service_instance._calculate_severity([bbox], 640, 480, focal_scale_factor=1.0)
-        assert result in (SeverityLevel.MEDIA, SeverityLevel.ALTA)
+        result = ml_service_instance._evaluate_severity([bbox], 640, 480, focal_scale_factor=1.0)
+        assert result.severity in (SeverityLevel.MEDIA, SeverityLevel.ALTA)
 
     def test_extreme_zoom_in_very_small_ratio(self, ml_service_instance, make_bbox):
         """Factor 0.01 (extremo, sin clamp en ml_service) → ratio casi cero → BAJA."""
         from models.report import SeverityLevel
         bbox = make_bbox(width=350, height=350, conf=0.4)
-        result = ml_service_instance._calculate_severity([bbox], 640, 480, focal_scale_factor=0.01)
-        assert result == SeverityLevel.BAJA
+        result = ml_service_instance._evaluate_severity([bbox], 640, 480, focal_scale_factor=0.01)
+        assert result.severity == SeverityLevel.BAJA
 
     def test_multiple_detections_high_confidence_stays_alta(self, ml_service_instance, make_bbox):
         """weighted_detections >= 3.0 → ALTA sin importar el zoom."""
         from models.report import SeverityLevel
         # 4 detecciones con conf=0.9 → weighted=3.6 → ALTA aunque damage_ratio sea bajo
         bboxes = [make_bbox(width=20, height=20, conf=0.9) for _ in range(4)]
-        result = ml_service_instance._calculate_severity(bboxes, 640, 480, focal_scale_factor=0.25)
-        assert result == SeverityLevel.ALTA
+        result = ml_service_instance._evaluate_severity(bboxes, 640, 480, focal_scale_factor=0.25)
+        assert result.severity == SeverityLevel.ALTA
+        assert result.weighted_detections == pytest.approx(3.6)
+
+    def test_breakdown_reaches_detections_json(self, ml_service_instance, make_bbox, real_ml_module):
+        """El desglose tiene que sobrevivir hasta el dict que se persiste."""
+        result = ml_service_instance._mock_detection(640, 480, focal_scale_factor=0.5)
+        data = result.to_dict()
+
+        assert data["focal_scale_factor"] == 0.5
+        assert data["area_scale_factor"] == 0.25
+        assert data["damage_ratio_normalized"] == pytest.approx(
+            data["damage_ratio_raw"] * 0.25, rel=1e-3
+        )
+        assert data["severity"] == result.severity.value
 
 
 # ══════════════════════════════════════════════════════════════════════════════

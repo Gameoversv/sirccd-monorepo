@@ -6,6 +6,7 @@ import os
 import json
 import logging
 import tempfile
+from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from PIL import Image
@@ -14,6 +15,42 @@ from core.config import settings
 from models.report import DamageType, SeverityLevel
 
 logger = logging.getLogger(__name__)
+
+# Umbrales de severidad sobre el ratio de daño ya normalizado por zoom
+_RATIO_ALTA = 0.15
+_RATIO_MEDIA = 0.05
+
+# Umbrales alternativos por cantidad de detecciones ponderadas por confianza
+_WEIGHTED_ALTA = 3.0
+_WEIGHTED_MEDIA = 1.5
+
+
+@dataclass(frozen=True)
+class SeverityBreakdown:
+    """
+    Cómo se llegó a la severidad.
+
+    Se persiste en detections_json: sin estos números la severidad es un enum
+    de tres cubos y no hay forma de auditar por qué un reporte salió ALTA, ni
+    de comprobar que la normalización por zoom hace lo que dice.
+    """
+
+    severity: SeverityLevel
+    damage_ratio_raw: float
+    damage_ratio_normalized: float
+    focal_scale_factor: float
+    area_scale_factor: float
+    weighted_detections: float
+
+    def to_dict(self) -> dict:
+        return {
+            "severity": self.severity.value,
+            "damage_ratio_raw": round(self.damage_ratio_raw, 6),
+            "damage_ratio_normalized": round(self.damage_ratio_normalized, 6),
+            "focal_scale_factor": round(self.focal_scale_factor, 4),
+            "area_scale_factor": round(self.area_scale_factor, 4),
+            "weighted_detections": round(self.weighted_detections, 3),
+        }
 
 
 class BoundingBox:
@@ -81,6 +118,7 @@ class DetectionResult:
         image_width: int,
         image_height: int,
         model_version: str = "roboflow",
+        severity_breakdown: Optional[SeverityBreakdown] = None,
     ):
         self.damage_type = damage_type
         self.severity = severity
@@ -89,9 +127,10 @@ class DetectionResult:
         self.image_width = image_width
         self.image_height = image_height
         self.model_version = model_version
+        self.severity_breakdown = severity_breakdown
 
     def to_dict(self) -> dict:
-        return {
+        data = {
             "damage_type": self.damage_type.value,
             "severity": self.severity.value,
             "confidence": float(self.confidence),
@@ -104,6 +143,9 @@ class DetectionResult:
             "model_recall": MLInferenceService.MODEL_RECALL,
             "model_map50": MLInferenceService.MODEL_MAP50,
         }
+        if self.severity_breakdown is not None:
+            data.update(self.severity_breakdown.to_dict())
+        return data
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict())
@@ -215,32 +257,58 @@ class MLInferenceService:
         class_id = 0 if damage_type == DamageType.BACHE else 1
         return damage_type, class_id
 
-    def _calculate_severity(
+    def _evaluate_severity(
         self,
         bounding_boxes: List[BoundingBox],
         image_width: int,
         image_height: int,
         focal_scale_factor: float = 1.0,
-    ) -> SeverityLevel:
+    ) -> SeverityBreakdown:
+        """
+        Calcula la severidad y devuelve los números que la explican.
+
+        [focal_scale_factor] es la razón lineal focal_referencia/focal_real
+        (1.0 sin zoom, 0.5 a 2x). La corrección se aplica al cuadrado porque
+        damage_ratio es una magnitud de área: a 2x el bache mide el doble de
+        ancho y el doble de alto, o sea 4x los píxeles. Corregir por 0.5 (lineal)
+        dejaba el ratio inflado 2x y una foto con zoom podía saltar de MEDIA a
+        ALTA sola.
+        """
         if not bounding_boxes:
-            return SeverityLevel.BAJA
+            return SeverityBreakdown(
+                severity=SeverityLevel.BAJA,
+                damage_ratio_raw=0.0,
+                damage_ratio_normalized=0.0,
+                focal_scale_factor=focal_scale_factor,
+                area_scale_factor=focal_scale_factor ** 2,
+                weighted_detections=0.0,
+            )
+
         image_area = image_width * image_height
         total_damage_area = sum(bb.area() for bb in bounding_boxes)
-        damage_ratio = total_damage_area / image_area if image_area > 0 else 0
+        damage_ratio_raw = total_damage_area / image_area if image_area > 0 else 0.0
 
-        # D-08 / normalización por zoom: si la cámara tiene zoom (focal > referencia),
-        # el bache aparece más grande en píxeles de lo que es en realidad.
-        # focal_scale_factor = focal_referencia / focal_real < 1.0 → reduce el ratio.
-        damage_ratio *= focal_scale_factor
+        area_scale_factor = focal_scale_factor ** 2
+        damage_ratio = damage_ratio_raw * area_scale_factor
 
         # Detecciones ponderadas por confianza (evita que conf=45% cuente igual que conf=95%)
         weighted_detections = sum(bb.confidence for bb in bounding_boxes)
-        if damage_ratio > 0.15 or weighted_detections >= 3.0:
-            return SeverityLevel.ALTA
-        elif damage_ratio > 0.05 or weighted_detections >= 1.5:
-            return SeverityLevel.MEDIA
+
+        if damage_ratio > _RATIO_ALTA or weighted_detections >= _WEIGHTED_ALTA:
+            severity = SeverityLevel.ALTA
+        elif damage_ratio > _RATIO_MEDIA or weighted_detections >= _WEIGHTED_MEDIA:
+            severity = SeverityLevel.MEDIA
         else:
-            return SeverityLevel.BAJA
+            severity = SeverityLevel.BAJA
+
+        return SeverityBreakdown(
+            severity=severity,
+            damage_ratio_raw=damage_ratio_raw,
+            damage_ratio_normalized=damage_ratio,
+            focal_scale_factor=focal_scale_factor,
+            area_scale_factor=area_scale_factor,
+            weighted_detections=weighted_detections,
+        )
 
     def _mock_detection(self, image_width: int, image_height: int, focal_scale_factor: float = 1.0) -> "DetectionResult":
         import random
@@ -264,14 +332,18 @@ class MLInferenceService:
         else:
             damage_type = DamageType.BACHE
             confidence = 0.5
+        breakdown = self._evaluate_severity(
+            bounding_boxes, image_width, image_height, focal_scale_factor
+        )
         return DetectionResult(
             damage_type=damage_type,
-            severity=self._calculate_severity(bounding_boxes, image_width, image_height, focal_scale_factor),
+            severity=breakdown.severity,
             confidence=confidence,
             bounding_boxes=bounding_boxes,
             image_width=image_width,
             image_height=image_height,
             model_version="mock-v1.0",
+            severity_breakdown=breakdown,
         )
 
     def _roboflow_detection(self, image_path: str, focal_scale_factor: float = 1.0) -> "DetectionResult":
@@ -339,14 +411,18 @@ class MLInferenceService:
             dominant_type = DamageType.BACHE
             confidence = 0.0
 
+        breakdown = self._evaluate_severity(
+            bounding_boxes, image_width, image_height, focal_scale_factor
+        )
         return DetectionResult(
             damage_type=dominant_type,
-            severity=self._calculate_severity(bounding_boxes, image_width, image_height, focal_scale_factor),
+            severity=breakdown.severity,
             confidence=confidence,
             bounding_boxes=bounding_boxes,
             image_width=image_width,
             image_height=image_height,
             model_version=settings.ROBOFLOW_MODEL_ID,
+            severity_breakdown=breakdown,
         )
 
     def detect(self, image_path: str, focal_scale_factor: float = 1.0) -> "DetectionResult":
