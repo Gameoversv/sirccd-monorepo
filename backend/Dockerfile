@@ -21,6 +21,13 @@ RUN apt-get update && apt-get install -y \
 
 # Instalar dependencias Python
 COPY requirements.txt .
+
+# torch/torchvision desde el indice CPU: el wheel por defecto arrastra las
+# librerias CUDA (~2.5 GB) que no se usan en este despliegue.
+RUN pip install --no-cache-dir \
+    --index-url https://download.pytorch.org/whl/cpu \
+    "torch>=2.2.0" "torchvision>=0.17.0"
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código
@@ -29,9 +36,11 @@ COPY . .
 # Directorios de trabajo
 RUN mkdir -p logs uploads storage
 
+ENV PORT=8000
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD curl -f http://localhost:8000/api/v1/health || exit 1
+    CMD curl -f http://localhost:${PORT}/api/v1/health || exit 1
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Shell form: la plataforma inyecta PORT en runtime y hay que expandirlo.
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT}

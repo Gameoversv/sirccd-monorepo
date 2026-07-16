@@ -116,6 +116,7 @@ class HealthCheckService:
                 host=settings.REDIS_HOST,
                 port=settings.REDIS_PORT,
                 db=settings.REDIS_DB,
+                password=settings.REDIS_PASSWORD,
                 socket_connect_timeout=5,
                 socket_timeout=5
             )

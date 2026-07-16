@@ -52,7 +52,8 @@ class Settings(BaseSettings):
     @property
     def REDIS_URL(self) -> str:
         """URL de conexión a Redis"""
-        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        auth = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
+        return f"redis://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
     
     # MinIO (almacenamiento de objetos)
     MINIO_ENDPOINT: str = "localhost:9000"
