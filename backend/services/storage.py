@@ -37,8 +37,10 @@ class StorageService:
                     secret_key=settings.MINIO_SECRET_KEY,
                     secure=settings.MINIO_SECURE
                 )
-                # Verificar/crear bucket de imágenes
+                # Verificar/crear buckets. El de modelos tambien es requerido
+                # por el health check, que reporta "degraded" si falta.
                 self._ensure_bucket(settings.MINIO_BUCKET_IMAGES)
+                self._ensure_bucket(settings.MINIO_BUCKET_MODELS)
             except Exception as e:
                 print(f"  MinIO no disponible, usando almacenamiento local: {e}")
                 self.use_minio = False
