@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sirccd_mobile/core/di/injection.dart';
+import 'package:sirccd_mobile/features/reports/domain/entities/pending_report.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_cubit.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_state.dart';
 import 'package:sirccd_mobile/features/reports/presentation/widgets/pending_report_card.dart';
@@ -94,6 +95,22 @@ class _ReportsView extends StatelessWidget {
   }
 }
 
+/// El detalle vive en el backend, así que solo se puede abrir un reporte que
+/// ya sincronizó: hasta entonces solo existe en el dispositivo y no tiene id
+/// de servidor.
+void _openReport(BuildContext context, PendingReport report) {
+  final serverId = report.serverId;
+  if (serverId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('El detalle estará disponible cuando se sincronice.'),
+      ),
+    );
+    return;
+  }
+  context.push(AppRoutes.reportDetail(serverId));
+}
+
 class _LoadedBody extends StatelessWidget {
   const _LoadedBody({required this.state, required this.onRetry});
 
@@ -117,8 +134,13 @@ class _LoadedBody extends StatelessWidget {
               : ListView.builder(
                   padding: const EdgeInsets.only(top: 8, bottom: 96),
                   itemCount: state.reports.length,
-                  itemBuilder: (_, i) =>
-                      PendingReportCard(report: state.reports[i]),
+                  itemBuilder: (_, i) {
+                    final report = state.reports[i];
+                    return PendingReportCard(
+                      report: report,
+                      onTap: () => _openReport(context, report),
+                    );
+                  },
                 ),
         ),
       ],

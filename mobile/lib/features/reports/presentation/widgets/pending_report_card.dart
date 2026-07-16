@@ -6,76 +6,90 @@ import 'package:sirccd_mobile/features/reports/domain/entities/sync_status.dart'
 import 'package:sirccd_mobile/presentation/theme/app_colors.dart';
 
 class PendingReportCard extends StatelessWidget {
-  const PendingReportCard({super.key, required this.report});
+  const PendingReportCard({super.key, required this.report, this.onTap});
 
   final PendingReport report;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _Thumbnail(imagePath: report.imagePath),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          report.description ?? 'Sin descripción',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _Thumbnail(imagePath: report.imagePath),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            report.description ?? 'Sin descripción',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      _SyncBadge(status: report.syncStatus),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatLocation(report),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                        const SizedBox(width: 8),
+                        _SyncBadge(status: report.syncStatus),
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _formatDate(report.createdAt),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  if (report.syncStatus == SyncStatus.failed &&
-                      report.syncError != null) ...[
                     const SizedBox(height: 4),
                     Text(
-                      report.syncError!,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.error,
+                      _formatLocation(report),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatDate(report.createdAt),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (report.syncStatus == SyncStatus.failed &&
+                        report.syncError != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        report.syncError!,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: AppColors.error,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-        ],
+            Padding(
+              padding: const EdgeInsets.only(right: 8, top: 16),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: report.serverId != null
+                    ? AppColors.outline
+                    : AppColors.outline.withValues(alpha: 0.4),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
