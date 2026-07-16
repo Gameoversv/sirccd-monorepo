@@ -18,6 +18,7 @@ from models.incident import Incident, IncidentStatus, PriorityLevel
 from schemas.report import CreateReportResponse, ReportResponse, UpdateReportStatusRequest
 from services.storage import storage_service
 from services.queue_service import queue_service
+from services.report_processing_service import resolve_incident_dedup
 
 
 def _public_url(url: str) -> str:
@@ -39,73 +40,6 @@ def _resolve_focal_scale_factor(exif_data, fallback: Optional[float]) -> float:
     if has_exif_focal or fallback is None:
         return exif_data.zoom_scale_factor
     return max(0.25, min(2.0, float(fallback)))
-
-
-def _resolve_incident_dedup(db, report, report_image, log):
-    """
-    Busca un Incident existente para fusionar con el reporte dado.
-    Usa geo (30m) + visual gate (cosine similarity >= threshold).
-    Fallback a geo-only si las imágenes no están disponibles.
-    Retorna el Incident a fusionar, o None para crear uno nuevo.
-    """
-    from geoalchemy2.functions import ST_DWithin, ST_SetSRID, ST_MakePoint
-    from geoalchemy2.shape import to_shape as _to_shape
-    from services.deduplication_service import compute_visual_similarity, load_image_from_url
-    from core.config import settings
-
-    visual_gate = getattr(settings, "DEDUP_VISUAL_GATE_THRESHOLD", 0.60)
-
-    try:
-        pt = _to_shape(report.location)
-        geo_candidates = (
-            db.query(Incident)
-            .filter(
-                Incident.status.in_([IncidentStatus.OPEN, IncidentStatus.IN_PROGRESS]),
-                ST_DWithin(
-                    Incident.location,
-                    ST_SetSRID(ST_MakePoint(pt.x, pt.y), 4326),
-                    30.0,
-                ),
-            )
-            .order_by(Incident.created_at.asc())
-            .all()
-        )
-    except Exception as geo_err:
-        log.warning("Error geo dedup: %s", geo_err)
-        return None
-
-    if not geo_candidates:
-        return None
-
-    # Sin imagen del reporte nuevo → no podemos verificar visualmente → crear nuevo incidente
-    if report_image is None:
-        log.info("Reporte %s: sin imagen para dedup visual → nuevo incidente", report.id)
-        return None
-
-    for candidate in geo_candidates:
-        incident_img = load_image_from_url(candidate.before_image_url) if candidate.before_image_url else None
-
-        if incident_img is None:
-            # El incidente candidato no tiene imagen → no podemos verificar → saltar candidato
-            log.info("Incidente %s sin imagen, saltando para reporte %s", candidate.id, report.id)
-            continue
-
-        similarity = compute_visual_similarity(report_image, incident_img)
-
-        if similarity is None:
-            # Embedder no disponible → saltar candidato
-            log.warning("Visual check no disponible para reporte %s vs incidente %s, saltando", report.id, candidate.id)
-            continue
-
-        print(f" Dedup visual: reporte {report.id} vs incidente {candidate.id} sim={similarity:.3f} (gate={visual_gate})")
-
-        if similarity >= visual_gate:
-            log.info("Reporte %s → incidente %s (geo+visual, sim=%.3f)", report.id, candidate.id, similarity)
-            return candidate
-        else:
-            log.info("Reporte %s ≠ incidente %s (sim=%.3f < %.3f)", report.id, candidate.id, similarity, visual_gate)
-
-    return None
 
 
 # ── List reports ──────────────────────────────────────────────────────────────
@@ -242,7 +176,7 @@ def review_report(
         except Exception:
             pass
 
-        existing_incident = _resolve_incident_dedup(db, report, report_image_for_dedup, _log)
+        existing_incident = resolve_incident_dedup(db, report, report_image_for_dedup)
 
         if existing_incident:
             # Asociar reporte al incidente existente en lugar de crear uno nuevo
@@ -475,174 +409,33 @@ async def create_report(
         db.commit()
         db.refresh(new_report)
         
-        # 3. Detección ML: siempre ejecutar inline (no hay worker RQ activo)
-        job_id = None
-        ml_ran_inline = False
-        priority_service = get_priority_service(db)
-        try:
-            import tempfile, requests as _req
-            from pathlib import Path
+        # 3. Detección ML: se encola para el worker RQ.
+        # Corría inline y la petición tardaba ~42s, por encima del timeout de
+        # 30s del cliente móvil: el reporte se creaba igual, pero la app lo
+        # daba por fallido y reintentaba, duplicando reportes.
+        # El factor de zoom se resuelve aquí, donde todavía existe el EXIF: la
+        # imagen almacenada va sin metadatos (D-08).
+        job = queue_service.enqueue_ml_detection(
+            report_id=new_report.id,
+            focal_scale_factor=_resolve_focal_scale_factor(
+                exif_data,
+                focal_scale_factor,
+            ),
+        )
+        job_id = job.id if job else None
 
-            # Resolver ruta local o descargar desde MinIO
-            image_local_path = None
-            _tmp_file = None
+        if job is None:
+            # El reporte queda en PROCESSING y sin detección. No se ejecuta
+            # inline como respaldo: eso reintroduciría el timeout que este
+            # cambio elimina. Queda para revisión manual.
+            print(
+                f" Advertencia: no se pudo encolar detección ML para "
+                f"reporte {new_report.id}"
+            )
+        else:
+            print(f" Detección ML encolada para reporte {new_report.id}: job {job_id}")
 
-            if image_url.startswith("/storage/images/"):
-                relative_path = image_url.replace("/storage/images/", "")
-                backend_dir = Path(__file__).resolve().parent.parent.parent
-                image_local_path = str(backend_dir / "storage" / "images" / relative_path)
-            elif image_url.startswith("http"):
-                # Descargar imagen desde MinIO usando el cliente autenticado
-                from minio import Minio
-                from core.config import settings as _cfg
-                _mc = Minio(
-                    _cfg.MINIO_ENDPOINT,
-                    access_key=_cfg.MINIO_ACCESS_KEY,
-                    secret_key=_cfg.MINIO_SECRET_KEY,
-                    secure=_cfg.MINIO_SECURE,
-                )
-                # Extraer bucket y object key de la URL
-                # URL format: http://minio:9000/bucket/object/key
-                _url_path = image_url.split(_cfg.MINIO_ENDPOINT)[-1].lstrip("/")
-                _bucket = _url_path.split("/")[0]
-                _object_key = "/".join(_url_path.split("/")[1:])
-                _tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-                _tmp_file.close()
-                _mc.fget_object(_bucket, _object_key, _tmp_file.name)
-                image_local_path = _tmp_file.name
 
-            if image_local_path:
-                ml_focal_scale_factor = _resolve_focal_scale_factor(
-                    exif_data,
-                    focal_scale_factor,
-                )
-                print(
-                    f" Ejecutando detección ML inline para reporte {new_report.id} "
-                    f"(zoom_factor={ml_focal_scale_factor:.2f})"
-                )
-                result = ml_service.detect(
-                    image_local_path,
-                    focal_scale_factor=ml_focal_scale_factor,
-                )
-                dedup_image = None
-                try:
-                    from PIL import Image as _PILImage
-                    dedup_image = _PILImage.open(image_local_path).convert("RGB")
-                    print(f" Imagen cargada para dedup: {image_local_path}")
-                except Exception as img_load_err:
-                    print(f" Advertencia: no se pudo cargar imagen para deduplicación: {img_load_err}")
-                    # Intentar cargar desde URL directamente
-                    try:
-                        from services.deduplication_service import load_image_from_url
-                        dedup_image = load_image_from_url(new_report.image_url)
-                        if dedup_image:
-                            print(f" Imagen cargada desde URL para dedup")
-                    except Exception:
-                        pass
-
-                # Generar imagen anotada con bounding boxes
-                import json as _json, os as _os
-                det_dict = result.to_dict()
-                try:
-                    backend_dir = Path(__file__).resolve().parent.parent.parent
-                    ann_name = f"report_{new_report.id}_det.jpg"
-                    annotated_local = str(backend_dir / "storage" / "images" / "annotated" / ann_name)
-                    ml_service.annotate_image(image_local_path, result, annotated_local)
-                    det_dict["annotated_image_url"] = f"/storage/images/annotated/{ann_name}"
-                    print(f" Imagen anotada guardada: {ann_name}")
-                except Exception as ann_err:
-                    import traceback as _tb
-                    print(f" Error generando imagen anotada: {ann_err}")
-                    _tb.print_exc()
-                finally:
-                    # Limpiar archivo temporal si se descargó de MinIO
-                    if _tmp_file and _os.path.exists(image_local_path):
-                        _os.remove(image_local_path)
-
-                new_report.damage_type = result.damage_type
-                new_report.severity = result.severity
-                new_report.confidence = result.confidence
-                new_report.detections_json = _json.dumps(det_dict)
-                new_report.status = ReportStatus.PENDING
-                new_report.updated_at = datetime.utcnow()
-                db.commit()
-                db.refresh(new_report)
-
-                if dedup_image is not None:
-                    try:
-                        dedup_service = get_deduplication_service(db)
-                        dedup_service.add_report_to_index(
-                            report=new_report,
-                            image=dedup_image,
-                            description=description,
-                        )
-                    except Exception as dedup_err:
-                        print(f" Advertencia: no se pudo indexar deduplicación para reporte {new_report.id}: {dedup_err}")
-
-                damage_type = result.damage_type
-                severity = result.severity
-                confidence = result.confidence
-                ml_ran_inline = True
-                print(f" Detección inline: {result.damage_type.value} ({result.severity.value}) conf={result.confidence:.2f}")
-
-                # Auto-aprobar si confianza >= 0.75
-                AUTO_APPROVE_THRESHOLD = 0.75
-                if result.confidence >= AUTO_APPROVE_THRESHOLD:
-                    try:
-                        new_report.status = ReportStatus.APPROVED
-                        new_report.reviewed_at = datetime.utcnow()
-                        db.commit()
-                        db.refresh(new_report)
-
-                        # Dedup geo+visual para auto-approve (dedup_image ya está en memoria)
-                        import logging as _auto_log
-                        existing_incident = _resolve_incident_dedup(
-                            db, new_report, dedup_image, _auto_log.getLogger(__name__)
-                        )
-                        if existing_incident:
-                            print(f" Auto-aprobado: reporte {new_report.id} → incidente existente {existing_incident.id}")
-                            try:
-                                pl, sc = priority_service.calculate_priority(existing_incident)
-                                existing_incident.priority = pl
-                                existing_incident.priority_score = sc
-                                db.commit()
-                            except Exception:
-                                pass
-                        else:
-                            new_incident = Incident(
-                                report_id=new_report.id,
-                                reported_by=new_report.user_id,
-                                location=new_report.location,
-                                address=new_report.address,
-                                city=new_report.city,
-                                province=new_report.province,
-                                damage_type=new_report.damage_type,
-                                severity=new_report.severity,
-                                priority=PriorityLevel.MEDIA,
-                                priority_score=0.0,
-                                status=IncidentStatus.OPEN,
-                                before_image_url=new_report.image_url,
-                                notes=new_report.description,
-                            )
-                            db.add(new_incident)
-                            db.flush()
-                            try:
-                                pl, sc = priority_service.calculate_priority(new_incident)
-                                new_incident.priority = pl
-                                new_incident.priority_score = sc
-                            except Exception:
-                                pass
-                            db.commit()
-                            print(f" Auto-aprobado: reporte {new_report.id} → nuevo incidente {new_incident.id}")
-                    except Exception as auto_err:
-                        print(f" Error en auto-aprobación: {auto_err}")
-                        db.rollback()
-
-        except Exception as e:
-            import traceback
-            print(f" Error en detección ML: {e}")
-            traceback.print_exc()
-        
     except Exception as e:
         db.rollback()
         # Intentar eliminar imagen si falló la BD

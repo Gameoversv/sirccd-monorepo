@@ -313,6 +313,45 @@ class StorageService:
         else:
             return await self._delete_from_local(image_url)
     
+    def upload_bytes(
+        self,
+        object_name: str,
+        content: bytes,
+        content_type: str = "image/jpeg",
+    ) -> str:
+        """
+        Sube bytes ya en memoria y devuelve su URL.
+
+        Version sincrona de _upload_to_minio: la usa el worker RQ, que no
+        corre sobre un event loop. Cae a almacenamiento local si MinIO no
+        esta disponible.
+        """
+        if self.use_minio:
+            try:
+                import io as _io
+                from minio.sse import SseS3
+
+                self.client.put_object(
+                    bucket_name=settings.MINIO_BUCKET_IMAGES,
+                    object_name=object_name,
+                    data=_io.BytesIO(content),
+                    length=len(content),
+                    content_type=content_type,
+                    sse=SseS3() if settings.MINIO_SSE_ENABLED else None,
+                )
+                protocol = "https" if settings.MINIO_SECURE else "http"
+                return (
+                    f"{protocol}://{settings.MINIO_ENDPOINT}/"
+                    f"{settings.MINIO_BUCKET_IMAGES}/{object_name}"
+                )
+            except S3Error as e:
+                print(f"  Error al subir '{object_name}' a MinIO: {e}")
+
+        local_path = Path("storage/images") / object_name
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        local_path.write_bytes(content)
+        return f"/storage/images/{object_name}"
+
     def download_image_bytes(self, image_url: str) -> Optional[bytes]:
         """
         Descarga una imagen de MinIO usando el SDK (con credenciales).

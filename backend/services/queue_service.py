@@ -58,15 +58,17 @@ class QueueService:
     def enqueue_ml_detection(
         self,
         report_id: int,
-        image_local_path: str
+        focal_scale_factor: Optional[float] = None,
     ) -> Optional[Job]:
         """
         Encola tarea de detección ML para un reporte
-        
+
         Args:
             report_id: ID del reporte
-            image_local_path: Ruta local de la imagen
-        
+            focal_scale_factor: Factor de zoom ya resuelto por la capa HTTP.
+                La imagen no se pasa: el worker la baja de MinIO, porque corre
+                en otro contenedor y no comparte disco con la API.
+
         Returns:
             Job de RQ o None si hay error
         """
@@ -83,7 +85,7 @@ class QueueService:
             job = self.queue.enqueue(
                 process_report_ml_detection,
                 report_id=report_id,
-                image_local_path=image_local_path,
+                focal_scale_factor=focal_scale_factor,
                 job_timeout=300,  # 5 minutos
                 result_ttl=3600,  # Mantener resultado 1 hora
                 failure_ttl=86400,  # Mantener failures 24 horas

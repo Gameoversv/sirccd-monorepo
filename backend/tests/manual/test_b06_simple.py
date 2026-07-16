@@ -121,7 +121,7 @@ try:
  # Encolar un job de prueba
  job = queue_service.enqueue_ml_detection(
  report_id=999,
- image_local_path="/fake/path/test.jpg"
+ focal_scale_factor=1.0
  )
  
  if job:
