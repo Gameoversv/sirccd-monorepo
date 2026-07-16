@@ -8,6 +8,7 @@ import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_cubit.dart';
 import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_state.dart';
 import 'package:sirccd_mobile/features/auth/presentation/pages/login_page.dart';
+import 'package:sirccd_mobile/features/auth/presentation/pages/register_page.dart';
 import 'package:sirccd_mobile/features/auth/presentation/pages/splash_page.dart';
 import 'package:sirccd_mobile/features/camera/domain/entities/photo_capture.dart';
 import 'package:sirccd_mobile/features/camera/presentation/pages/camera_page.dart';
@@ -22,6 +23,7 @@ import 'package:sirccd_mobile/presentation/widgets/app_shell.dart';
 abstract final class AppRoutes {
   static const splash = '/';
   static const login = '/login';
+  static const register = '/register';
   static const permissions = '/permissions';
   static const home = '/home';
   static const reports = '/reports';
@@ -41,29 +43,22 @@ class AppRouter {
       refreshListenable: _GoRouterRefreshStream(authCubit.stream),
       redirect: _redirect,
       routes: [
+        GoRoute(path: AppRoutes.splash, builder: (_, __) => const SplashPage()),
+        GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginPage()),
         GoRoute(
-          path: AppRoutes.splash,
-          builder: (_, __) => const SplashPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.login,
-          builder: (_, __) => const LoginPage(),
+          path: AppRoutes.register,
+          builder: (_, __) => const RegisterPage(),
         ),
         GoRoute(
           path: AppRoutes.permissions,
           builder: (_, __) => const PermissionRationalePage(),
         ),
-        GoRoute(
-          path: AppRoutes.camera,
-          builder: (_, __) => const CameraPage(),
-        ),
+        GoRoute(path: AppRoutes.camera, builder: (_, __) => const CameraPage()),
         GoRoute(
           path: AppRoutes.newReport,
           builder: (context, state) => BlocProvider(
             create: (_) => di<ReportsCubit>()..init(),
-            child: NewReportPage(
-              capture: state.extra as PhotoCapture?,
-            ),
+            child: NewReportPage(capture: state.extra as PhotoCapture?),
           ),
         ),
         GoRoute(
@@ -106,16 +101,19 @@ class AppRouter {
 
     if (loc == AppRoutes.splash) {
       if (authState is AuthAuthenticated) return AppRoutes.permissions;
-      if (authState is AuthUnauthenticated || authState is AuthError) {
+      if (authState is AuthUnauthenticated ||
+          authState is AuthExpired ||
+          authState is AuthError) {
         return AppRoutes.login;
       }
       return null;
     }
 
     final isAuth = authState is AuthAuthenticated;
+    final isAuthPage = loc == AppRoutes.login || loc == AppRoutes.register;
 
-    if (!isAuth && loc != AppRoutes.login) return AppRoutes.login;
-    if (isAuth && loc == AppRoutes.login) return AppRoutes.permissions;
+    if (!isAuth && !isAuthPage) return AppRoutes.login;
+    if (isAuth && isAuthPage) return AppRoutes.permissions;
 
     return null;
   }

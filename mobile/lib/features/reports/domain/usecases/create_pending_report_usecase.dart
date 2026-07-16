@@ -11,6 +11,7 @@ final class CreateReportParams extends Equatable {
     this.address,
     this.city,
     this.province,
+    this.focalScaleFactor,
   });
 
   final String imagePath;
@@ -20,17 +21,19 @@ final class CreateReportParams extends Equatable {
   final String? address;
   final String? city;
   final String? province;
+  final double? focalScaleFactor;
 
   @override
   List<Object?> get props => [
-        imagePath,
-        latitude,
-        longitude,
-        description,
-        address,
-        city,
-        province,
-      ];
+    imagePath,
+    latitude,
+    longitude,
+    description,
+    address,
+    city,
+    province,
+    focalScaleFactor,
+  ];
 }
 
 final class CreatePendingReportUseCase {
@@ -47,5 +50,6 @@ final class CreatePendingReportUseCase {
         address: params.address,
         city: params.city,
         province: params.province,
+        focalScaleFactor: params.focalScaleFactor,
       );
 }

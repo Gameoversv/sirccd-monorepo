@@ -33,8 +33,7 @@ class _ReportDetailView extends StatelessWidget {
       body: BlocBuilder<ReportDetailCubit, ReportDetailState>(
         builder: (context, state) => switch (state) {
           ReportDetailInitial() ||
-          ReportDetailLoading() =>
-            const _LoadingScaffold(),
+          ReportDetailLoading() => const _LoadingScaffold(),
           ReportDetailError(:final message) => _ErrorScaffold(message: message),
           ReportDetailLoaded(:final report) => _DetailScaffold(report: report),
         },
@@ -70,8 +69,11 @@ class _ErrorScaffold extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline_rounded,
-                  size: 48, color: AppColors.error),
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: AppColors.error,
+              ),
               const SizedBox(height: 12),
               Text(message, textAlign: TextAlign.center),
             ],
@@ -108,6 +110,13 @@ class _DetailScaffold extends StatelessWidget {
                     report.description!,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
+                  const SizedBox(height: 20),
+                ],
+                if (report.annotatedImageUrl != null &&
+                    report.annotatedImageUrl!.isNotEmpty) ...[
+                  _SectionLabel('Resultado ML'),
+                  const SizedBox(height: 8),
+                  _DetectionImageSection(report: report),
                   const SizedBox(height: 20),
                 ],
                 _SectionLabel('Ubicación'),
@@ -167,6 +176,122 @@ class _ImageSliverAppBar extends StatelessWidget {
   }
 }
 
+class _DetectionImageSection extends StatelessWidget {
+  const _DetectionImageSection({required this.report});
+
+  final UserReport report;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final panels = [
+          _ReportImagePanel(
+            title: 'Anotacion ML',
+            url: report.annotatedImageUrl!,
+            icon: Icons.auto_awesome_rounded,
+          ),
+          _ReportImagePanel(
+            title: 'Original',
+            url: report.imageUrl,
+            icon: Icons.image_outlined,
+          ),
+        ];
+
+        if (constraints.maxWidth >= 560) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: panels[0]),
+              const SizedBox(width: 12),
+              Expanded(child: panels[1]),
+            ],
+          );
+        }
+
+        return Column(
+          children: [panels[0], const SizedBox(height: 12), panels[1]],
+        );
+      },
+    );
+  }
+}
+
+class _ReportImagePanel extends StatelessWidget {
+  const _ReportImagePanel({
+    required this.title,
+    required this.url,
+    required this.icon,
+  });
+
+  final String title;
+  final String url;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: AspectRatio(
+        aspectRatio: 4 / 3,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              url,
+              fit: BoxFit.cover,
+              loadingBuilder: (_, child, progress) => progress == null
+                  ? child
+                  : Container(
+                      color: AppColors.surfaceVariant,
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+              errorBuilder: (_, __, ___) => Container(
+                color: AppColors.surfaceVariant,
+                child: const Icon(
+                  Icons.image_not_supported_outlined,
+                  size: 40,
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+            ),
+            Positioned(
+              left: 8,
+              bottom: 8,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.62),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 5,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon, size: 14, color: Colors.white),
+                      const SizedBox(width: 5),
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _StatusRow extends StatelessWidget {
   const _StatusRow({required this.report});
 
@@ -198,7 +323,8 @@ class _StatusRow extends StatelessWidget {
           ),
         if (report.confidence != null)
           _Badge(
-            label: 'Confianza: ${(report.confidence! * 100).toStringAsFixed(0)}%',
+            label:
+                'Confianza: ${(report.confidence! * 100).toStringAsFixed(0)}%',
             color: AppColors.primaryContainer,
             icon: Icons.auto_awesome_rounded,
           ),
@@ -213,24 +339,24 @@ class _StatusRow extends StatelessWidget {
   }
 
   Color _statusColor(ReportStatus s) => switch (s) {
-        ReportStatus.pending => AppColors.warningContainer,
-        ReportStatus.processing => AppColors.primaryContainer,
-        ReportStatus.approved => const Color(0xFFDCFCE7),
-        ReportStatus.rejected => AppColors.errorContainer,
-      };
+    ReportStatus.pending => AppColors.warningContainer,
+    ReportStatus.processing => AppColors.primaryContainer,
+    ReportStatus.approved => const Color(0xFFDCFCE7),
+    ReportStatus.rejected => AppColors.errorContainer,
+  };
 
   IconData _statusIcon(ReportStatus s) => switch (s) {
-        ReportStatus.pending => Icons.schedule_rounded,
-        ReportStatus.processing => Icons.sync_rounded,
-        ReportStatus.approved => Icons.check_circle_outline_rounded,
-        ReportStatus.rejected => Icons.cancel_outlined,
-      };
+    ReportStatus.pending => Icons.schedule_rounded,
+    ReportStatus.processing => Icons.sync_rounded,
+    ReportStatus.approved => Icons.check_circle_outline_rounded,
+    ReportStatus.rejected => Icons.cancel_outlined,
+  };
 
   Color _severityColor(SeverityLevel s) => switch (s) {
-        SeverityLevel.baja => const Color(0xFFDCFCE7),
-        SeverityLevel.media => AppColors.warningContainer,
-        SeverityLevel.alta => AppColors.errorContainer,
-      };
+    SeverityLevel.baja => const Color(0xFFDCFCE7),
+    SeverityLevel.media => AppColors.warningContainer,
+    SeverityLevel.alta => AppColors.errorContainer,
+  };
 
   String _formatDate(DateTime dt) =>
       '${dt.day.toString().padLeft(2, '0')}/'
@@ -254,8 +380,11 @@ class _LocationSection extends StatelessWidget {
         if (report.address != null && report.address!.isNotEmpty) ...[
           Row(
             children: [
-              const Icon(Icons.location_on_outlined,
-                  size: 16, color: AppColors.outline),
+              const Icon(
+                Icons.location_on_outlined,
+                size: 16,
+                color: AppColors.outline,
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
@@ -293,8 +422,7 @@ class _LocationSection extends StatelessWidget {
               ),
               children: [
                 TileLayer(
-                  urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.sirccd.mobile',
                 ),
                 MarkerLayer(
@@ -331,15 +459,28 @@ class _AnalysisSection extends StatelessWidget {
       if (report.confidence != null)
         (
           'Confianza del modelo',
-          '${(report.confidence! * 100).toStringAsFixed(1)}%'
+          '${(report.confidence! * 100).toStringAsFixed(1)}%',
         ),
+      if (report.detectionCount != null)
+        ('Detecciones ML', report.detectionCount.toString()),
+      if (report.modelVersion != null && report.modelVersion!.isNotEmpty)
+        ('Modelo', report.modelVersion!),
+      if (report.modelPrecision != null)
+        ('Precision validacion', _formatPercent(report.modelPrecision!)),
+      if (report.modelRecall != null)
+        ('Recall validacion', _formatPercent(report.modelRecall!)),
+      if (report.modelMap50 != null)
+        ('mAP50', _formatPercent(report.modelMap50!)),
+      if (report.annotatedImageUrl != null &&
+          report.annotatedImageUrl!.isNotEmpty)
+        ('Anotacion ML', 'Disponible'),
       ('Estado', report.status.label),
       if (report.reviewedAt != null)
         (
           'Revisado el',
           '${report.reviewedAt!.day.toString().padLeft(2, '0')}/'
               '${report.reviewedAt!.month.toString().padLeft(2, '0')}/'
-              '${report.reviewedAt!.year}'
+              '${report.reviewedAt!.year}',
         ),
     ];
 
@@ -347,14 +488,21 @@ class _AnalysisSection extends StatelessWidget {
       return Text(
         'Análisis no disponible',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       );
     }
 
     return Column(
-      children: rows.map((row) => _InfoRow(label: row.$1, value: row.$2)).toList(),
+      children: rows
+          .map((row) => _InfoRow(label: row.$1, value: row.$2))
+          .toList(),
     );
+  }
+
+  String _formatPercent(double value) {
+    final percent = value <= 1 ? value * 100 : value;
+    return '${percent.toStringAsFixed(1)}%';
   }
 }
 
@@ -374,8 +522,11 @@ class _RejectionSection extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded,
-              size: 16, color: AppColors.error),
+          const Icon(
+            Icons.info_outline_rounded,
+            size: 16,
+            color: AppColors.error,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -384,16 +535,16 @@ class _RejectionSection extends StatelessWidget {
                 Text(
                   'Motivo de rechazo',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppColors.onErrorContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: AppColors.onErrorContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   reason,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.onErrorContainer,
-                      ),
+                    color: AppColors.onErrorContainer,
+                  ),
                 ),
               ],
             ),
@@ -413,9 +564,9 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
     );
   }
 }
@@ -458,11 +609,7 @@ class _InfoRow extends StatelessWidget {
 }
 
 class _Badge extends StatelessWidget {
-  const _Badge({
-    required this.label,
-    required this.color,
-    required this.icon,
-  });
+  const _Badge({required this.label, required this.color, required this.icon});
 
   final String label;
   final Color color;

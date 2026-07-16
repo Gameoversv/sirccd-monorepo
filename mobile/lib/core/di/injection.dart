@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:sirccd_mobile/core/services/connectivity_service.dart';
 import 'package:sirccd_mobile/core/services/database_service.dart';
 import 'package:sirccd_mobile/core/services/permission_service.dart';
+import 'package:sirccd_mobile/core/services/session_service.dart';
 import 'package:sirccd_mobile/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:sirccd_mobile/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:sirccd_mobile/features/auth/data/repositories/auth_repository_impl.dart';
@@ -11,12 +12,18 @@ import 'package:sirccd_mobile/features/auth/domain/repositories/auth_repository.
 import 'package:sirccd_mobile/features/auth/domain/usecases/get_stored_token_usecase.dart';
 import 'package:sirccd_mobile/features/auth/domain/usecases/login_usecase.dart';
 import 'package:sirccd_mobile/features/auth/domain/usecases/logout_usecase.dart';
+import 'package:sirccd_mobile/features/auth/domain/usecases/register_usecase.dart';
 import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:sirccd_mobile/features/camera/data/datasources/camera_datasource.dart';
 import 'package:sirccd_mobile/features/camera/data/repositories/camera_repository_impl.dart';
 import 'package:sirccd_mobile/features/camera/domain/repositories/camera_repository.dart';
 import 'package:sirccd_mobile/features/camera/domain/usecases/capture_photo_usecase.dart';
 import 'package:sirccd_mobile/features/camera/presentation/cubit/camera_cubit.dart';
+import 'package:sirccd_mobile/features/profile/data/datasources/profile_remote_datasource.dart';
+import 'package:sirccd_mobile/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:sirccd_mobile/features/profile/domain/repositories/profile_repository.dart';
+import 'package:sirccd_mobile/features/profile/domain/usecases/get_current_profile_usecase.dart';
+import 'package:sirccd_mobile/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:sirccd_mobile/features/reports/data/datasources/report_local_datasource.dart';
 import 'package:sirccd_mobile/features/reports/data/datasources/report_remote_datasource.dart';
 import 'package:sirccd_mobile/features/reports/data/repositories/report_repository_impl.dart';
@@ -55,25 +62,38 @@ Future<void> initDependencies() async {
     ..registerSingleton<AuthLocalDataSource>(AuthLocalDataSourceImpl(storage))
     ..registerSingleton<AuthRemoteDataSource>(AuthRemoteDataSourceImpl(dio))
     ..registerSingleton<AuthRepository>(
-      AuthRepositoryImpl(
-        di<AuthRemoteDataSource>(),
-        di<AuthLocalDataSource>(),
-      ),
+      AuthRepositoryImpl(di<AuthRemoteDataSource>(), di<AuthLocalDataSource>()),
     )
     ..registerSingleton(LoginUseCase(di<AuthRepository>()))
+    ..registerSingleton(RegisterUseCase(di<AuthRepository>()))
     ..registerSingleton(LogoutUseCase(di<AuthRepository>()))
     ..registerSingleton(GetStoredTokenUseCase(di<AuthRepository>()))
     ..registerSingleton(PermissionService())
     ..registerSingleton<DatabaseService>(DatabaseServiceImpl())
     ..registerSingleton<ConnectivityService>(ConnectivityServiceImpl())
+    ..registerSingleton(SessionService())
     ..registerFactory(
       () => AuthCubit(
         di<LoginUseCase>(),
+        di<RegisterUseCase>(),
         di<LogoutUseCase>(),
         di<GetStoredTokenUseCase>(),
+        di<SessionService>(),
       ),
     )
-
+    // Profile
+    ..registerSingleton<ProfileRemoteDataSource>(
+      ProfileRemoteDataSourceImpl(dio),
+    )
+    ..registerSingleton<ProfileRepository>(
+      ProfileRepositoryImpl(
+        di<ProfileRemoteDataSource>(),
+        di<AuthLocalDataSource>(),
+        di<SessionService>(),
+      ),
+    )
+    ..registerSingleton(GetCurrentProfileUseCase(di<ProfileRepository>()))
+    ..registerFactory(() => ProfileCubit(di<GetCurrentProfileUseCase>()))
     // ── Camera ───────────────────────────────────────────────────────────────
     ..registerSingleton<CameraDatasource>(CameraDatasourceImpl())
     ..registerSingleton<CameraRepository>(
@@ -81,20 +101,18 @@ Future<void> initDependencies() async {
     )
     ..registerSingleton(CapturePhotoUseCase(di<CameraRepository>()))
     ..registerFactory(() => CameraCubit(di<CapturePhotoUseCase>()))
-
     // ── Reports ──────────────────────────────────────────────────────────────
     ..registerSingleton<ReportLocalDataSource>(
       ReportLocalDataSourceImpl(di<DatabaseService>()),
     )
-    ..registerSingleton<ReportRemoteDataSource>(
-      ReportRemoteDataSourceImpl(dio),
-    )
+    ..registerSingleton<ReportRemoteDataSource>(ReportRemoteDataSourceImpl(dio))
     ..registerSingleton<ReportRepository>(
       ReportRepositoryImpl(
         di<ReportLocalDataSource>(),
         di<ReportRemoteDataSource>(),
         di<AuthLocalDataSource>(),
         di<ConnectivityService>(),
+        di<SessionService>(),
       ),
     )
     ..registerSingleton(CreatePendingReportUseCase(di<ReportRepository>()))
@@ -113,7 +131,5 @@ Future<void> initDependencies() async {
       ),
     )
     ..registerFactory(() => ReportHistoryCubit(di<GetUserReportsUseCase>()))
-    ..registerFactory(
-      () => ReportDetailCubit(di<GetReportDetailUseCase>()),
-    );
+    ..registerFactory(() => ReportDetailCubit(di<GetReportDetailUseCase>()));
 }

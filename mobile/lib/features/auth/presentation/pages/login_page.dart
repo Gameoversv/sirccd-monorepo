@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:sirccd_mobile/features/auth/presentation/cubit/auth_state.dart';
+import 'package:sirccd_mobile/presentation/router/app_router.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,6 +17,20 @@ class _LoginPageState extends State<LoginPage> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscurePassword = true;
+  bool _shownInitialExpiredMessage = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _shownInitialExpiredMessage) return;
+      final state = context.read<AuthCubit>().state;
+      if (state is AuthExpired) {
+        _shownInitialExpiredMessage = true;
+        _showMessage(state.message);
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -25,9 +41,13 @@ class _LoginPageState extends State<LoginPage> {
 
   void _submit(BuildContext context) {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    context
-        .read<AuthCubit>()
-        .login(_emailCtrl.text.trim(), _passwordCtrl.text);
+    context.read<AuthCubit>().login(_emailCtrl.text.trim(), _passwordCtrl.text);
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
   }
 
   @override
@@ -37,12 +57,10 @@ class _LoginPageState extends State<LoginPage> {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          _showMessage(state.message);
+        } else if (state is AuthExpired) {
+          _shownInitialExpiredMessage = true;
+          _showMessage(state.message);
         }
       },
       child: Scaffold(
@@ -58,10 +76,7 @@ class _LoginPageState extends State<LoginPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 32),
-                      Text(
-                        'Bienvenido',
-                        style: theme.textTheme.headlineMedium,
-                      ),
+                      Text('Bienvenido', style: theme.textTheme.headlineMedium),
                       const SizedBox(height: 8),
                       Text(
                         'Ingresa para reportar daños viales en tu ciudad.',
@@ -119,8 +134,9 @@ class _LoginPageState extends State<LoginPage> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text('Iniciar sesión'),
                       ),
@@ -129,9 +145,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: TextButton(
                           onPressed: isLoading
                               ? null
-                              : () {
-                                  // TODO(auth): navigate to register
-                                },
+                              : () => context.push(AppRoutes.register),
                           child: const Text('¿No tienes cuenta? Regístrate'),
                         ),
                       ),

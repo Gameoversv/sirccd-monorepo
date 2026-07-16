@@ -31,6 +31,37 @@ final class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<AuthToken> registerAndLogin({
+    required String username,
+    required String email,
+    required String password,
+    String? fullName,
+  }) async {
+    try {
+      await _remote.register(
+        username: username,
+        email: email,
+        password: password,
+        fullName: fullName,
+      );
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 400 || status == 409) {
+        throw ServerFailure(_responseMessage(e, 'No se pudo crear la cuenta.'));
+      }
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        throw const NetworkFailure();
+      }
+      throw ServerFailure(e.message ?? 'Error del servidor.');
+    } catch (e) {
+      throw UnknownFailure('$e');
+    }
+
+    return login(email, password);
+  }
+
+  @override
   Future<void> logout() => _local.deleteToken();
 
   @override
@@ -38,5 +69,13 @@ final class AuthRepositoryImpl implements AuthRepository {
     final token = await _local.getToken();
     if (token == null) return null;
     return AuthToken(accessToken: token);
+  }
+
+  String _responseMessage(DioException e, String fallback) {
+    final data = e.response?.data;
+    if (data is Map<String, dynamic> && data['detail'] is String) {
+      return data['detail'] as String;
+    }
+    return e.message ?? fallback;
   }
 }

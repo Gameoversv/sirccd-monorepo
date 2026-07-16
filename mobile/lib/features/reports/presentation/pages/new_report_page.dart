@@ -78,15 +78,18 @@ class _NewReportPageState extends State<NewReportPage> {
       final addr = data['address'] as Map<String, dynamic>?;
       if (addr == null) return;
 
-      final road = addr['road'] as String? ?? addr['pedestrian'] as String? ?? '';
+      final road =
+          addr['road'] as String? ?? addr['pedestrian'] as String? ?? '';
       final number = addr['house_number'] as String? ?? '';
       final street = number.isNotEmpty ? '$road $number'.trim() : road;
-      final city = addr['city'] as String? ??
+      final city =
+          addr['city'] as String? ??
           addr['town'] as String? ??
           addr['village'] as String? ??
           addr['municipality'] as String? ??
           '';
-      final province = addr['state'] as String? ?? addr['county'] as String? ?? '';
+      final province =
+          addr['state'] as String? ?? addr['county'] as String? ?? '';
 
       if (street.isNotEmpty && _addressController.text.isEmpty) {
         _addressController.text = street;
@@ -122,6 +125,7 @@ class _NewReportPageState extends State<NewReportPage> {
           latitude: position.latitude,
           longitude: position.longitude,
           accuracyMeters: position.accuracy,
+          zoomLevel: _capture!.zoomLevel,
         );
       });
       await _reverseGeocode(position.latitude, position.longitude);
@@ -204,22 +208,23 @@ class _NewReportPageState extends State<NewReportPage> {
     setState(() => _submitting = true);
     try {
       await context.read<ReportsCubit>().create(
-            imagePath: _capture!.imagePath,
-            latitude: _capture!.latitude!,
-            longitude: _capture!.longitude!,
-            description: _descriptionController.text.trim().isEmpty
-                ? null
-                : _descriptionController.text.trim(),
-            address: _addressController.text.trim().isEmpty
-                ? null
-                : _addressController.text.trim(),
-            city: _cityController.text.trim().isEmpty
-                ? null
-                : _cityController.text.trim(),
-            province: _provinceController.text.trim().isEmpty
-                ? null
-                : _provinceController.text.trim(),
-          );
+        imagePath: _capture!.imagePath,
+        latitude: _capture!.latitude!,
+        longitude: _capture!.longitude!,
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        address: _addressController.text.trim().isEmpty
+            ? null
+            : _addressController.text.trim(),
+        city: _cityController.text.trim().isEmpty
+            ? null
+            : _cityController.text.trim(),
+        province: _provinceController.text.trim().isEmpty
+            ? null
+            : _provinceController.text.trim(),
+        focalScaleFactor: _capture!.focalScaleFactor,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -374,8 +379,9 @@ class _NewReportPageState extends State<NewReportPage> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed:
-                          _submitting ? null : () => Navigator.of(context).pop(),
+                      onPressed: _submitting
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       child: const Text('Cancelar'),
                     ),
                   ),
@@ -394,7 +400,9 @@ class _NewReportPageState extends State<NewReportPage> {
                               ),
                             )
                           : const Icon(Icons.send_rounded),
-                      label: Text(_submitting ? 'Guardando…' : 'Enviar reporte'),
+                      label: Text(
+                        _submitting ? 'Guardando…' : 'Enviar reporte',
+                      ),
                     ),
                   ),
                 ],
@@ -404,8 +412,8 @@ class _NewReportPageState extends State<NewReportPage> {
                 'Sin conexión, el reporte se guardará localmente\n'
                 'y se enviará al reconectar automáticamente.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -448,10 +456,9 @@ class _SectionCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
               ),
               if (required)
                 const Text(
@@ -468,8 +475,8 @@ class _SectionCard extends StatelessWidget {
             Text(
               subtitle!,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
           const SizedBox(height: 12),
@@ -603,28 +610,35 @@ class _LocationContent extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.location_on_rounded,
-                size: 20, color: AppColors.primary),
+            const Icon(
+              Icons.location_on_rounded,
+              size: 20,
+              color: AppColors.primary,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('$latStr, $lngStr',
-                      style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    '$latStr, $lngStr',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   if (accuracy.isNotEmpty)
                     Text(
                       'Precisión$accuracy',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                 ],
               ),
             ),
-            const Icon(Icons.check_circle_rounded,
-                size: 18, color: AppColors.statusResolved),
+            const Icon(
+              Icons.check_circle_rounded,
+              size: 18,
+              color: AppColors.statusResolved,
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -642,8 +656,7 @@ class _LocationContent extends StatelessWidget {
               ),
               children: [
                 TileLayer(
-                  urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.sirccd.mobile',
                   errorTileCallback: (tile, error, stackTrace) {},
                 ),
@@ -686,15 +699,18 @@ class _NoLocationWarning extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.location_off_rounded,
-                size: 20, color: AppColors.warning),
+            const Icon(
+              Icons.location_off_rounded,
+              size: 20,
+              color: AppColors.warning,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Sin ubicación GPS. Activa el GPS y obtén la ubicación.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.warning,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.warning),
               ),
             ),
           ],
@@ -712,7 +728,9 @@ class _NoLocationWarning extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.my_location_rounded, size: 18),
-              label: Text(isLoading ? 'Obteniendo ubicación…' : 'Obtener ubicación'),
+              label: Text(
+                isLoading ? 'Obteniendo ubicación…' : 'Obtener ubicación',
+              ),
             ),
           ),
         ],
@@ -751,8 +769,9 @@ class _DescriptionFieldState extends State<_DescriptionField> {
           ),
           maxLines: 4,
           maxLength: 2000,
-          buildCounter: (_, {required currentLength, required isFocused, maxLength}) =>
-              const SizedBox.shrink(),
+          buildCounter:
+              (_, {required currentLength, required isFocused, maxLength}) =>
+                  const SizedBox.shrink(),
           textCapitalization: TextCapitalization.sentences,
           validator: (v) {
             if ((v?.length ?? 0) > 2000) return 'Máximo 2000 caracteres';
@@ -765,10 +784,10 @@ class _DescriptionFieldState extends State<_DescriptionField> {
           child: Text(
             '$length/2000',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: length > 1900
-                      ? AppColors.error
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: length > 1900
+                  ? AppColors.error
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],

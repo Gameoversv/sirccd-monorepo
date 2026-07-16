@@ -10,7 +10,10 @@ class CameraRepositoryImpl implements CameraRepository {
   final CameraDatasource _datasource;
 
   @override
-  Future<PhotoCapture> capturePhoto(CameraController controller) async {
+  Future<PhotoCapture> capturePhoto(
+    CameraController controller, {
+    double? zoomLevel,
+  }) async {
     final orientation = _datasource.getOrientation(controller);
 
     final results = await Future.wait([
@@ -28,6 +31,7 @@ class CameraRepositoryImpl implements CameraRepository {
       latitude: position?.latitude,
       longitude: position?.longitude,
       accuracyMeters: position?.accuracy,
+      zoomLevel: zoomLevel,
     );
   }
 }

@@ -34,6 +34,15 @@ final class AuthUnauthenticated extends AuthState {
   List<Object> get props => [];
 }
 
+final class AuthExpired extends AuthState {
+  const AuthExpired(this.message);
+
+  final String message;
+
+  @override
+  List<Object> get props => [message];
+}
+
 final class AuthError extends AuthState {
   const AuthError(this.message);
 

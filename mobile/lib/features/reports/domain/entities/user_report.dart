@@ -17,6 +17,11 @@ class UserReport extends Equatable {
     this.confidence,
     required this.imageUrl,
     this.annotatedImageUrl,
+    this.modelVersion,
+    this.detectionCount,
+    this.modelPrecision,
+    this.modelRecall,
+    this.modelMap50,
     this.description,
     this.rejectionReason,
     required this.createdAt,
@@ -36,6 +41,11 @@ class UserReport extends Equatable {
   final double? confidence;
   final String imageUrl;
   final String? annotatedImageUrl;
+  final String? modelVersion;
+  final int? detectionCount;
+  final double? modelPrecision;
+  final double? modelRecall;
+  final double? modelMap50;
   final String? description;
   final String? rejectionReason;
   final DateTime createdAt;
@@ -44,22 +54,27 @@ class UserReport extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        latitude,
-        longitude,
-        address,
-        city,
-        province,
-        status,
-        damageType,
-        severity,
-        confidence,
-        imageUrl,
-        annotatedImageUrl,
-        description,
-        rejectionReason,
-        createdAt,
-        updatedAt,
-        reviewedAt,
-      ];
+    id,
+    latitude,
+    longitude,
+    address,
+    city,
+    province,
+    status,
+    damageType,
+    severity,
+    confidence,
+    imageUrl,
+    annotatedImageUrl,
+    modelVersion,
+    detectionCount,
+    modelPrecision,
+    modelRecall,
+    modelMap50,
+    description,
+    rejectionReason,
+    createdAt,
+    updatedAt,
+    reviewedAt,
+  ];
 }

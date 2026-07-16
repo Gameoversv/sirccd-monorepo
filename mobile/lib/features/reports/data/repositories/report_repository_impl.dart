@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import 'package:sirccd_mobile/core/services/connectivity_service.dart';
+import 'package:sirccd_mobile/core/services/session_service.dart';
 import 'package:sirccd_mobile/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:sirccd_mobile/features/reports/data/datasources/report_local_datasource.dart';
 import 'package:sirccd_mobile/features/reports/data/datasources/report_remote_datasource.dart';
@@ -22,12 +23,14 @@ final class ReportRepositoryImpl implements ReportRepository {
     this._remote,
     this._auth,
     this._connectivity,
+    this._session,
   ) : _refreshController = StreamController<List<PendingReport>>.broadcast();
 
   final ReportLocalDataSource _local;
   final ReportRemoteDataSource _remote;
   final AuthLocalDataSource _auth;
   final ConnectivityService _connectivity;
+  final SessionService _session;
   final StreamController<List<PendingReport>> _refreshController;
 
   static const _uuid = Uuid();
@@ -41,16 +44,20 @@ final class ReportRepositoryImpl implements ReportRepository {
     String? address,
     String? city,
     String? province,
+    double? focalScaleFactor,
   }) async {
     final report = PendingReportModel(
       localId: _uuid.v4(),
       imagePath: imagePath,
       latitude: latitude,
       longitude: longitude,
-      description: description?.trim().isEmpty ?? true ? null : description?.trim(),
+      description: description?.trim().isEmpty ?? true
+          ? null
+          : description?.trim(),
       address: address?.trim().isEmpty ?? true ? null : address?.trim(),
       city: city?.trim().isEmpty ?? true ? null : city?.trim(),
       province: province?.trim().isEmpty ?? true ? null : province?.trim(),
+      focalScaleFactor: focalScaleFactor,
       syncStatus: SyncStatus.pending,
       createdAt: DateTime.now(),
     );
@@ -94,18 +101,19 @@ final class ReportRepositoryImpl implements ReportRepository {
         serverId: serverId,
       );
     } on DioException catch (e) {
+      if (_isUnauthorized(e)) {
+        _session.notifyExpired();
+        await _local.updateStatus(
+          report.localId,
+          SyncStatus.failed,
+          error: 'Sesion expirada. Inicia sesion para reintentar.',
+        );
+        return;
+      }
       final msg = e.response?.data?.toString() ?? e.message ?? 'Error de red';
-      await _local.updateStatus(
-        report.localId,
-        SyncStatus.failed,
-        error: msg,
-      );
+      await _local.updateStatus(report.localId, SyncStatus.failed, error: msg);
     } catch (e) {
-      await _local.updateStatus(
-        report.localId,
-        SyncStatus.failed,
-        error: '$e',
-      );
+      await _local.updateStatus(report.localId, SyncStatus.failed, error: '$e');
     } finally {
       await _notifyRefresh();
     }
@@ -122,26 +130,48 @@ final class ReportRepositoryImpl implements ReportRepository {
     String sortOrder = 'desc',
   }) async {
     final token = await _auth.getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      _session.notifyExpired();
+      throw Exception('No autenticado');
+    }
 
-    return _remote.getUserReports(
-      token: token,
-      page: page,
-      perPage: perPage,
-      status: status,
-      damageType: damageType,
-      severity: severity,
-      search: search,
-      sortOrder: sortOrder,
-    );
+    try {
+      return await _remote.getUserReports(
+        token: token,
+        page: page,
+        perPage: perPage,
+        status: status,
+        damageType: damageType,
+        severity: severity,
+        search: search,
+        sortOrder: sortOrder,
+      );
+    } on DioException catch (e) {
+      if (_isUnauthorized(e)) {
+        _session.notifyExpired();
+        throw Exception('No autenticado');
+      }
+      rethrow;
+    }
   }
 
   @override
   Future<UserReport> getReportDetail(int id) async {
     final token = await _auth.getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      _session.notifyExpired();
+      throw Exception('No autenticado');
+    }
 
-    return _remote.getReportDetail(id: id, token: token);
+    try {
+      return await _remote.getReportDetail(id: id, token: token);
+    } on DioException catch (e) {
+      if (_isUnauthorized(e)) {
+        _session.notifyExpired();
+        throw Exception('No autenticado');
+      }
+      rethrow;
+    }
   }
 
   @override
@@ -154,5 +184,10 @@ final class ReportRepositoryImpl implements ReportRepository {
     if (_refreshController.isClosed) return;
     final reports = await _local.getAll();
     _refreshController.add(reports);
+  }
+
+  bool _isUnauthorized(DioException e) {
+    final status = e.response?.statusCode;
+    return status == 401 || status == 403;
   }
 }

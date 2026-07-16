@@ -36,8 +36,8 @@ final class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
         report.imagePath,
         filename: 'report.jpg',
       ),
-      'lat': report.latitude,
-      'lng': report.longitude,
+      'latitude': report.latitude,
+      'longitude': report.longitude,
       if (report.description != null && report.description!.isNotEmpty)
         'description': report.description,
       if (report.address != null && report.address!.isNotEmpty)
@@ -45,6 +45,8 @@ final class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
       if (report.city != null && report.city!.isNotEmpty) 'city': report.city,
       if (report.province != null && report.province!.isNotEmpty)
         'province': report.province,
+      if (report.focalScaleFactor != null)
+        'focal_scale_factor': report.focalScaleFactor,
     });
 
     final response = await _dio.post<Map<String, dynamic>>(

@@ -7,6 +7,6 @@ class CapturePhotoUseCase {
 
   final CameraRepository _repository;
 
-  Future<PhotoCapture> call(CameraController controller) =>
-      _repository.capturePhoto(controller);
+  Future<PhotoCapture> call(CameraController controller, {double? zoomLevel}) =>
+      _repository.capturePhoto(controller, zoomLevel: zoomLevel);
 }

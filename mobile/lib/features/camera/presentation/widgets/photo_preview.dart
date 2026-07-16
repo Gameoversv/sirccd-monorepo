@@ -24,10 +24,7 @@ class PhotoPreview extends StatelessWidget {
       children: [
         Image.file(File(capture.imagePath), fit: BoxFit.cover),
         _MetadataBar(capture: capture),
-        _ActionRow(
-          onRetake: onRetake,
-          onAccept: () => onAccept(capture),
-        ),
+        _ActionRow(onRetake: onRetake, onAccept: () => onAccept(capture)),
       ],
     );
   }
@@ -57,10 +54,7 @@ class _MetadataBar extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _MetaRow(
-              icon: Icons.access_time_rounded,
-              text: dateStr,
-            ),
+            _MetaRow(icon: Icons.access_time_rounded, text: dateStr),
             if (capture.hasLocation) ...[
               const SizedBox(height: 4),
               _MetaRow(
@@ -76,10 +70,14 @@ class _MetadataBar extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 4),
-            _MetaRow(
-              icon: Icons.screen_rotation_rounded,
-              text: orientLabel,
-            ),
+            _MetaRow(icon: Icons.screen_rotation_rounded, text: orientLabel),
+            if (capture.zoomLevel != null) ...[
+              const SizedBox(height: 4),
+              _MetaRow(
+                icon: Icons.zoom_in_rounded,
+                text: 'Zoom ${capture.zoomLevel!.toStringAsFixed(1)}x',
+              ),
+            ],
           ],
         ),
       ),
@@ -87,8 +85,19 @@ class _MetadataBar extends StatelessWidget {
   }
 
   static const _months = [
-    '', 'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-    'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+    '',
+    'ene',
+    'feb',
+    'mar',
+    'abr',
+    'may',
+    'jun',
+    'jul',
+    'ago',
+    'sep',
+    'oct',
+    'nov',
+    'dic',
   ];
 
   String _formatTimestamp(DateTime dt) {
@@ -110,19 +119,15 @@ class _MetadataBar extends StatelessWidget {
   }
 
   String _orientationLabel(DeviceOrientation o) => switch (o) {
-        DeviceOrientation.portraitUp => 'Retrato',
-        DeviceOrientation.portraitDown => 'Retrato invertido',
-        DeviceOrientation.landscapeLeft => 'Paisaje izquierda',
-        DeviceOrientation.landscapeRight => 'Paisaje derecha',
-      };
+    DeviceOrientation.portraitUp => 'Retrato',
+    DeviceOrientation.portraitDown => 'Retrato invertido',
+    DeviceOrientation.landscapeLeft => 'Paisaje izquierda',
+    DeviceOrientation.landscapeRight => 'Paisaje derecha',
+  };
 }
 
 class _MetaRow extends StatelessWidget {
-  const _MetaRow({
-    required this.icon,
-    required this.text,
-    this.muted = false,
-  });
+  const _MetaRow({required this.icon, required this.text, this.muted = false});
 
   final IconData icon;
   final String text;
@@ -172,10 +177,7 @@ class _ActionRow extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
-            colors: [
-              Colors.black.withValues(alpha: 0.8),
-              Colors.transparent,
-            ],
+            colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
           ),
         ),
         child: Row(

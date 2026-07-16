@@ -11,6 +11,7 @@ final class PendingReportModel extends PendingReport {
     super.address,
     super.city,
     super.province,
+    super.focalScaleFactor,
     required super.syncStatus,
     super.serverId,
     super.syncError,
@@ -27,6 +28,7 @@ final class PendingReportModel extends PendingReport {
         address: map['address'] as String?,
         city: map['city'] as String?,
         province: map['province'] as String?,
+        focalScaleFactor: (map['focal_scale_factor'] as num?)?.toDouble(),
         syncStatus: SyncStatus.values.firstWhere(
           (s) => s.name == map['sync_status'],
           orElse: () => SyncStatus.pending,
@@ -37,17 +39,18 @@ final class PendingReportModel extends PendingReport {
       );
 
   Map<String, dynamic> toMap() => {
-        'local_id': localId,
-        'image_path': imagePath,
-        'latitude': latitude,
-        'longitude': longitude,
-        'description': description,
-        'address': address,
-        'city': city,
-        'province': province,
-        'sync_status': syncStatus.name,
-        'server_id': serverId,
-        'sync_error': syncError,
-        'created_at': createdAt.toIso8601String(),
-      };
+    'local_id': localId,
+    'image_path': imagePath,
+    'latitude': latitude,
+    'longitude': longitude,
+    'description': description,
+    'address': address,
+    'city': city,
+    'province': province,
+    'focal_scale_factor': focalScaleFactor,
+    'sync_status': syncStatus.name,
+    'server_id': serverId,
+    'sync_error': syncError,
+    'created_at': createdAt.toIso8601String(),
+  };
 }

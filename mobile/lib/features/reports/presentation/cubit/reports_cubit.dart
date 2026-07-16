@@ -62,6 +62,7 @@ final class ReportsCubit extends Cubit<ReportsState> {
     String? address,
     String? city,
     String? province,
+    double? focalScaleFactor,
   }) async {
     try {
       await _createReport(
@@ -73,6 +74,7 @@ final class ReportsCubit extends Cubit<ReportsState> {
           address: address,
           city: city,
           province: province,
+          focalScaleFactor: focalScaleFactor,
         ),
       );
     } catch (e) {

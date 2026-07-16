@@ -14,6 +14,7 @@ abstract interface class ReportRepository {
     String? address,
     String? city,
     String? province,
+    double? focalScaleFactor,
   });
 
   Stream<List<PendingReport>> watchAllReports();

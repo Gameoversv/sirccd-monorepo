@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,14 +22,17 @@ class CameraPage extends StatefulWidget {
   State<CameraPage> createState() => _CameraPageState();
 }
 
-class _CameraPageState extends State<CameraPage>
-    with WidgetsBindingObserver {
+class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   List<CameraDescription> _cameras = [];
   CameraController? _controller;
   int _cameraIndex = 0;
   FlashMode _flashMode = FlashMode.off;
   bool _isInitialized = false;
   String? _initError;
+  double _minZoomLevel = 1;
+  double _maxZoomLevel = 1;
+  double _zoomLevel = 1;
+  double _baseZoomLevel = 1;
 
   @override
   void initState() {
@@ -86,11 +91,56 @@ class _CameraPageState extends State<CameraPage>
     await ctrl.initialize();
     if (!mounted) return;
     await ctrl.setFlashMode(_flashMode);
+    var minZoom = 1.0;
+    var maxZoom = 1.0;
+    var nextZoom = 1.0;
+    try {
+      minZoom = await ctrl.getMinZoomLevel();
+      maxZoom = await ctrl.getMaxZoomLevel();
+      nextZoom = _clampZoom(_zoomLevel, minZoom, maxZoom);
+      await ctrl.setZoomLevel(nextZoom);
+    } on Exception {
+      minZoom = 1.0;
+      maxZoom = 1.0;
+      nextZoom = 1.0;
+    }
     setState(() {
       _cameraIndex = index;
       _isInitialized = true;
       _initError = null;
+      _minZoomLevel = minZoom;
+      _maxZoomLevel = maxZoom;
+      _zoomLevel = nextZoom;
     });
+  }
+
+  bool get _supportsZoom => (_maxZoomLevel - _minZoomLevel) > 0.01;
+
+  double _clampZoom(double value, double min, double max) {
+    if (max <= min) return min;
+    return value.clamp(min, max).toDouble();
+  }
+
+  Future<void> _setZoom(double value) async {
+    final ctrl = _controller;
+    if (ctrl == null || !ctrl.value.isInitialized) return;
+
+    final nextZoom = _clampZoom(value, _minZoomLevel, _maxZoomLevel);
+    try {
+      await ctrl.setZoomLevel(nextZoom);
+      if (mounted) setState(() => _zoomLevel = nextZoom);
+    } on Exception {
+      // Some devices briefly reject zoom changes while refocusing.
+    }
+  }
+
+  void _handleScaleStart(ScaleStartDetails details) {
+    _baseZoomLevel = _zoomLevel;
+  }
+
+  void _handleScaleUpdate(ScaleUpdateDetails details) {
+    if (details.pointerCount < 2) return;
+    unawaited(_setZoom(_baseZoomLevel * details.scale));
   }
 
   Future<void> _toggleFlash() async {
@@ -136,9 +186,22 @@ class _CameraPageState extends State<CameraPage>
             return Stack(
               fit: StackFit.expand,
               children: [
-                _buildPreview(context),
+                GestureDetector(
+                  onScaleStart: _supportsZoom ? _handleScaleStart : null,
+                  onScaleUpdate: _supportsZoom ? _handleScaleUpdate : null,
+                  child: _buildPreview(context),
+                ),
                 if (_isInitialized && state is! CameraCapturing)
                   const CameraGuideOverlay(),
+                if (_isInitialized &&
+                    state is! CameraCapturing &&
+                    _supportsZoom)
+                  _ZoomControl(
+                    zoomLevel: _zoomLevel,
+                    minZoomLevel: _minZoomLevel,
+                    maxZoomLevel: _maxZoomLevel,
+                    onChanged: (value) => _setZoom(value),
+                  ),
                 if (state is CameraCapturing) _CapturingShimmer(),
                 _TopBar(
                   flashMode: _flashMode,
@@ -150,7 +213,10 @@ class _CameraPageState extends State<CameraPage>
                   isReady: _isInitialized,
                   hasFrontCamera: _cameras.length > 1,
                   onCapture: _isInitialized && state is! CameraCapturing
-                      ? () => context.read<CameraCubit>().capture(_controller!)
+                      ? () => context.read<CameraCubit>().capture(
+                          _controller!,
+                          zoomLevel: _zoomLevel,
+                        )
                       : null,
                   onFlip: _flipCamera,
                 ),
@@ -278,6 +344,134 @@ class _TopBar extends StatelessWidget {
   }
 }
 
+class _ZoomControl extends StatelessWidget {
+  const _ZoomControl({
+    required this.zoomLevel,
+    required this.minZoomLevel,
+    required this.maxZoomLevel,
+    required this.onChanged,
+  });
+
+  final double zoomLevel;
+  final double minZoomLevel;
+  final double maxZoomLevel;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final value = zoomLevel.clamp(minZoomLevel, maxZoomLevel).toDouble();
+    final presets = [1.0, 2.0]
+        .where((v) => v >= minZoomLevel - 0.01 && v <= maxZoomLevel + 0.01)
+        .toList();
+
+    return Positioned(
+      left: 20,
+      right: 20,
+      bottom: MediaQuery.of(context).padding.bottom + 120,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.62),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${value.toStringAsFixed(1)}x',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (presets.isNotEmpty) ...[
+                for (final preset in presets) ...[
+                  _ZoomPresetButton(
+                    value: preset,
+                    selected: (value - preset).abs() < 0.05,
+                    onSelected: onChanged,
+                  ),
+                  const SizedBox(width: 6),
+                ],
+              ],
+              Expanded(
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 3,
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 7,
+                    ),
+                    overlayShape: const RoundSliderOverlayShape(
+                      overlayRadius: 14,
+                    ),
+                  ),
+                  child: Slider(
+                    value: value,
+                    min: minZoomLevel,
+                    max: maxZoomLevel,
+                    activeColor: AppColors.primary,
+                    inactiveColor: Colors.white.withValues(alpha: 0.28),
+                    onChanged: onChanged,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ZoomPresetButton extends StatelessWidget {
+  const _ZoomPresetButton({
+    required this.value,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final double value;
+  final bool selected;
+  final ValueChanged<double> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(6),
+      onTap: () => onSelected(value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary
+              : Colors.white.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          '${value.toStringAsFixed(0)}x',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.isCapturing,
@@ -310,10 +504,7 @@ class _BottomBar extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
-            colors: [
-              Colors.black.withValues(alpha: 0.75),
-              Colors.transparent,
-            ],
+            colors: [Colors.black.withValues(alpha: 0.75), Colors.transparent],
           ),
         ),
         child: Row(

@@ -8,11 +8,11 @@ class CameraCubit extends Cubit<CameraState> {
 
   final CapturePhotoUseCase _capturePhoto;
 
-  Future<void> capture(CameraController controller) async {
+  Future<void> capture(CameraController controller, {double? zoomLevel}) async {
     if (state is CameraCapturing) return;
     emit(const CameraCapturing());
     try {
-      final capture = await _capturePhoto(controller);
+      final capture = await _capturePhoto(controller, zoomLevel: zoomLevel);
       emit(CameraCaptured(capture));
     } catch (e) {
       emit(CameraFailure(e.toString()));

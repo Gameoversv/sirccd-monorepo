@@ -19,7 +19,7 @@ final class DatabaseServiceImpl implements DatabaseService {
     final path = p.join(dbPath, 'sirccd.db');
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, _) async {
         await db.execute('''
           CREATE TABLE pending_reports (
@@ -31,12 +31,20 @@ final class DatabaseServiceImpl implements DatabaseService {
             address     TEXT,
             city        TEXT,
             province    TEXT,
+            focal_scale_factor REAL,
             sync_status TEXT NOT NULL DEFAULT 'pending',
             server_id   INTEGER,
             sync_error  TEXT,
             created_at  TEXT NOT NULL
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute(
+            'ALTER TABLE pending_reports ADD COLUMN focal_scale_factor REAL',
+          );
+        }
       },
     );
   }
