@@ -9,12 +9,18 @@ La contrasena NO se hardcodea: se toma del entorno y el script falla si falta.
 Es idempotente — si el usuario ya existe, no lo pisa; solo corrige rol/estado
 si quedaron mal, y unicamente cambia la clave si se pide explicitamente.
 
-Uso:
+Uso (local, contra la BD que apunte settings):
     ADMIN_USERNAME=admin ADMIN_EMAIL=admin@sirccd.com ADMIN_PASSWORD='...' \
         python -m scripts.seed_admin
 
-En Railway:
-    railway run --service backend python -m scripts.seed_admin
+En Railway hay que ejecutarlo DENTRO del contenedor:
+    railway ssh --service backend -- \
+        env ADMIN_USERNAME=admin ADMIN_EMAIL=admin@sirccd.com \
+            ADMIN_PASSWORD='...' python -m scripts.seed_admin
+
+No sirve `railway run`: inyecta las variables pero corre el proceso en tu
+maquina, y POSTGRES_HOST es postgres.railway.internal, que solo resuelve
+dentro de la red privada de Railway.
 
 El login de la web es por username + password (auth.py acepta tambien el email
 como identificador, pero el username es el camino previsto).
