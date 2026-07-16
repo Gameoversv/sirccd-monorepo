@@ -1,7 +1,7 @@
 """add sla_deadline to incidents and create sla_configs table (P-06)
 
 Revision ID: 001_sla_fields
-Revises:
+Revises: 005
 Create Date: 2026-05-05
 """
 
@@ -9,7 +9,11 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "001_sla_fields"
-down_revision = None
+# Depende de la cadena 001..005: altera la tabla `incidents`, que crea la
+# migracion inicial. Con down_revision = None quedaba como una segunda raiz,
+# dejando dos heads ("Multiple head revisions are present") y ordenandose
+# antes de que `incidents` existiera.
+down_revision = "005"
 branch_labels = None
 depends_on = None
 
