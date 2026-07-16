@@ -258,21 +258,51 @@ class _ScaledPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-    final scale = (() {
-      final previewRatio = controller.value.aspectRatio;
-      final screenRatio = size.width / size.height;
-      if (previewRatio < screenRatio) {
-        return size.width / (size.height * previewRatio);
-      }
-      return size.height / (size.width / previewRatio);
-    })();
+    final orientation =
+        controller.value.lockedCaptureOrientation ??
+        controller.value.deviceOrientation;
 
-    return Transform.scale(
-      scale: scale,
-      child: Center(child: CameraPreview(controller)),
+    final scale = previewCoverScale(
+      sensorAspectRatio: controller.value.aspectRatio,
+      screenSize: MediaQuery.sizeOf(context),
+      isLandscape:
+          orientation == DeviceOrientation.landscapeLeft ||
+          orientation == DeviceOrientation.landscapeRight,
+    );
+
+    return ClipRect(
+      child: Transform.scale(
+        scale: scale,
+        child: Center(child: CameraPreview(controller)),
+      ),
     );
   }
+}
+
+/// Escala minima que hace a [CameraPreview] cubrir la pantalla sin deformarla
+/// ni dejar franjas.
+///
+/// [sensorAspectRatio] es `controller.value.aspectRatio`, que viene en
+/// orientacion del sensor (apaisada, p.ej. 1.78). CameraPreview ya lo invierte
+/// al renderizar en retrato, asi que hay que comparar contra el ratio ya
+/// rotado: comparar el del sensor contra el de la pantalla ampliaba la vista
+/// previa ~3x en un telefono 1080x2400.
+@visibleForTesting
+double previewCoverScale({
+  required double sensorAspectRatio,
+  required Size screenSize,
+  required bool isLandscape,
+}) {
+  if (sensorAspectRatio <= 0 || screenSize.width <= 0 || screenSize.height <= 0) {
+    return 1;
+  }
+
+  final screenRatio = screenSize.width / screenSize.height;
+  final previewRatio = isLandscape ? sensorAspectRatio : 1 / sensorAspectRatio;
+
+  return previewRatio > screenRatio
+      ? previewRatio / screenRatio
+      : screenRatio / previewRatio;
 }
 
 class _CapturingShimmer extends StatelessWidget {
