@@ -10,7 +10,7 @@ Endpoints para:
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_, desc, asc
 from geoalchemy2.functions import ST_X, ST_Y, ST_Within
@@ -18,8 +18,9 @@ from datetime import datetime, timedelta, date
 import math
 
 from db.session import get_db
-from api.deps import get_current_active_user, require_supervisor, require_admin
-from models.user import User
+from api.deps import get_current_active_user, get_optional_user, require_supervisor, require_admin
+from core.image_tokens import sign_image_url, verify_image_signature
+from models.user import User, UserRole
 from models.incident import Incident, IncidentStatus, PriorityLevel
 from schemas.incident import (
     IncidentStatusEnum,
@@ -47,13 +48,16 @@ from services.storage import storage_service
 from core.config import settings
 
 
-def _public_url(url: str | None) -> str | None:
-    if url and "minio:9000" in url:
-        return url.replace("minio:9000", "localhost:9000")
-    return url
-
-
 router = APIRouter()
+
+_SCOPE = "incidents"
+
+
+def _image_url(incident_id: int, variant: str, stored_url: str | None) -> str | None:
+    """URL firmada del proxy. El bucket de MinIO es privado (S-03)."""
+    if not stored_url:
+        return None
+    return sign_image_url(_SCOPE, incident_id, variant)
 
 
 @router.get("/", response_model=IncidentListResponse)
@@ -238,8 +242,8 @@ def get_incident(
         "is_verified": incident.is_verified,
         "verified_by": incident.verified_by,
         "verification_notes": incident.verification_notes,
-        "before_image_url": _public_url(incident.before_image_url),
-        "after_image_url": _public_url(incident.after_image_url),
+        "before_image_url": _image_url(incident.id, "before", incident.before_image_url),
+        "after_image_url": _image_url(incident.id, "after", incident.after_image_url),
         "notes": incident.notes,
         "created_at": incident.created_at,
         "updated_at": incident.updated_at
@@ -319,7 +323,11 @@ def update_incident_details(
         db.add(audit_entry)
     db.commit()
     db.refresh(incident)
-    return {"id": incident_id, "estimated_repair_hours": incident.estimated_repair_hours, "after_image_url": _public_url(incident.after_image_url)}
+    return {
+        "id": incident_id,
+        "estimated_repair_hours": incident.estimated_repair_hours,
+        "after_image_url": _image_url(incident.id, "after", incident.after_image_url),
+    }
 
 
 @router.post("/{incident_id:int}/after-image")
@@ -334,7 +342,7 @@ async def upload_after_image(
     if not incident:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incidente no encontrado")
     try:
-        image_url, _, _, _ = await storage_service.upload_image(file=image, folder="after", anonymize=False)
+        image_url, _, _, _, _ = await storage_service.upload_image(file=image, folder="after", anonymize=False)
         incident.after_image_url = image_url
         audit_entry = IncidentAuditLog(
             incident_id=incident_id,
@@ -345,9 +353,80 @@ async def upload_after_image(
         )
         db.add(audit_entry)
         db.commit()
-        return {"id": incident_id, "after_image_url": _public_url(image_url)}
+        return {
+            "id": incident_id,
+            "after_image_url": _image_url(incident.id, "after", image_url),
+        }
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.get(
+    "/{incident_id:int}/image",
+    summary="Servir la imagen antes/después de un incidente",
+    description=(
+        "Descarga la imagen desde MinIO y la reenvía. El bucket es privado, "
+        "así que este proxy es el único acceso: se autoriza con el token o "
+        "con la firma de corta duración que incluyen las URLs del API."
+    ),
+    responses={
+        200: {"content": {"image/*": {}}, "description": "Bytes de la imagen"},
+        401: {"description": "Sin token ni firma válida"},
+        404: {"description": "Incidente o imagen no encontrada"},
+    },
+)
+def get_incident_image(
+    incident_id: int,
+    variant: str = Query("before", pattern="^(before|after)$"),
+    exp: Optional[int] = Query(None),
+    sig: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user),
+):
+    """Sirve la foto 'antes' o 'después' de un incidente."""
+
+    has_signature = verify_image_signature(_SCOPE, incident_id, variant, exp, sig)
+
+    # Los incidentes solo los ve personal de la alcaldía; sin firma se exige
+    # el mismo rol que en GET /incidents/{id}.
+    if not has_signature and (
+        current_user is None
+        or current_user.role not in (UserRole.SUPERVISOR, UserRole.ADMIN)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Se requiere token de supervisor o una URL firmada válida",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Incidente {incident_id} no encontrado",
+        )
+
+    object_url = (
+        incident.before_image_url if variant == "before" else incident.after_image_url
+    )
+    if not object_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"El incidente {incident_id} no tiene imagen '{variant}'",
+        )
+
+    content = storage_service.read_image_bytes(object_url)
+    if content is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="La imagen no está disponible en el almacenamiento",
+        )
+
+    return Response(
+        content=content,
+        media_type=storage_service.guess_content_type(object_url),
+        headers={"Cache-Control": "private, max-age=3600"},
+    )
 
 
 @router.post("/{incident_id:int}/recalculate-priority", response_model=RecalculatePriorityResponse)

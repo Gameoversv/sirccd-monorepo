@@ -2,16 +2,25 @@
 Rutas de Reportes - Gestión de reportes ciudadanos
 """
 
+import json as _json
 from typing import Optional, List
 from datetime import datetime
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Query, status
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, asc
 from geoalchemy2.elements import WKTElement
 from geoalchemy2.shape import to_shape
 
 from db.session import get_db
-from api.deps import get_current_active_user, ActiveUser, SupervisorUser, DbSession, require_supervisor
+from api.deps import (
+    get_current_active_user,
+    ActiveUser,
+    OptionalUser,
+    SupervisorUser,
+    DbSession,
+    require_supervisor,
+)
+from core.image_tokens import sign_image_url, verify_image_signature
 from models.user import User
 from models.report import Report, ReportStatus, DamageType, SeverityLevel
 from models.incident import Incident, IncidentStatus, PriorityLevel
@@ -19,19 +28,32 @@ from schemas.report import CreateReportResponse, ReportResponse, UpdateReportSta
 from services.storage import storage_service
 from services.queue_service import queue_service
 from services.report_processing_service import resolve_incident_dedup
-
-
-def _public_url(url: str) -> str:
-    """Convierte URLs internas de MinIO (minio:9000) a URLs accesibles por el browser (localhost:9000)"""
-    if url and "minio:" in url:
-        return url.replace("minio:", "localhost:", 1)
-    return url
 from services.ml_service import ml_service
 from services.deduplication_service import get_deduplication_service
 from services.priority_service import get_priority_service
 
 
 router = APIRouter(prefix="/reportes", tags=["Reportes"])
+
+_SCOPE = "reportes"
+
+
+def _image_url(report_id: int, variant: str = "original") -> str:
+    """URL firmada del proxy. El bucket de MinIO es privado (S-03)."""
+    return sign_image_url(_SCOPE, report_id, variant)
+
+
+def _annotated_image_url(report: Report) -> Optional[str]:
+    """URL firmada de la imagen con bounding boxes, si el worker la generó."""
+    if not report.detections_json:
+        return None
+    try:
+        det = _json.loads(report.detections_json)
+    except ValueError:
+        return None
+    if not det.get("annotated_image_url"):
+        return None
+    return _image_url(report.id, "annotated")
 
 
 def _resolve_focal_scale_factor(exif_data, fallback: Optional[float]) -> float:
@@ -89,15 +111,12 @@ def list_reports(
         point = to_shape(r.location)
 
         # Parse detections_json to extract derived fields
-        import json as _json
-        annotated_image_url = None
         model_precision = None
         model_recall = None
         model_map50 = None
         if r.detections_json:
             try:
                 det = _json.loads(r.detections_json)
-                annotated_image_url = det.get("annotated_image_url")
                 model_precision = det.get("model_precision")
                 model_recall = det.get("model_recall")
                 model_map50 = det.get("model_map50")
@@ -115,8 +134,8 @@ def list_reports(
             "damage_type": r.damage_type.value,
             "severity": r.severity.value,
             "confidence": r.confidence,
-            "image_url": _public_url(r.image_url),
-            "annotated_image_url": annotated_image_url,
+            "image_url": _image_url(r.id),
+            "annotated_image_url": _annotated_image_url(r),
             "model_precision": model_precision,
             "model_recall": model_recall,
             "model_map50": model_map50,
@@ -456,7 +475,7 @@ async def create_report(
         damage_type=damage_type,
         severity=severity,
         confidence=confidence,
-        image_url=_public_url(image_url),
+        image_url=_image_url(new_report.id),
         latitude=report_latitude,
         longitude=report_longitude,
         description=description,
@@ -510,7 +529,8 @@ async def get_report(
         damage_type=report.damage_type,
         severity=report.severity,
         confidence=report.confidence,
-        image_url=_public_url(report.image_url),
+        image_url=_image_url(report.id),
+        annotated_image_url=_annotated_image_url(report),
         image_width=report.image_width,
         image_height=report.image_height,
         detections_json=report.detections_json,
@@ -521,6 +541,90 @@ async def get_report(
         updated_at=report.updated_at,
         reviewed_at=report.reviewed_at
     )
+
+
+@router.get(
+    "/{report_id}/image",
+    summary="Servir la imagen de un reporte",
+    description=(
+        "Descarga la imagen desde MinIO y la reenvía. El bucket es privado, "
+        "así que este proxy es el único acceso: se autoriza con el token o "
+        "con la firma de corta duración que incluyen las URLs del API."
+    ),
+    responses={
+        200: {"content": {"image/*": {}}, "description": "Bytes de la imagen"},
+        401: {"description": "Sin token ni firma válida"},
+        404: {"description": "Reporte o imagen no encontrada"},
+    },
+)
+def get_report_image(
+    report_id: int,
+    db: DbSession,
+    current_user: OptionalUser,
+    variant: str = Query("original", pattern="^(original|annotated)$"),
+    exp: Optional[int] = Query(None),
+    sig: Optional[str] = Query(None),
+) -> Response:
+    """Sirve la imagen original o la anotada de un reporte."""
+
+    has_signature = verify_image_signature(_SCOPE, report_id, variant, exp, sig)
+
+    if not has_signature and current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Se requiere token o una URL firmada válida",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    report = db.query(Report).filter(Report.id == report_id).first()
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Reporte {report_id} no encontrado",
+        )
+
+    # La firma ya autoriza esta imagen concreta; sin ella se aplican las mismas
+    # reglas de visibilidad que en GET /reportes/{id}.
+    if not has_signature and current_user.role.value == "ciudadano" \
+            and report.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para ver este reporte",
+        )
+
+    object_url = _resolve_image_object(report, variant)
+    if not object_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"El reporte {report_id} no tiene imagen '{variant}'",
+        )
+
+    content = storage_service.read_image_bytes(object_url)
+    if content is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="La imagen no está disponible en el almacenamiento",
+        )
+
+    return Response(
+        content=content,
+        media_type=storage_service.guess_content_type(object_url),
+        headers={"Cache-Control": "private, max-age=3600"},
+    )
+
+
+def _resolve_image_object(report: Report, variant: str) -> Optional[str]:
+    """Devuelve la URL almacenada del objeto para la variante pedida."""
+    if variant == "original":
+        return report.image_url
+
+    if not report.detections_json:
+        return None
+    try:
+        det = _json.loads(report.detections_json)
+    except ValueError:
+        return None
+    return det.get("annotated_image_url")
 
 
 @router.get(

@@ -381,6 +381,46 @@ class StorageService:
                 response.close()
                 response.release_conn()
 
+    def read_image_bytes(self, image_url: str) -> Optional[bytes]:
+        """
+        Lee una imagen sin importar dónde esté guardada (MinIO o disco local).
+
+        La usa el proxy de imágenes, que puede recibir URLs de MinIO guardadas
+        antes de un cambio de backend de storage. Devuelve None si no existe.
+        """
+        if not image_url:
+            return None
+
+        if self.use_minio:
+            data = self.download_image_bytes(image_url)
+            if data is not None:
+                return data
+
+        return self._read_local_bytes(image_url)
+
+    def _read_local_bytes(self, image_url: str) -> Optional[bytes]:
+        """Lee del almacenamiento local, rechazando rutas fuera del directorio."""
+        prefix = "/storage/images/"
+        if not image_url.startswith(prefix):
+            return None
+
+        base = Path("storage/images").resolve()
+        try:
+            file_path = (base / image_url[len(prefix):]).resolve()
+        except OSError:
+            return None
+
+        if not file_path.is_relative_to(base) or not file_path.is_file():
+            return None
+
+        return file_path.read_bytes()
+
+    @staticmethod
+    def guess_content_type(image_url: str) -> str:
+        """Deduce el content-type por extensión, con fallback binario."""
+        content_type, _ = mimetypes.guess_type(image_url)
+        return content_type or "application/octet-stream"
+
     async def _delete_from_minio(self, image_url: str) -> bool:
         """Elimina imagen de MinIO"""
         try:

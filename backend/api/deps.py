@@ -19,6 +19,14 @@ oauth2_scheme = OAuth2PasswordBearer(
     scheme_name="JWT"
 )
 
+# Variante que no falla si no viene el header: la usan endpoints que aceptan
+# tanto token como otra credencial (ej. imagenes con URL firmada).
+oauth2_scheme_optional = OAuth2PasswordBearer(
+    tokenUrl="/api/v1/auth/login",
+    scheme_name="JWT",
+    auto_error=False
+)
+
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
@@ -89,6 +97,34 @@ async def get_current_active_user(
             detail="Usuario inactivo"
         )
     return current_user
+
+
+async def get_optional_user(
+    token: Annotated[Optional[str], Depends(oauth2_scheme_optional)] = None,
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """
+    Devuelve el usuario autenticado, o None si no hay token válido.
+
+    No lanza 401: el endpoint decide si la falta de usuario es un error. Útil
+    cuando existe una credencial alternativa (ej. firma en la query string).
+    """
+    if not token:
+        return None
+
+    payload = decode_access_token(token)
+    if payload is None:
+        return None
+
+    user_id: Optional[str] = payload.get("sub")
+    if user_id is None:
+        return None
+
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if user is None or not user.is_active:
+        return None
+
+    return user
 
 
 async def get_current_verified_user(
@@ -200,3 +236,4 @@ ActiveUser = Annotated[User, Depends(get_current_active_user)]
 VerifiedUser = Annotated[User, Depends(get_current_verified_user)]
 AdminUser = Annotated[User, Depends(require_admin)]
 SupervisorUser = Annotated[User, Depends(require_supervisor)]
+OptionalUser = Annotated[Optional[User], Depends(get_optional_user)]
