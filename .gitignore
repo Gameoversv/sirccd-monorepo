@@ -14,11 +14,14 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
-parts/
+# Anclados a la raiz: sin la barra inicial estos patrones de empaquetado
+# Python matchean cualquier directorio con ese nombre a cualquier
+# profundidad, y se tragaban frontend/src/lib/.
+/lib/
+/lib64/
+/parts/
 sdist/
-var/
+/var/
 wheels/
 share/python-wheels/
 *.egg-info/
@@ -233,7 +236,10 @@ uvicorn.log
 ###########################
 runs/
 checkpoints/
-models/
+# Anclado a la raiz: sin la barra inicial se tragaba backend/models/ (modelos
+# SQLAlchemy) y los tests del movil. Los pesos ya se ignoran por extension
+# mas abajo (*.pt, *.onnx, *.bin, *.pkl).
+/models/
 !backend/models/
 !ml/models/
 !ml/models/baseline/
