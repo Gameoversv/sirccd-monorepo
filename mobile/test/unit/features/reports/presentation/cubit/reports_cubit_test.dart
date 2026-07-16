@@ -23,16 +23,15 @@ import 'package:sirccd_mobile/features/reports/presentation/cubit/reports_state.
 PendingReport _report({
   String id = 'r1',
   SyncStatus status = SyncStatus.pending,
-}) =>
-    PendingReport(
-      localId: id,
-      imagePath: '/img.jpg',
-      latitude: 0,
-      longitude: 0,
-      description: 'desc',
-      syncStatus: status,
-      createdAt: DateTime(2025),
-    );
+}) => PendingReport(
+  localId: id,
+  imagePath: '/img.jpg',
+  latitude: 0,
+  longitude: 0,
+  description: 'desc',
+  syncStatus: status,
+  createdAt: DateTime(2025),
+);
 
 class _FakeRepo implements ReportRepository {
   final StreamController<List<PendingReport>> _ctrl =
@@ -52,6 +51,7 @@ class _FakeRepo implements ReportRepository {
     String? address,
     String? city,
     String? province,
+    double? focalScaleFactor,
   }) async {
     if (createError != null) throw createError!;
     final r = _report();
@@ -79,14 +79,13 @@ class _FakeRepo implements ReportRepository {
     SeverityLevel? severity,
     String? search,
     String sortOrder = 'desc',
-  }) async =>
-      const PaginatedReports(
-        items: [],
-        total: 0,
-        page: 1,
-        perPage: 20,
-        totalPages: 0,
-      );
+  }) async => const PaginatedReports(
+    items: [],
+    total: 0,
+    page: 1,
+    perPage: 20,
+    totalPages: 0,
+  );
 
   @override
   Future<UserReport> getReportDetail(int id) async =>
@@ -118,12 +117,12 @@ class _FakeConnectivity implements ConnectivityService {
 }
 
 ReportsCubit _cubit(_FakeRepo repo, _FakeConnectivity conn) => ReportsCubit(
-      CreatePendingReportUseCase(repo),
-      GetAllReportsUseCase(repo),
-      SyncPendingReportsUseCase(repo),
-      conn,
-      DeleteAllLocalReportsUseCase(repo),
-    );
+  CreatePendingReportUseCase(repo),
+  GetAllReportsUseCase(repo),
+  SyncPendingReportsUseCase(repo),
+  conn,
+  DeleteAllLocalReportsUseCase(repo),
+);
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 

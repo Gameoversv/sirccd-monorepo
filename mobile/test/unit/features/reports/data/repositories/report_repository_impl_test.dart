@@ -39,6 +39,9 @@ class _FakeLocalDataSource implements ReportLocalDataSource {
       longitude: old.longitude,
       description: old.description,
       address: old.address,
+      city: old.city,
+      province: old.province,
+      focalScaleFactor: old.focalScaleFactor,
       syncStatus: status,
       serverId: serverId ?? old.serverId,
       syncError: error ?? (status == SyncStatus.syncing ? null : old.syncError),
@@ -68,6 +71,7 @@ void main() {
         address: 'Av. 27 de Febrero 123',
         city: 'Santo Domingo',
         province: 'Distrito Nacional',
+        focalScaleFactor: 0.5,
         syncStatus: SyncStatus.pending,
         createdAt: DateTime(2025, 1, 15, 10, 30),
       );
@@ -83,6 +87,7 @@ void main() {
       expect(restored.address, original.address);
       expect(restored.city, original.city);
       expect(restored.province, original.province);
+      expect(restored.focalScaleFactor, original.focalScaleFactor);
       expect(restored.syncStatus, original.syncStatus);
       expect(restored.serverId, isNull);
       expect(restored.syncError, isNull);
@@ -129,16 +134,16 @@ void main() {
     test('getByStatus filters correctly', () async {
       final ds = _local();
       Future<void> add(String id, SyncStatus s) async => ds.insert(
-            PendingReportModel(
-              localId: id,
-              imagePath: '/img.jpg',
-              latitude: 0,
-              longitude: 0,
-              description: 'd',
-              syncStatus: s,
-              createdAt: DateTime.now(),
-            ),
-          );
+        PendingReportModel(
+          localId: id,
+          imagePath: '/img.jpg',
+          latitude: 0,
+          longitude: 0,
+          description: 'd',
+          syncStatus: s,
+          createdAt: DateTime.now(),
+        ),
+      );
 
       await add('a', SyncStatus.pending);
       await add('b', SyncStatus.synced);
