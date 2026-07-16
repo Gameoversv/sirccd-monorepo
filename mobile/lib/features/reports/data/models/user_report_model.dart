@@ -25,6 +25,11 @@ class UserReportModel extends UserReport {
     super.modelPrecision,
     super.modelRecall,
     super.modelMap50,
+    super.damageRatioRaw,
+    super.damageRatioNormalized,
+    super.focalScaleFactor,
+    super.areaScaleFactor,
+    super.weightedDetections,
     super.description,
     super.rejectionReason,
     required super.createdAt,
@@ -69,6 +74,21 @@ class UserReportModel extends UserReport {
       modelMap50:
           _doubleValue(json['model_map50']) ??
           _doubleValue(detections?['model_map50']),
+      damageRatioRaw:
+          _doubleValue(json['damage_ratio_raw']) ??
+          _doubleValue(detections?['damage_ratio_raw']),
+      damageRatioNormalized:
+          _doubleValue(json['damage_ratio_normalized']) ??
+          _doubleValue(detections?['damage_ratio_normalized']),
+      focalScaleFactor:
+          _doubleValue(json['focal_scale_factor']) ??
+          _doubleValue(detections?['focal_scale_factor']),
+      areaScaleFactor:
+          _doubleValue(json['area_scale_factor']) ??
+          _doubleValue(detections?['area_scale_factor']),
+      weightedDetections:
+          _doubleValue(json['weighted_detections']) ??
+          _doubleValue(detections?['weighted_detections']),
       description: json['description'] as String?,
       rejectionReason: json['rejection_reason'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),

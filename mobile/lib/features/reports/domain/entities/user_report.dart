@@ -22,6 +22,11 @@ class UserReport extends Equatable {
     this.modelPrecision,
     this.modelRecall,
     this.modelMap50,
+    this.damageRatioRaw,
+    this.damageRatioNormalized,
+    this.focalScaleFactor,
+    this.areaScaleFactor,
+    this.weightedDetections,
     this.description,
     this.rejectionReason,
     required this.createdAt,
@@ -46,6 +51,22 @@ class UserReport extends Equatable {
   final double? modelPrecision;
   final double? modelRecall;
   final double? modelMap50;
+
+  /// Área detectada / área de la imagen, tal como sale del modelo.
+  final double? damageRatioRaw;
+
+  /// [damageRatioRaw] corregido por zoom — es el que decide la severidad.
+  final double? damageRatioNormalized;
+
+  /// Razón lineal focal_ref/focal_real: 1.0 sin zoom, 0.5 a 2x.
+  final double? focalScaleFactor;
+
+  /// Corrección aplicada al ratio de área ([focalScaleFactor] al cuadrado).
+  final double? areaScaleFactor;
+
+  /// Suma de confianzas: vía alternativa por la que un reporte llega a ALTA.
+  final double? weightedDetections;
+
   final String? description;
   final String? rejectionReason;
   final DateTime createdAt;
@@ -71,6 +92,11 @@ class UserReport extends Equatable {
     modelPrecision,
     modelRecall,
     modelMap50,
+    damageRatioRaw,
+    damageRatioNormalized,
+    focalScaleFactor,
+    areaScaleFactor,
+    weightedDetections,
     description,
     rejectionReason,
     createdAt,

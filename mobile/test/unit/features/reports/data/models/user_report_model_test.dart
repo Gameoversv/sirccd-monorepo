@@ -94,5 +94,65 @@ void main() {
       expect(report.modelRecall, 0.66);
       expect(report.modelMap50, 83.4);
     });
+
+    test('reads the severity breakdown out of detections_json', () {
+      // Arrange: foto a 2x — el backend guarda el desglose dentro del JSON
+      final report = UserReportModel.fromJson({
+        'id': 5,
+        'latitude': 18.48,
+        'longitude': -69.93,
+        'status': 'approved',
+        'image_url': '/api/v1/reportes/5/image',
+        'created_at': '2026-07-16T21:07:00Z',
+        'updated_at': '2026-07-16T21:07:00Z',
+        'detections_json': jsonEncode({
+          'damage_ratio_raw': 0.1875,
+          'damage_ratio_normalized': 0.046875,
+          'focal_scale_factor': 0.5,
+          'area_scale_factor': 0.25,
+          'weighted_detections': 0.4,
+        }),
+      });
+
+      // Assert
+      expect(report.damageRatioRaw, 0.1875);
+      expect(report.damageRatioNormalized, 0.046875);
+      expect(report.focalScaleFactor, 0.5);
+      expect(report.areaScaleFactor, 0.25);
+      expect(report.weightedDetections, 0.4);
+    });
+
+    test('prefers top-level breakdown fields over detections_json', () {
+      // El detalle los expone arriba; el listado solo trae detections_json.
+      final report = UserReportModel.fromJson({
+        'id': 5,
+        'latitude': 18.48,
+        'longitude': -69.93,
+        'status': 'approved',
+        'image_url': '/api/v1/reportes/5/image',
+        'created_at': '2026-07-16T21:07:00Z',
+        'updated_at': '2026-07-16T21:07:00Z',
+        'damage_ratio_normalized': 0.5,
+        'detections_json': jsonEncode({'damage_ratio_normalized': 0.1}),
+      });
+
+      expect(report.damageRatioNormalized, 0.5);
+    });
+
+    test('leaves the breakdown null for reports processed before it existed', () {
+      final report = UserReportModel.fromJson({
+        'id': 4,
+        'latitude': 18.48,
+        'longitude': -69.93,
+        'status': 'approved',
+        'image_url': '/api/v1/reportes/4/image',
+        'created_at': '2026-07-16T20:38:00Z',
+        'updated_at': '2026-07-16T20:38:00Z',
+        'detections_json': jsonEncode({'severity': 'baja', 'confidence': 0.87}),
+      });
+
+      expect(report.damageRatioRaw, isNull);
+      expect(report.focalScaleFactor, isNull);
+    });
   });
 }

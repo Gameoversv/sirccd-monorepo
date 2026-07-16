@@ -456,6 +456,27 @@ class _AnalysisSection extends StatelessWidget {
     final rows = <(String, String)>[
       if (report.damageType != null) ('Tipo de daño', report.damageType!.label),
       if (report.severity != null) ('Severidad', report.severity!.label),
+      // Los tres numeros que explican la severidad. Sin ellos solo se ve el
+      // enum (baja/media/alta) y no hay forma de comparar dos fotos.
+      if (report.damageRatioRaw != null)
+        ('Área del daño (sin corregir)', _formatRatio(report.damageRatioRaw!)),
+      if (report.damageRatioNormalized != null)
+        (
+          'Área corregida por zoom',
+          _formatRatio(report.damageRatioNormalized!),
+        ),
+      if (report.focalScaleFactor != null)
+        ('Zoom detectado', _formatZoom(report.focalScaleFactor!)),
+      if (report.areaScaleFactor != null)
+        (
+          'Corrección de área aplicada',
+          '×${report.areaScaleFactor!.toStringAsFixed(2)}',
+        ),
+      if (report.weightedDetections != null)
+        (
+          'Detecciones ponderadas',
+          report.weightedDetections!.toStringAsFixed(2),
+        ),
       if (report.confidence != null)
         (
           'Confianza del modelo',
@@ -503,6 +524,17 @@ class _AnalysisSection extends StatelessWidget {
   String _formatPercent(double value) {
     final percent = value <= 1 ? value * 100 : value;
     return '${percent.toStringAsFixed(1)}%';
+  }
+
+  /// Los ratios suelen ser muy chicos (un bache ocupa ~1% de la foto), asi que
+  /// un solo decimal los aplasta todos a "0.0%".
+  String _formatRatio(double value) => '${(value * 100).toStringAsFixed(3)}%';
+
+  /// El factor es la razon lineal focal_ref/focal_real: 0.5 significa 2x.
+  String _formatZoom(double focalScaleFactor) {
+    if (focalScaleFactor <= 0) return '—';
+    final zoom = 1 / focalScaleFactor;
+    return '${zoom.toStringAsFixed(2)}× (factor ${focalScaleFactor.toStringAsFixed(2)})';
   }
 }
 
