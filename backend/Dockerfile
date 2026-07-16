@@ -43,4 +43,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD curl -f http://localhost:${PORT}/api/v1/health || exit 1
 
 # Shell form: la plataforma inyecta PORT en runtime y hay que expandirlo.
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT}
+# forwarded-allow-ips: el proxy TLS de Railway no es 127.0.0.1 (el default de
+# uvicorn), asi que sin esto descarta su X-Forwarded-Proto, cree servir http y
+# emite los redirects absolutos (307 de barra final) apuntando a http://. El
+# navegador los bloquea como mixed content. El contenedor solo es alcanzable a
+# traves del proxy, asi que confiar en la cabecera es seguro aqui.
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips="*"
