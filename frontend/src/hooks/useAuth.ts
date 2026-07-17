@@ -9,9 +9,14 @@ import { usersService } from '@/services/usersService';
  */
 export function useAuth(redirectTo: string = '/login') {
   const router = useRouter();
-  const { isAuthenticated, isLoading, token, setUser } = useAuthStore();
+  const { isAuthenticated, isLoading, token, setUser, hasHydrated } = useAuthStore();
 
   useEffect(() => {
+    // Esperar a que persist rehidrate desde localStorage; si no, en el primer
+    // render (token aún null) redirigiría a login al refrescar la página.
+    if (!hasHydrated) {
+      return;
+    }
     if (!isLoading && !isAuthenticated) {
       router.push(redirectTo);
       return;
@@ -33,7 +38,7 @@ export function useAuth(redirectTo: string = '/login') {
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isLoading, router, redirectTo]);
+  }, [hasHydrated, isAuthenticated, isLoading, router, redirectTo]);
 
   return { isAuthenticated, isLoading };
 }

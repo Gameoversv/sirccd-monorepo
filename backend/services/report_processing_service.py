@@ -57,6 +57,9 @@ def resolve_incident_dedup(
         geo_candidates = (
             db.query(Incident)
             .filter(
+                # Excluir el incidente del propio reporte: si se reprocesa, no
+                # debe quedar marcado como duplicado de sí mismo.
+                Incident.report_id != report.id,
                 Incident.status.in_(
                     [IncidentStatus.OPEN, IncidentStatus.IN_PROGRESS]
                 ),

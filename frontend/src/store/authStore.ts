@@ -8,9 +8,13 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  
+  // True una vez que persist rehidrató desde localStorage. Hasta entonces no se
+  // puede decidir si el usuario está autenticado (evita el logout al refrescar).
+  hasHydrated: boolean;
+
   // Actions
   setUser: (user: User) => void;
+  setHasHydrated: (value: boolean) => void;
   setToken: (token: string) => void;
   login: (authResponse: AuthResponse) => void;
   logout: () => void;
@@ -27,8 +31,11 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      hasHydrated: false,
 
       setUser: (user) => set({ user, isAuthenticated: true }),
+
+      setHasHydrated: (value) => set({ hasHydrated: value }),
       
       setToken: (token) => set({ token }),
       
@@ -68,6 +75,10 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Se ejecuta al terminar la rehidratación (con o sin datos guardados).
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
