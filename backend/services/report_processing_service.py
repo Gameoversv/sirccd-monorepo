@@ -190,10 +190,15 @@ def _auto_approve(db: Session, report: Report, dedup_image: Optional[Image.Image
 
     existing = resolve_incident_dedup(db, report, dedup_image)
     if existing:
+        # Persistir la membresía: el reporte fusionado apunta al reporte primario
+        # del incidente. Así el incidente puede listar todos sus reportes
+        # (original + detección) sin buscarlos en la pestaña de reportes.
+        report.duplicate_of_report_id = existing.report_id
         logger.info(
-            "Auto-aprobado: reporte %s -> incidente existente %s",
+            "Auto-aprobado: reporte %s -> incidente existente %s (duplicado de reporte %s)",
             report.id,
             existing.id,
+            existing.report_id,
         )
         incident = existing
     else:
