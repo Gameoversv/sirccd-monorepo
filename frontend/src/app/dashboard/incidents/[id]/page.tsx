@@ -46,6 +46,40 @@ function resolveMediaUrl(url: string | null | undefined): string | undefined {
   return url.startsWith('http') ? url : `${MEDIA_BASE}${url}`;
 }
 
+interface PhotoTileProps {
+  url: string | null | undefined;
+  alt: string;
+  emptyText: string;
+}
+
+function PhotoTile({ url, alt, emptyText }: PhotoTileProps) {
+  const src = resolveMediaUrl(url);
+  if (!src) {
+    return (
+      <div className="h-52 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center">
+        <div className="text-center text-gray-400">
+          <ImageIcon className="h-8 w-8 mx-auto" />
+          <p className="text-xs mt-1">{emptyText}</p>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="relative">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="w-full h-52 object-cover rounded-lg" />
+      <a
+        href={src}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-md hover:bg-white shadow-sm"
+      >
+        <ExternalLink className="h-3.5 w-3.5 text-gray-600" />
+      </a>
+    </div>
+  );
+}
+
 interface PageProps {
   params: { id: string };
 }
@@ -133,6 +167,7 @@ export default function IncidentDetailPage({ params }: PageProps) {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [priorityBreakdown, setPriorityBreakdown] = useState<PriorityBreakdown | null>(null);
+  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [slaStatus, setSlaStatus] = useState<SLAStatusResponse | null>(null);
 
@@ -277,85 +312,102 @@ export default function IncidentDetailPage({ params }: PageProps) {
               <ImageIcon className="h-4 w-4 text-gray-500" />
               <h2 className="text-sm font-semibold text-gray-800">{t('incidents.detail.photo')}</h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 divide-x divide-gray-100">
-              {/* Before */}
-              <div className="p-4 space-y-2">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('incidents.detail.before')}</p>
-                {incident.before_image_url ? (
-                  <div className="relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={resolveMediaUrl(incident.before_image_url)}
-                      alt={t('incidents.detail.before')}
-                      className="w-full h-52 object-cover rounded-lg"
-                    />
-                    <a
-                      href={resolveMediaUrl(incident.before_image_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-md hover:bg-white shadow-sm"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 text-gray-600" />
-                    </a>
-                  </div>
-                ) : (
-                  <div className="h-52 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center">
-                    <div className="text-center text-gray-400">
-                      <ImageIcon className="h-8 w-8 mx-auto" />
-                      <p className="text-xs mt-1">{t('incidents.detail.noImage')}</p>
+            {(() => {
+              const members = incident.member_reports ?? [];
+              const selected =
+                members.find((m) => m.report_id === selectedReportId) ??
+                members.find((m) => m.is_primary) ??
+                members[0] ??
+                null;
+              return (
+                <div className="p-4 space-y-4">
+                  {members.length > 1 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label htmlFor="member-report" className="text-xs font-medium text-gray-500">
+                        {t('incidents.detail.report')}
+                      </label>
+                      <select
+                        id="member-report"
+                        value={selected?.report_id ?? ''}
+                        onChange={(e) => setSelectedReportId(Number(e.target.value))}
+                        className="text-sm border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                      >
+                        {members.map((m) => (
+                          <option key={m.report_id} value={m.report_id}>
+                            #{m.report_id}
+                            {m.is_primary ? ` (${t('incidents.detail.primaryTag')})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-xs text-gray-400">
+                        {t('incidents.detail.groupedReports', { count: members.length })}
+                      </span>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
 
-              {/* After */}
-              <div className="p-4 space-y-2">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('incidents.detail.after')}</p>
-                {incident.after_image_url ? (
-                  <div className="relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={resolveMediaUrl(incident.after_image_url)}
-                      alt={t('incidents.detail.after')}
-                      className="w-full h-52 object-cover rounded-lg"
-                    />
-                    <a
-                      href={resolveMediaUrl(incident.after_image_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-md hover:bg-white shadow-sm"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 text-gray-600" />
-                    </a>
-                  </div>
-                ) : (
-                  <label className="h-52 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        try {
-                          const form = new FormData();
-                          form.append('image', file);
-                          await incidentsService.uploadAfterImage(incidentId, form);
-                          toast.success(t('incidents.detail.afterUploadSuccess'));
-                          fetchIncident();
-                        } catch {
-                          toast.error(t('incidents.detail.uploadImageError'));
-                        }
-                      }}
-                    />
-                    <div className="text-center text-gray-400">
-                      <ImageIcon className="h-8 w-8 mx-auto" />
-                      <p className="text-xs mt-1">{t('incidents.detail.uploadAfterPhoto')}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        {t('incidents.detail.original')}
+                      </p>
+                      <PhotoTile
+                        url={selected?.original_image_url}
+                        alt={t('incidents.detail.original')}
+                        emptyText={t('incidents.detail.noImage')}
+                      />
                     </div>
-                  </label>
-                )}
-              </div>
-            </div>
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        {t('incidents.detail.detection')}
+                      </p>
+                      <PhotoTile
+                        url={selected?.annotated_image_url}
+                        alt={t('incidents.detail.detection')}
+                        emptyText={t('incidents.detail.noDetection')}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      {t('incidents.detail.after')}
+                    </p>
+                    {incident.after_image_url ? (
+                      <PhotoTile
+                        url={incident.after_image_url}
+                        alt={t('incidents.detail.after')}
+                        emptyText={t('incidents.detail.noImage')}
+                      />
+                    ) : (
+                      <label className="h-52 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              const form = new FormData();
+                              form.append('image', file);
+                              await incidentsService.uploadAfterImage(incidentId, form);
+                              toast.success(t('incidents.detail.afterUploadSuccess'));
+                              fetchIncident();
+                            } catch {
+                              toast.error(t('incidents.detail.uploadImageError'));
+                            }
+                          }}
+                        />
+                        <div className="text-center text-gray-400">
+                          <ImageIcon className="h-8 w-8 mx-auto" />
+                          <p className="text-xs mt-1">{t('incidents.detail.uploadAfterPhoto')}</p>
+                        </div>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* AI Analysis + Location info */}

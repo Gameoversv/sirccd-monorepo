@@ -440,7 +440,17 @@ export interface IncidentDetail {
   verification_notes: string | null;
   before_image_url: string | null;
   after_image_url: string | null;
+  member_reports: MemberReport[];
   notes: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface MemberReport {
+  report_id: number;
+  is_primary: boolean;
+  status: string;
+  created_at: string;
+  original_image_url: string | null;
+  annotated_image_url: string | null;
 }

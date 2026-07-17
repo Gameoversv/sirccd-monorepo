@@ -192,6 +192,18 @@ class IncidentBriefResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class MemberReportItem(BaseModel):
+    """Reporte agrupado en un incidente (primario o duplicado M-13)."""
+    report_id: int
+    is_primary: bool
+    status: str
+    created_at: datetime
+    original_image_url: Optional[str] = None
+    annotated_image_url: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class IncidentDetailResponse(BaseModel):
     """Response detallado de un incidente"""
     id: int
@@ -230,7 +242,10 @@ class IncidentDetailResponse(BaseModel):
     # Imágenes
     before_image_url: Optional[str]
     after_image_url: Optional[str]
-    
+
+    # Reportes agrupados (primario + duplicados M-13), con original y detección.
+    member_reports: List[MemberReportItem] = []
+
     # Notas
     notes: Optional[str]
     

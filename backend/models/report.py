@@ -71,6 +71,13 @@ class Report(Base):
     status = Column(SQLEnum(ReportStatus), default=ReportStatus.PENDING, nullable=False, index=True)
     description = Column(Text, nullable=True)
     rejection_reason = Column(Text, nullable=True)
+
+    # Agrupación de duplicados (M-13): apunta al reporte primario del cual este
+    # es duplicado. El primario tiene NULL. Permite ver todos los reportes de un
+    # incidente (primario + duplicados) sin buscarlos en la pestaña de reportes.
+    duplicate_of_report_id = Column(
+        Integer, ForeignKey("reports.id"), nullable=True, index=True
+    )
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
@@ -80,6 +87,13 @@ class Report(Base):
     # Relaciones
     user = relationship("User", back_populates="reports")
     incident = relationship("Incident", back_populates="original_report", uselist=False)
+    # Adjacency list: cada reporte tiene un primario (many-to-one, remote_side
+    # en el lado "uno"); el backref expone los duplicados del primario.
+    primary_report = relationship(
+        "Report",
+        remote_side=[id],
+        backref="duplicate_reports",
+    )
     
     def __repr__(self):
         return f"<Report {self.id} - {self.damage_type} ({self.severity}) - {self.status}>"

@@ -340,6 +340,7 @@ class SpatialClusteringService:
                     f"Duplicado espacial — cluster M-13 #{cluster_id}, "
                     f"reporte primario #{target.primary_report_id}"
                 )
+                r.duplicate_of_report_id = target.primary_report_id
                 r.updated_at = datetime.utcnow()
                 resolved.append(r.id)
 
@@ -402,6 +403,7 @@ class SpatialClusteringService:
                         f"Duplicado espacial — cluster M-13 #{cluster.cluster_id}, "
                         f"reporte primario #{cluster.primary_report_id}"
                     )
+                    r.duplicate_of_report_id = cluster.primary_report_id
                     r.updated_at = datetime.utcnow()
                     resolved.append(r.id)
 

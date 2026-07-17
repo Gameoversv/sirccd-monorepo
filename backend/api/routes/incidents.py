@@ -20,8 +20,10 @@ import math
 from db.session import get_db
 from api.deps import get_current_active_user, get_optional_user, require_supervisor, require_admin
 from core.image_tokens import sign_image_url, verify_image_signature
+import json as _json
 from models.user import User, UserRole
 from models.incident import Incident, IncidentStatus, PriorityLevel
+from models.report import Report
 from schemas.incident import (
     IncidentStatusEnum,
     PriorityLevelEnum,
@@ -58,6 +60,57 @@ def _image_url(incident_id: int, variant: str, stored_url: str | None) -> str | 
     if not stored_url:
         return None
     return sign_image_url(_SCOPE, incident_id, variant)
+
+
+# Scope del proxy de imágenes de reportes (ver api/routes/reports.py).
+_REPORTS_SCOPE = "reportes"
+
+
+def _report_annotated_url(report: Report) -> str | None:
+    """URL firmada de la detección (bounding boxes) si el worker la generó."""
+    if not report.detections_json:
+        return None
+    try:
+        det = _json.loads(report.detections_json)
+    except ValueError:
+        return None
+    if not det.get("annotated_image_url"):
+        return None
+    return sign_image_url(_REPORTS_SCOPE, report.id, "annotated")
+
+
+def _member_reports(db: Session, incident: Incident) -> list[dict]:
+    """
+    Reportes agrupados en el incidente: el primario más los duplicados que
+    apuntan a él (M-13). Cada uno con su original y su detección firmadas, para
+    poder revisarlos desde el incidente sin ir a la pestaña de reportes.
+    """
+    reports = (
+        db.query(Report)
+        .filter(
+            or_(
+                Report.id == incident.report_id,
+                Report.duplicate_of_report_id == incident.report_id,
+            )
+        )
+        .all()
+    )
+    # Primario primero, luego duplicados por id ascendente.
+    reports.sort(key=lambda r: (r.id != incident.report_id, r.id))
+
+    return [
+        {
+            "report_id": r.id,
+            "is_primary": r.id == incident.report_id,
+            "status": r.status,
+            "created_at": r.created_at,
+            "original_image_url": sign_image_url(_REPORTS_SCOPE, r.id, "original")
+            if r.image_url
+            else None,
+            "annotated_image_url": _report_annotated_url(r),
+        }
+        for r in reports
+    ]
 
 
 @router.get("/", response_model=IncidentListResponse)
@@ -244,11 +297,12 @@ def get_incident(
         "verification_notes": incident.verification_notes,
         "before_image_url": _image_url(incident.id, "before", incident.before_image_url),
         "after_image_url": _image_url(incident.id, "after", incident.after_image_url),
+        "member_reports": _member_reports(db, incident),
         "notes": incident.notes,
         "created_at": incident.created_at,
         "updated_at": incident.updated_at
     }
-    
+
     return IncidentDetailResponse(**incident_dict)
 
 
