@@ -144,12 +144,20 @@ class PriorityService:
         
         return round(score, 2), priority_level
 
-    def calculate_priority_breakdown(self, incident: Incident) -> dict:
-        """Retorna desglose detallado del score de prioridad"""
+    def calculate_priority_breakdown(self, incident: Incident, visual_dedup: bool = True) -> dict:
+        """
+        Retorna desglose detallado del score de prioridad.
+
+        [visual_dedup] controla el factor 'duplicados': con True se hace la
+        comparación visual (descarga imágenes + ResNet50, costoso); con False
+        se usa un conteo espacial barato para respuestas inmediatas.
+        """
         cfg = self._get_priority_settings()
         w_severity, w_age, w_damage, w_location, w_duplicates = self._effective_weights(cfg)
         nearby_pois_count = self._count_nearby_pois(incident, cfg)
-        nearby_duplicates_count = self._count_nearby_duplicates(incident, cfg)
+        nearby_duplicates_count = self._count_nearby_duplicates(
+            incident, cfg, visual_dedup=visual_dedup
+        )
 
         severity_score = self.SEVERITY_SCORES.get(incident.severity, 50)
         age_score = self._calculate_age_score(incident.created_at)
@@ -193,6 +201,12 @@ class PriorityService:
         incident.priority_score = score
         incident.priority = priority_level
         incident.updated_at = datetime.utcnow()
+
+        # Persistir el desglose exacto (con dedup visual) para que la vista de
+        # detalle no tenga que recalcularlo en cada apertura.
+        incident.priority_breakdown = self.calculate_priority_breakdown(
+            incident, visual_dedup=True
+        )
 
         # Registrar en bitácora (P-07)
         audit_entry = IncidentAuditLog(
@@ -343,10 +357,19 @@ class PriorityService:
             # Si no hay tabla POI o hay error, retornar 0
             return 0
     
-    def _count_nearby_duplicates(self, incident: Incident, cfg: Optional[PrioritySetting] = None) -> int:
+    def _count_nearby_duplicates(
+        self,
+        incident: Incident,
+        cfg: Optional[PrioritySetting] = None,
+        visual_dedup: bool = True,
+    ) -> int:
         """
         Cuenta reportes similares cercanos para prioridad.
-        Se aplica filtro visual para evitar falsos duplicados por cercania.
+
+        Con [visual_dedup]=True se aplica filtro visual (descarga de imágenes +
+        embedding ResNet50) para evitar falsos duplicados por cercanía; es
+        costoso y no debe correr en el path de una petición interactiva. Con
+        False devuelve el conteo espacial de candidatos, sin red ni ML.
         """
         radius_meters = self._duplicate_radius_meters(cfg)
         time_window_days = self._duplicate_window_days(cfg)
@@ -369,6 +392,10 @@ class PriorityService:
 
             if not candidate_reports:
                 return 0
+
+            # Modo rápido: solo cercanía espacial, sin descargas ni embeddings.
+            if not visual_dedup:
+                return len(candidate_reports)
 
             from services.deduplication_service import load_image_from_url, compute_visual_similarity
 

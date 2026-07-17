@@ -3,7 +3,7 @@ Modelo de Incidente
 """
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean, JSON, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geography
 import enum
@@ -60,6 +60,11 @@ class Incident(Base):
     # Priorización
     priority = Column(SQLEnum(PriorityLevel), nullable=False, index=True)
     priority_score = Column(Float, nullable=True)  # Score calculado por algoritmo
+    # Desglose de factores persistido: evita recalcular (descarga de imágenes +
+    # similitud visual ResNet50) en cada apertura del incidente. Se rellena al
+    # recalcular la prioridad o vía backfill. Null => se computa un desglose
+    # rápido (sin dedup visual) al vuelo.
+    priority_breakdown = Column(JSON, nullable=True)
     
     # Estado
     status = Column(SQLEnum(IncidentStatus), default=IncidentStatus.OPEN, nullable=False, index=True)

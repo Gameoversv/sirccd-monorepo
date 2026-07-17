@@ -36,6 +36,16 @@ import {
 import { MiniMap } from '@/components/MiniMap';
 import i18n from '@/i18n/config';
 
+// Las URLs firmadas del API son relativas (/api/v1/incidents/.../image). En
+// <img>/<a> se resuelven contra el origen del frontend, no contra el backend,
+// así que hay que anteponer el origen del API (NEXT_PUBLIC_API_URL sin /api/v1).
+const MEDIA_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1').replace(/\/api\/v1\/?$/, '');
+
+function resolveMediaUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  return url.startsWith('http') ? url : `${MEDIA_BASE}${url}`;
+}
+
 interface PageProps {
   params: { id: string };
 }
@@ -275,12 +285,12 @@ export default function IncidentDetailPage({ params }: PageProps) {
                   <div className="relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={incident.before_image_url}
+                      src={resolveMediaUrl(incident.before_image_url)}
                       alt={t('incidents.detail.before')}
                       className="w-full h-52 object-cover rounded-lg"
                     />
                     <a
-                      href={incident.before_image_url}
+                      href={resolveMediaUrl(incident.before_image_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-md hover:bg-white shadow-sm"
@@ -305,12 +315,12 @@ export default function IncidentDetailPage({ params }: PageProps) {
                   <div className="relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={incident.after_image_url}
+                      src={resolveMediaUrl(incident.after_image_url)}
                       alt={t('incidents.detail.after')}
                       className="w-full h-52 object-cover rounded-lg"
                     />
                     <a
-                      href={incident.after_image_url}
+                      href={resolveMediaUrl(incident.after_image_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-md hover:bg-white shadow-sm"

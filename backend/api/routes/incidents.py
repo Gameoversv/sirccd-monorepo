@@ -470,8 +470,12 @@ def recalculate_priority(
         # Determinar si hubo cambio
         changed = (old_priority != new_priority) or (old_score != new_score)
         
-        factors = priority_service.calculate_priority_breakdown(updated_incident)
-        
+        # recalculate_priority ya persistió el desglose exacto; reutilizarlo
+        # evita una segunda pasada de dedup visual.
+        factors = updated_incident.priority_breakdown or priority_service.calculate_priority_breakdown(
+            updated_incident, visual_dedup=False
+        )
+
         return RecalculatePriorityResponse(
             incident_id=incident_id,
             old_priority=old_priority,
@@ -500,14 +504,38 @@ def get_priority_breakdown(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_supervisor)
 ):
-    """Obtiene el desglose de prioridad sin recalcular ni guardar en BD"""
+    """
+    Obtiene el desglose de prioridad.
+
+    Devuelve el desglose persistido (calculado con dedup visual al recalcular la
+    prioridad o vía backfill). Si el incidente aún no lo tiene, computa un
+    desglose rápido al vuelo (sin descargas de imágenes ni ResNet50) para no
+    bloquear la apertura del incidente; ese factor de duplicados es aproximado
+    hasta el próximo recálculo.
+    """
     priority_service = get_priority_service(db)
     incident = db.query(Incident).filter(Incident.id == incident_id).first()
     if not incident:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Incidente {incident_id} no encontrado")
     try:
-        factors = priority_service.calculate_priority_breakdown(incident)
-        return {"incident_id": incident_id, "priority": incident.priority, "priority_score": incident.priority_score, "factors": factors}
+        stored = incident.priority_breakdown
+        if stored:
+            return {
+                "incident_id": incident_id,
+                "priority": incident.priority,
+                "priority_score": incident.priority_score,
+                "factors": stored,
+                "stale": False,
+            }
+
+        factors = priority_service.calculate_priority_breakdown(incident, visual_dedup=False)
+        return {
+            "incident_id": incident_id,
+            "priority": incident.priority,
+            "priority_score": incident.priority_score,
+            "factors": factors,
+            "stale": True,
+        }
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
