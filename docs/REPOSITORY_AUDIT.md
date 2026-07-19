@@ -117,8 +117,8 @@ graph TD
 | Problema | Ubicación | Detalle |
 |---|---|---|
 | `README.md` raíz desactualizado | `README.md` | Referencia `docker-compose.minio.yml` y `docs/` en la raíz (ya no existen ahí) y describe `dev.ps1`/`dev-stop.ps1` como archivos raíz cuando en realidad viven en `scripts/`. |
-| Dataset ajeno dentro de `ml/` | `ml/datasets/pois_google/` | Contiene datos semilla de PostgreSQL (GeoJSON + `pois_insert.sql`) para la tabla `pois`, no datos de entrenamiento ML. Está fuera de lugar temático. |
-| Cuatro scripts de arranque de backend redundantes | `backend/start.py`, `start_server.py`, `start.sh`, `start.bat` | Ninguno es referenciado por el `Dockerfile` (que invoca `uvicorn` directamente) ni entre sí. Candidatos a consolidación, pendiente confirmar si algún flujo de desarrollador local depende de ellos. |
+| Dataset ajeno dentro de `ml/` | ~~`ml/datasets/pois_google/`~~ → `backend/db/seed/pois_google/` | Contenía datos semilla de PostgreSQL (GeoJSON + `pois_insert.sql`) para la tabla `pois`, no datos de entrenamiento ML. **Reubicado en Fase 4** — ver sección 9. |
+| ~~Cuatro scripts de arranque de backend redundantes~~ | ~~`backend/start.py`, `start_server.py`, `start.sh`, `start.bat`~~ | **Resuelto en Fase 4**: eliminados `start.py` y `start_server.py` (ninguno referenciado por Dockerfile/CI; solo un `print()` en `tests/manual/test_auth_manual.py` sugería `python start_server.py`, corregido a `python main.py`). Se conservaron `start.sh` y `start.bat` — son los scripts equivalentes por sistema operativo, con lógica de setup de entorno virtual + `.env` + instalación de dependencias, sin solapamiento entre sí. |
 | Utilidades del frontend en dos ubicaciones paralelas | `frontend/src/lib/` vs `frontend/src/utils/` | `lib/` tiene `exifGps.ts`, `geocode.ts`; `utils/` tiene `cn.ts`, `labels.ts`. No hay duplicación literal, pero la separación no es evidente para un desarrollador nuevo. |
 | Carpeta `src/pages/` residual | `frontend/src/pages/` | Vacía salvo `.gitkeep`, remanente del Pages Router (proyecto usa App Router). Sigue referenciada en el glob de contenido de `tailwind.config.js`. |
 | Carpetas de infraestructura vacías | `infra/ci-cd/`, `infra/docker/` | Sin contenido real; o se plantea qué van a contener, o se elimina el placeholder. |
@@ -132,7 +132,7 @@ graph TD
 |---|---|---|---|
 | `QueueService` y helpers en desuso | *(ya resuelto)* | `clear_queue()` fue eliminado en la limpieza previa de esta sesión tras confirmar cero referencias. | — (ya aplicado) |
 | Scripts de mantenimiento con backfills antiguos | `backend/scripts/maintenance/backfill_priority_breakdown.py`, `backfill_report_duplicate_of.py`, `backfill_merged_report_links.py` | Ligados a migraciones ya aplicadas (007/008), sin referencia desde otro código ni desde `scripts/maintenance/README.md`. | Confirmar contra el historial de despliegues en Railway si ya se ejecutaron en producción antes de borrar. |
-| Cuatro scripts de arranque redundantes en backend | Ver sección 5 | No usados por Docker ni CI. | Confirmar con el equipo si algún flujo local (fuera de este repo, ej. documentación externa) los referencia. |
+| ~~Cuatro scripts de arranque redundantes en backend~~ | ~~Ver sección 5~~ | ~~No usados por Docker ni CI.~~ | **Resuelto en Fase 4** — ver sección 5. |
 | Notebooks de ML superados | `ml/notebooks/SIRCCD_Training_v3_FromScratch.ipynb`, `_v4_`, posiblemente `_v5_` es el vigente | Nomenclatura versionada sugiere que v3/v4 quedaron obsoletos al llegar v5. | Confirmar con quien entrena el modelo cuál versión sigue siendo de referencia antes de archivar/eliminar. |
 | `tests/pytest.log` | `backend/tests/pytest.log` | Artefacto de ejecución local. **Corrección tras verificar con `git ls-files`**: no estaba trackeado por git (ya cubierto por `*.log` en `.gitignore`) — el hallazgo original de este documento decía "commiteado por accidente", lo cual era incorrecto; era solo clutter en disco local. | Resuelto en Fase 4: archivo eliminado del disco (no requería `git rm`). |
 | `frontend/tsconfig.tsbuildinfo` | raíz de `frontend/` | Artefacto de build de TypeScript, normalmente no se versiona. | Confirmar que `.gitignore` no lo excluye ya por error; si no está ignorado, añadirlo y eliminar el tracked. |
@@ -143,7 +143,7 @@ graph TD
 
 | Archivo/carpeta | Ubicación actual | Ubicación esperada | Nota |
 |---|---|---|---|
-| `ml/datasets/pois_google/*.geojson`, `pois_insert.sql` | `ml/datasets/pois_google/` | Algo como `backend/db/seed/` o `scripts/seed/` | Es dato semilla de base de datos (POIs: hospitales, escuelas, etc.), no dataset de entrenamiento. |
+| `pois_google/*.geojson`, `pois_insert.sql` | ~~`ml/datasets/pois_google/`~~ | `backend/db/seed/pois_google/` ✅ movido en Fase 4 | Era dato semilla de base de datos (POIs: hospitales, escuelas, etc.), no dataset de entrenamiento. |
 | `docker-compose.minio.yml` | `infra/compose/docker-compose.minio.yml` | Correcto según estructura actual, pero el `README.md` raíz lo describe como si estuviera en la raíz — desalineación de documentación, no del archivo en sí. |
 | Scripts de arranque de backend | `backend/start.py`, `start_server.py`, `start.sh`, `start.bat` | Si se mantienen, agruparlos bajo `backend/scripts/dev/` para diferenciarlos de los scripts de mantenimiento/verificación. |
 
@@ -154,7 +154,7 @@ No se encontraron archivos con patrones típicos de copias temporales (`-old`, `
 | Riesgo | Severidad | Detalle |
 |---|---|---|
 | `SECRET_KEY` con valor por defecto hardcodeado | Alto (a validar) | `backend/core/config.py` define un default con comentario `# CAMBIAR en producción!`. Debe confirmarse que Railway efectivamente sobreescribe esta variable — **no se debe asumir que está resuelto sin verificar las variables de entorno reales del entorno de producción**. |
-| `.env.example` incompleto | Medio | Faltan en `.env.example` variables que el backend sí lee de `core/config.py`: `MINIO_ENDPOINT`, `MINIO_SECURE`, `MINIO_BUCKET_IMAGES`, `MINIO_BUCKET_MODELS`, `MINIO_SSE_ENABLED`, `CONFIDENCE_THRESHOLD`, `IOU_THRESHOLD`, `FAISS_INDEX_PATH`, variables `DEDUPLICATION_*`/`PRIORITY_*`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `SMTP_*`, `SLA_*`, `LOG_LEVEL`, `HOST`, `PORT`, `DEBUG`, `ALLOWED_ORIGINS`. Un desarrollador nuevo no puede levantar el entorno completo solo con el `.env.example` actual. |
+| ~~`.env.example` incompleto~~ | ~~Medio~~ | **Resuelto en Fase 4** — `.env.example` ahora incluye las ~35 variables que `core/config.py` realmente lee, con nombres y defaults verificados directamente contra el código (no aproximados), agrupadas por área y con valores ficticios/seguros. |
 | Protección de rutas del frontend solo en cliente | Medio | No existe `middleware.ts` de Next.js; la protección de `/dashboard/*` depende enteramente del hook `useAuth()` en el cliente. Cualquier fuga de HTML/datos antes de la hidratación de React debe ser evaluada por el equipo de seguridad. |
 | Ausencia de CI para frontend, mobile y ml | Medio | Solo existe `backend-tests.yml`. Cambios en frontend/mobile se despliegan sin verificación automática de tests/build en PR. |
 | Ausencia de workflow de despliegue versionado | Bajo-Medio | `docker-compose.prod.yml` existe pero no hay un workflow de CI/CD que lo use — el despliegue a Railway parece manual o gestionado fuera del repo. |
@@ -174,9 +174,9 @@ Clasificadas según el criterio pedido: **Seguro**, **Riesgo bajo**, **Requiere 
 
 ### Riesgo bajo (requiere una verificación rápida antes de aplicar)
 
-- Mover `ml/datasets/pois_google/` a una ubicación de seed de base de datos (ej. `backend/db/seed/` o `scripts/seed/`), actualizando cualquier referencia a esa ruta en scripts de importación.
-- Completar `.env.example` (raíz) con las variables detectadas como faltantes (sección 8), usando únicamente valores ficticios.
-- Consolidar los 4 scripts de arranque de backend (`start.py`, `start_server.py`, `start.sh`, `start.bat`) en uno o dos, tras confirmar con grep que ningún otro script/documentación los invoca por nombre.
+- ✅ Mover `ml/datasets/pois_google/` a una ubicación de seed de base de datos — hecho en Fase 4, ahora en `backend/db/seed/pois_google/`. No se encontraron referencias de código a la ruta anterior (solo esta documentación), por lo que no hizo falta actualizar scripts de importación.
+- ✅ Completar `.env.example` (raíz) con las variables detectadas como faltantes (sección 8) — hecho en Fase 4.
+- ✅ Consolidar los 4 scripts de arranque de backend — hecho en Fase 4. Eliminados `start.py` y `start_server.py` (redundantes, sin referencias externas reales); conservados `start.sh`/`start.bat` como scripts equivalentes por sistema operativo.
 
 ### Requiere validación manual (no ejecutar sin confirmación humana)
 

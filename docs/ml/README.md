@@ -27,7 +27,6 @@ Ultralytics (YOLO), PyTorch/torchvision, Albumentations (aumentaciones), FAISS, 
 | `ml/scripts/` | `download_from_minio.py`, `upload_to_minio.py`, `verify_environment.py` |
 | `ml/docs/` | 9 documentos existentes (guías de Colab, diagnóstico de modelo, optimización de entrenamiento) — **no se duplican aquí**, ver índice abajo |
 | `ml/deduplication/`, `embeddings/`, `inference/`, `train/`, `utils/` | Carpetas planificadas, actualmente vacías (solo `.gitkeep`) |
-| `ml/datasets/pois_google/` | Dato semilla de base de datos (POIs), no dataset de entrenamiento — ver nota de reubicación en [REPOSITORY_AUDIT.md](../REPOSITORY_AUDIT.md#7-archivos-potencialmente-mal-ubicados) |
 
 ## Documentación de entrenamiento existente
 

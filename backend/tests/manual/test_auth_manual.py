@@ -30,7 +30,7 @@ def test_auth_flow():
  print(f" Servidor no responde")
  print(f"\n Iniciar servidor con:")
  print(f" cd backend")
- print(f" python start_server.py")
+ print(f" python main.py")
  sys.exit(1)
  
  # 1. Registro
@@ -214,7 +214,7 @@ def test_auth_flow():
  print(f"\n Error de conexión: {e}")
  print(f"\n Asegúrate de que el servidor esté corriendo:")
  print(f" cd backend")
- print(f" python start_server.py")
+ print(f" python main.py")
  return False
  except Exception as e:
  print(f"\n Error inesperado: {e}")

@@ -34,21 +34,29 @@ Fuente: `backend/core/config.py` (clase `Settings`).
 | `ROBOFLOW_MODEL_ID` | Identificador del modelo en Roboflow | No (default `rd-roaddataset/5`) | `rd-roaddataset/5` | Todos | Usa default |
 | `CONFIDENCE_THRESHOLD` | Umbral de confianza mínima de detección | No (default `0.4`) | `0.4` | Todos | Usa default |
 | `IOU_THRESHOLD` | Umbral de IoU para supresión de duplicados en detección | No (default `0.4`) | `0.4` | Todos | Usa default |
-| `FAISS_INDEX_PATH` | Ruta del índice FAISS para deduplicación visual | No | `storage/faiss_index` | Todos | Usa default local |
-| `DEDUPLICATION_*` (varias) | Modelo visual, pesos y umbrales del pipeline de deduplicación | No | Ver `core/config.py` | Todos | Usa defaults |
-| `VISUAL_SIMILARITY_THRESHOLD` | Umbral de similitud visual para considerar duplicado | No | Ver `core/config.py` | Todos | Usa default |
-| `GEO_DISTANCE_THRESHOLD` | Distancia máxima (m) para considerar duplicado geográfico | No | Ver `core/config.py` | Todos | Usa default |
-| `DEDUP_TIME_WINDOW_DAYS` | Ventana de tiempo para deduplicación | No | Ver `core/config.py` | Todos | Usa default |
-| `DEDUP_VISUAL_GATE_THRESHOLD` | Umbral de corte previo a comparación visual completa | No | Ver `core/config.py` | Todos | Usa default |
-| `PRIORITY_*_RADIUS` / `PRIORITY_*_WINDOW` (varias) | Radios/ventanas usados en el cálculo de prioridad por proximidad a POIs | No | Ver `core/config.py` | Todos | Usa defaults |
+| `FAISS_INDEX_PATH` | Ruta del índice FAISS para deduplicación visual | No (default `storage/faiss_index.bin`) | `storage/faiss_index.bin` | Todos | Usa default local |
+| `DEDUPLICATION_VISUAL_MODEL` | Modelo primario de embeddings visuales | No (default `resnet50`) | `resnet50` | Todos | Usa default |
+| `DEDUPLICATION_SECONDARY_MODEL` | Modelo secundario de embeddings (fusión) | No (default `clip-vit-base-patch32`) | `clip-vit-base-patch32` | Todos | Usa default |
+| `DEDUPLICATION_ALLOW_HISTOGRAM_FALLBACK` | Permite fallback a histograma de color si los modelos fallan | No (default `True`) | `True` | Todos | Usa default |
+| `VISUAL_SIMILARITY_THRESHOLD` | Distancia L2 máxima para considerar duplicado visual | No (default `0.15`) | `0.15` | Todos | Usa default |
+| `GEO_DISTANCE_THRESHOLD` | Distancia máxima (m) para considerar duplicado geográfico | No (default `50.0`) | `50.0` | Todos | Usa default |
+| `DEDUP_TIME_WINDOW_DAYS` | Ventana de tiempo (días) para deduplicación | No (default `30`) | `30` | Todos | Usa default |
+| `DEDUP_VISUAL_GATE_THRESHOLD` | Umbral de corte previo a comparación visual completa | No (default `0.82`) | `0.82` | Todos | Usa default |
+| `DEDUPLICATION_SCORE_THRESHOLD` | Score fusionado mínimo para marcar como duplicado | No (default `0.72`) | `0.72` | Todos | Usa default |
+| `DEDUPLICATION_VISUAL_WEIGHT_PRIMARY` / `_SECONDARY` | Peso de cada modelo visual en el score fusionado | No (default `0.45` / `0.25`) | — | Todos | Usa defaults |
+| `DEDUPLICATION_GEO_WEIGHT` | Peso de la señal geográfica en el score fusionado | No (default `0.20`) | `0.20` | Todos | Usa default |
+| `DEDUPLICATION_TEXT_WEIGHT` | Peso de la señal textual (descripción) en el score fusionado | No (default `0.10`) | `0.10` | Todos | Usa default |
+| `PRIORITY_POI_RADIUS_METERS` | Radio (m) para buscar POIs cercanos al calcular prioridad | No (default `500`) | `500` | Todos | Usa default |
+| `PRIORITY_DUPLICATE_RADIUS_METERS` | Radio (m) para buscar duplicados al calcular prioridad | No (default `100`) | `100` | Todos | Usa default |
+| `PRIORITY_DUPLICATE_TIME_WINDOW_DAYS` | Ventana temporal (días) para duplicados en el cálculo de prioridad | No (default `30`) | `30` | Todos | Usa default |
 | `FIELD_ENCRYPTION_KEY` | Clave Fernet para cifrado de campos sensibles en BD (ej. teléfono) | Sí en producción | `CAMBIAR_FERNET_KEY_AQUI` (generar con `Fernet.generate_key()`) | Prod | Datos sensibles quedan sin cifrar en BD |
 | `SECRET_KEY` | Clave de firma JWT | **Sí, crítico** | `CAMBIAR_JWT_SECRET_AQUI` (generar con `openssl rand -hex 32`) | Todos | **`core/config.py` trae un valor por defecto hardcodeado — debe confirmarse que producción lo sobreescribe** (ver [SECURITY.md](SECURITY.md)) |
 | `ALGORITHM` | Algoritmo de firma JWT | No (default `HS256`) | `HS256` | Todos | Usa default |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Minutos de validez del access token | No (default `30`) | `30` | Todos | Usa default |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM` | Configuración de correo saliente para alertas SLA | No (solo si `SMTP_ENABLED=True`) | — | Prod (opcional) | Sin estas variables, las alertas SLA por correo no se envían |
 | `SMTP_ENABLED` | Activa el envío de alertas SLA por correo | No (default `False`) | `False` | Prod (opcional) | Alertas SLA solo visibles en el dashboard, no por correo |
-| `SLA_WARNING_HOURS_BEFORE` | Horas antes del vencimiento para alertar | No | Ver `core/config.py` | Todos | Usa default |
-| `SLA_CHECK_INTERVAL_MINUTES` | Frecuencia del chequeo periódico de SLA | No | Ver `core/config.py` | Todos | Usa default |
+| `SLA_WARNING_HOURS_BEFORE` | Horas antes del vencimiento para alertar | No (default `4.0`) | `4.0` | Todos | Usa default |
+| `SLA_CHECK_INTERVAL_MINUTES` | Frecuencia del chequeo periódico de SLA | No (default `30`) | `30` | Todos | Usa default |
 | `LOG_LEVEL` | Nivel de logging | No (default `INFO`) | `INFO` | Todos | Usa default |
 | `DOMAIN` | Dominio de producción (usado en plantillas de despliegue) | Sí en producción | `sirccd.example.com` | Prod | Solo relevante para `docker-compose.prod.yml`/proxy |
 | `ADMIN_USERNAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_FULL_NAME` | Usadas únicamente por `scripts/seed_admin.py` para crear el admin inicial | Sí, al ejecutar el script | — | Setup inicial | El script falla explícitamente si `ADMIN_PASSWORD` no está definida (no hay contraseña por defecto) |
