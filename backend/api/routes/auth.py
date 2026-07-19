@@ -144,7 +144,7 @@ async def login(
     user.last_login = datetime.utcnow()
     db.commit()
     
-    # Crear token de acceso
+    # Crear token de acceso y refresh token
     access_token = create_access_token(
         subject=user.id,
         additional_claims={
@@ -152,11 +152,13 @@ async def login(
             "username": user.username
         }
     )
-    
+    refresh_token = create_refresh_token(subject=user.id)
+
     return LoginResponse(
         access_token=access_token,
         token_type="bearer",
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convertir a segundos
+        refresh_token=refresh_token,
         user_id=user.id,
         username=user.username,
         email=user.email,

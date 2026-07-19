@@ -44,18 +44,20 @@ class Token(BaseModel):
 # Schema para respuesta de login completa
 class LoginResponse(Token):
     """Schema de respuesta de login incluyendo datos del usuario"""
+    refresh_token: str = Field(..., description="Refresh token JWT (válido 7 días)")
     user_id: int = Field(..., description="ID del usuario")
     username: str = Field(..., description="Nombre de usuario")
     email: EmailStr = Field(..., description="Email del usuario")
     role: UserRole = Field(..., description="Rol del usuario")
     full_name: Optional[str] = Field(None, description="Nombre completo")
-    
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                 "token_type": "bearer",
                 "expires_in": 1800,
+                "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                 "user_id": 1,
                 "username": "juanperez",
                 "email": "juan.perez@example.com",
