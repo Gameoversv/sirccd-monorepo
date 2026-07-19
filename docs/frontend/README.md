@@ -34,6 +34,3 @@ npm run lint           # next lint
 npx playwright test   # pruebas E2E
 ```
 
-## Nota conocida
-
-`reportsService.deleteReport` (`src/services/reportsService.ts:54`) llama a `DELETE /reports/{id}`, mientras todos los demás endpoints de reportes usan el prefijo `/reportes` (español) definido en el backend (`api/routes/reports.py`, prefijo `/reportes`). Esto es probablemente un bug — el endpoint `/reports/{id}` no existe en el backend documentado en [../backend/API.md](../backend/API.md). No se corrigió en esta fase de documentación (cambiar código de negocio está fuera de alcance de "documentar y organizar" sin confirmación); ver seguimiento en [../REPOSITORY_AUDIT.md](../REPOSITORY_AUDIT.md).

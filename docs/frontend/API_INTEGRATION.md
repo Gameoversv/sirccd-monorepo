@@ -57,10 +57,10 @@ Correspondencia completa con [../backend/API.md](../backend/API.md).
 | `getReports(filters, page, perPage)` | `GET /reportes?...` | Lista paginada/filtrada de reportes propios |
 | `getReport(id)` | `GET /reportes/{id}` | Detalle de un reporte |
 | `createReport(formData)` | `POST /reportes` (multipart) | Crea nuevo reporte ciudadano |
-| `updateReport(id, data)` | `PATCH /reportes/{id}` | Actualización parcial |
-| `deleteReport(id)` | `DELETE /reports/{id}` | ⚠️ **Ruta inconsistente** — usa `/reports` en vez de `/reportes`. El backend documentado en [../backend/API.md](../backend/API.md) no expone `DELETE /reportes/{id}` en absoluto; este endpoint probablemente no funciona tal como está. Ver `src/services/reportsService.ts:54`. No corregido en esta fase — requiere decisión del equipo (¿implementar el endpoint en el backend, o corregir la ruta si ya existe con otro nombre?) |
 | `checkDuplicate(formData)` | `POST /deduplication/check` (multipart) | Detecta duplicados a partir de una imagen |
 | `verifyImage(file)` | `POST /reportes/verify-image` (multipart) | Chequeo de privacidad rostro/placa pre-subida |
+
+> `updateReport`/`deleteReport` existían en este servicio pero fueron eliminados: apuntaban a endpoints inexistentes en el backend (`PATCH /reportes/{id}` genérico y `DELETE /reports/{id}` — el backend solo expone `PATCH /reportes/{id}/review`) y no se usaban desde ninguna página. Código huérfano de una feature nunca conectada a la UI, no un bug activo.
 
 ## usersService
 

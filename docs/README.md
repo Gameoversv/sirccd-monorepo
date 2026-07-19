@@ -62,8 +62,8 @@ Documentos que quedan fuera del alcance de esta fase, a validar con el equipo an
 - `diagrams/` adicionales más allá de los ya incluidos en ARCHITECTURE.md/SCHEMA.md
 - Documentación operativa de Railway (fuera del repositorio, pendiente de confirmación con el equipo)
 
-## Hallazgos que requieren decisión del equipo
+## Hallazgos resueltos en esta sesión
 
-- `reportsService.deleteReport` (frontend) llama a un endpoint (`DELETE /reports/{id}`) que no existe en el backend documentado — ver [frontend/API_INTEGRATION.md](frontend/API_INTEGRATION.md).
-- `SECRET_KEY` con valor por defecto en código — confirmar que producción lo sobreescribe, ver [SECURITY.md](SECURITY.md).
-- Resto de hallazgos clasificados por severidad en [REPOSITORY_AUDIT.md](REPOSITORY_AUDIT.md).
+- ~~`reportsService.deleteReport`/`updateReport` apuntaban a endpoints inexistentes~~ — eran código muerto, nunca usado desde ninguna página; eliminados. Ver [frontend/API_INTEGRATION.md](frontend/API_INTEGRATION.md).
+- ~~`SECRET_KEY` con valor por defecto en código~~ — confirmado que producción usa un valor real distinto del default. Ver [SECURITY.md](SECURITY.md).
+- Resto de hallazgos, clasificados por severidad, en [REPOSITORY_AUDIT.md](REPOSITORY_AUDIT.md).

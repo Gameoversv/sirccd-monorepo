@@ -42,18 +42,6 @@ export const reportsService = {
     return response.data;
   },
 
-  async updateReport(id: number, data: Partial<Report>): Promise<Report> {
-    const response = await apiClient.patch<Report>(`/reportes/${id}`, data);
-    return response.data;
-  },
-
-  /**
-   * Delete report
-   */
-  async deleteReport(id: number): Promise<void> {
-    await apiClient.delete(`/reports/${id}`);
-  },
-
   /**
    * Check for duplicates
    */
