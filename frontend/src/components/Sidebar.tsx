@@ -11,6 +11,7 @@ import {
   Settings2,
   PlusCircle,
   ShieldCheck,
+  HelpCircle,
 } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { UserRole } from '@/types';
@@ -34,6 +35,7 @@ export function Sidebar() {
     { href: '/dashboard/reports', label: t('nav.viewReports'), icon: FileText },
     { href: '/dashboard/users', label: t('nav.users'), icon: Users, roles: [UserRole.ADMIN, UserRole.SUPERVISOR] },
     { href: '/dashboard/settings', label: t('settings.title'), icon: Settings2, roles: [UserRole.ADMIN] },
+    { href: '/guia', label: t('guide.title'), icon: HelpCircle },
   ];
 
   const visible = items.filter(i => !i.roles || (user?.role && i.roles.includes(user.role)));

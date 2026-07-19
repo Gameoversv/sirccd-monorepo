@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LogOut, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
+import { HelpCircle, LogOut, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -30,6 +31,14 @@ export function PortalTopbar() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <Link
+            href="/guia"
+            aria-label={t('guide.title')}
+            title={t('guide.title')}
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Link>
           <LanguageSwitcher />
           <ThemeToggle />
           <div className="mx-1 h-5 w-px bg-border" />

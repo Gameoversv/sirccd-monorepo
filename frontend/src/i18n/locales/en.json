@@ -504,5 +504,77 @@
       "approved": "Approved",
       "rejected": "Rejected"
     }
+  },
+  "guide": {
+    "title": "User guide",
+    "subtitle": "How to use SIRCCD based on your role",
+    "back": "Back",
+    "tabs": {
+      "citizen": "Citizen",
+      "staff": "Municipal staff"
+    },
+    "citizen": {
+      "intro": "As a citizen you can report road damage and track your reports.",
+      "steps": {
+        "1": {
+          "title": "Create an account or sign in",
+          "body": "Register with your email or sign in if you already have an account."
+        },
+        "2": {
+          "title": "Report damage",
+          "body": "Tap \"Report damage\", take or upload a photo of the pothole or crack. The system detects type and severity automatically."
+        },
+        "3": {
+          "title": "Confirm the location",
+          "body": "Check that the map pin marks the correct spot of the damage."
+        },
+        "4": {
+          "title": "Track progress",
+          "body": "In your portal you'll see status: Analyzing, Pending, Approved, or Rejected."
+        },
+        "5": {
+          "title": "Check the map",
+          "body": "Review the locations of all your reports on your portal's map."
+        }
+      }
+    },
+    "staff": {
+      "intro": "Supervisors and admins manage incidents, reports, and SLA from the dashboard.",
+      "steps": {
+        "1": {
+          "title": "Dashboard",
+          "body": "Overview with metrics on active incidents and reports."
+        },
+        "2": {
+          "title": "Incidents",
+          "body": "List and filter incidents by severity, priority score, status, and date. Open one for details and status timeline."
+        },
+        "3": {
+          "title": "Reports",
+          "body": "Review citizen reports and create manual reports from \"Create Report\"."
+        },
+        "4": {
+          "title": "SLA",
+          "body": "Monitor response and resolution time compliance."
+        },
+        "5": {
+          "title": "Users",
+          "body": "Supervisor and admin only: manage staff accounts and roles."
+        },
+        "6": {
+          "title": "Settings",
+          "body": "Admin only: general system settings."
+        }
+      }
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "q1": "What if my report gets rejected?",
+      "a1": "The team reviewed the photo and determined it doesn't correspond to a valid road damage, or is a duplicate.",
+      "q2": "Can I report without a photo?",
+      "a2": "No, a photo is required for the system to detect the type and severity of the damage.",
+      "q3": "How do I change the language?",
+      "a3": "Use the language switcher in the top bar."
+    }
   }
 }

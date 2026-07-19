@@ -502,5 +502,77 @@
       "approved": "Aprobado",
       "rejected": "Rechazado"
     }
+  },
+  "guide": {
+    "title": "Guía de uso",
+    "subtitle": "Cómo usar SIRCCD según tu rol",
+    "back": "Volver",
+    "tabs": {
+      "citizen": "Ciudadano",
+      "staff": "Personal municipal"
+    },
+    "citizen": {
+      "intro": "Como ciudadano puedes reportar daños viales y dar seguimiento a tus reportes.",
+      "steps": {
+        "1": {
+          "title": "Crea una cuenta o inicia sesión",
+          "body": "Regístrate con tu correo o entra si ya tienes cuenta."
+        },
+        "2": {
+          "title": "Reporta un daño",
+          "body": "Toca \"Reportar daño\", toma o sube una foto del bache o grieta. El sistema detecta tipo y severidad automáticamente."
+        },
+        "3": {
+          "title": "Confirma la ubicación",
+          "body": "Verifica que el pin en el mapa marque el lugar correcto del daño."
+        },
+        "4": {
+          "title": "Da seguimiento",
+          "body": "En tu portal verás el estado: Analizando, Pendiente, Aprobado o Rechazado."
+        },
+        "5": {
+          "title": "Consulta el mapa",
+          "body": "Revisa las ubicaciones de todos tus reportes en el mapa de tu portal."
+        }
+      }
+    },
+    "staff": {
+      "intro": "Supervisores y administradores gestionan incidentes, reportes y SLA desde el panel.",
+      "steps": {
+        "1": {
+          "title": "Dashboard",
+          "body": "Vista general con métricas de incidentes y reportes activos."
+        },
+        "2": {
+          "title": "Incidentes",
+          "body": "Lista y filtra incidentes por severidad, score de prioridad, estado y fecha. Abre uno para ver detalle y línea de tiempo de estado."
+        },
+        "3": {
+          "title": "Reportes",
+          "body": "Consulta reportes ciudadanos y crea reportes manuales desde \"Crear Reporte\"."
+        },
+        "4": {
+          "title": "SLA",
+          "body": "Monitorea cumplimiento de tiempos de respuesta y resolución."
+        },
+        "5": {
+          "title": "Usuarios",
+          "body": "Solo supervisor y admin: gestiona cuentas y roles del personal."
+        },
+        "6": {
+          "title": "Configuración",
+          "body": "Solo admin: ajustes generales del sistema."
+        }
+      }
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "q1": "¿Qué pasa si mi reporte es rechazado?",
+      "a1": "El equipo revisó la foto y determinó que no corresponde a un daño vial válido o está duplicado.",
+      "q2": "¿Puedo reportar sin foto?",
+      "a2": "No, la foto es necesaria para que el sistema detecte tipo y severidad del daño.",
+      "q3": "¿Cómo cambio el idioma?",
+      "a3": "Usa el selector de idioma en la barra superior."
+    }
   }
 }
