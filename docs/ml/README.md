@@ -23,7 +23,7 @@ Ultralytics (YOLO), PyTorch/torchvision, Albumentations (aumentaciones), FAISS, 
 |---|---|
 | `ml/anonymization/` | Pipeline activo de anonimización: `train.py`, `inference.py`, `data.yaml`, scripts propios de dataset (WIDERFace, placas), documentación en `ml/anonymization/docs/` |
 | `ml/models/baseline/` | Métricas/configuración de una corrida base de entrenamiento (YOLOv8m, mAP50 ~0.698–0.795 según el documento de referencia) — sin pesos `.pt` versionados en git |
-| `ml/notebooks/` | 6 notebooks de Colab, incluyendo una cadena versionada de entrenamiento (`v3_FromScratch`, `v4_YOLO11l`, `v5_H100_Optimized`) sin indicación explícita de cuál es la vigente |
+| `ml/notebooks/` | 4 notebooks activos + `archive/` con 2 archivados. **Vigente confirmado (2026-07-19): `SIRCCD_Training_v5_H100_Optimized.ipynb`.** `v3_FromScratch` y `v4_YOLO11l` movidos a `ml/notebooks/archive/` por quedar superados. |
 | `ml/scripts/` | `download_from_minio.py`, `upload_to_minio.py`, `verify_environment.py` |
 | `ml/docs/` | 9 documentos existentes (guías de Colab, diagnóstico de modelo, optimización de entrenamiento) — **no se duplican aquí**, ver índice abajo |
 | `ml/deduplication/`, `embeddings/`, `inference/`, `train/`, `utils/` | Carpetas planificadas, actualmente vacías (solo `.gitkeep`) |

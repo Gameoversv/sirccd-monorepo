@@ -122,7 +122,7 @@ graph TD
 | Utilidades del frontend en dos ubicaciones paralelas | `frontend/src/lib/` vs `frontend/src/utils/` | `lib/` tiene `exifGps.ts`, `geocode.ts`; `utils/` tiene `cn.ts`, `labels.ts`. No hay duplicación literal, pero la separación no es evidente para un desarrollador nuevo. |
 | Carpeta `src/pages/` residual | `frontend/src/pages/` | Vacía salvo `.gitkeep`, remanente del Pages Router (proyecto usa App Router). Sigue referenciada en el glob de contenido de `tailwind.config.js`. |
 | Carpetas de infraestructura vacías | `infra/ci-cd/`, `infra/docker/` | Sin contenido real; o se plantea qué van a contener, o se elimina el placeholder. |
-| Notebooks de entrenamiento sin poda | `ml/notebooks/SIRCCD_Training_v3_FromScratch.ipynb`, `_v4_YOLO11l`, `_v5_H100_Optimized` | Cadena de iteración visible sin indicar cuál es la versión vigente; no está documentado cuál notebook es el "actual". |
+| ~~Notebooks de entrenamiento sin poda~~ | ~~`ml/notebooks/SIRCCD_Training_v3_FromScratch.ipynb`, `_v4_YOLO11l`, `_v5_H100_Optimized`~~ | **Resuelto**: confirmado que `v5_H100_Optimized` es el vigente; `v3`/`v4` movidos a `ml/notebooks/archive/`. Referencias corregidas en `ml/docs/GUIA_MEJORAS_MODELO.md`, `GUIA_CONTINUAR_ENTRENAMIENTO.md`, `V3_TRAINING_OPTIMIZATION.md` (el primero marcaba a v3 con ⭐ como recomendado, contradecía la versión vigente confirmada). |
 
 ## 6. Código potencialmente obsoleto
 
@@ -131,7 +131,7 @@ graph TD
 | Elemento | Ubicación | Por qué es sospechoso | Validación necesaria antes de eliminar |
 |---|---|---|---|
 | `QueueService` y helpers en desuso | *(ya resuelto)* | `clear_queue()` fue eliminado en la limpieza previa de esta sesión tras confirmar cero referencias. | — (ya aplicado) |
-| Scripts de mantenimiento con backfills antiguos | `backend/scripts/maintenance/backfill_priority_breakdown.py`, `backfill_report_duplicate_of.py`, `backfill_merged_report_links.py` | Ligados a migraciones ya aplicadas (007/008), sin referencia desde otro código ni desde `scripts/maintenance/README.md`. | Confirmar contra el historial de despliegues en Railway si ya se ejecutaron en producción antes de borrar. |
+| ~~Scripts de mantenimiento con backfills antiguos~~ | ~~`backend/scripts/maintenance/backfill_priority_breakdown.py`, `backfill_report_duplicate_of.py`, `backfill_merged_report_links.py`~~ | Ligados a migraciones ya aplicadas (007/008). | **Resuelto**: 0 candidatos pendientes en producción para los 3 scripts, confirmado por consulta directa a la BD. Eliminados. |
 | ~~Cuatro scripts de arranque redundantes en backend~~ | ~~Ver sección 5~~ | ~~No usados por Docker ni CI.~~ | **Resuelto en Fase 4** — ver sección 5. |
 | Notebooks de ML superados | `ml/notebooks/SIRCCD_Training_v3_FromScratch.ipynb`, `_v4_`, posiblemente `_v5_` es el vigente | Nomenclatura versionada sugiere que v3/v4 quedaron obsoletos al llegar v5. | Confirmar con quien entrena el modelo cuál versión sigue siendo de referencia antes de archivar/eliminar. |
 | `tests/pytest.log` | `backend/tests/pytest.log` | Artefacto de ejecución local. **Corrección tras verificar con `git ls-files`**: no estaba trackeado por git (ya cubierto por `*.log` en `.gitignore`) — el hallazgo original de este documento decía "commiteado por accidente", lo cual era incorrecto; era solo clutter en disco local. | Resuelto en Fase 4: archivo eliminado del disco (no requería `git rm`). |
@@ -180,9 +180,9 @@ Clasificadas según el criterio pedido: **Seguro**, **Riesgo bajo**, **Requiere 
 
 ### Requiere validación manual (no ejecutar sin confirmación humana)
 
-- Eliminar los 3 scripts de backfill en `backend/scripts/maintenance/` — depende del historial real de despliegues en Railway, no verificable desde el repositorio.
-- Archivar o eliminar notebooks de ML superados (`v3`, `v4`) — depende de a quién pertenezca el criterio de "versión vigente" del modelo, información que no vive en el código.
-- Revisar y posiblemente retirar `frontend/docs/W-04-MAPA-IMPLEMENTACION.md` — requiere lectura de contenido y comparación con el estado actual de los componentes de mapa.
+- ✅ Eliminar los 3 scripts de backfill en `backend/scripts/maintenance/` — verificado en producción vía consulta directa a la BD: 0 candidatos pendientes en los 3 casos (`priority_breakdown`, `duplicate_of_report_id`, enlaces de reportes fusionados). Eliminados.
+- ✅ Archivar notebooks de ML superados (`v3`, `v4`) — hecho, confirmado por el usuario que `v5` es la vigente.
+- ✅ Revisar y retirar `frontend/docs/W-04-MAPA-IMPLEMENTACION.md` — leído y comparado con `MapView.tsx` actual: describía v1.0.0 (marzo 2026) sin filtros/heatmap/capas POI, referenciaba `components/index.ts` y el tipo `IncidentListResponse` ya eliminados en la Fase 2 de esta limpieza, y un centro de mapa (Santo Domingo) distinto al real (Santiago de los Caballeros). Eliminado con confirmación del usuario.
 - ✅ **Resuelto**: `SECRET_KEY`, `FIELD_ENCRYPTION_KEY`, `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `MINIO_SECRET_KEY` confirmados como variables de entorno reales en Railway (`railway variables --service backend`). `SECRET_KEY` verificado explícitamente distinto del default hardcodeado en `core/config.py` (64 caracteres, no coincide). Ningún valor real fue expuesto en esta verificación.
 
 ### No recomendado (fuera de alcance de esta limpieza)

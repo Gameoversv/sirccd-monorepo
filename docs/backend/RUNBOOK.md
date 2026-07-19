@@ -64,4 +64,4 @@ curl http://localhost:8000/api/v1/metrics          # métricas Prometheus
 
 ## Scripts de mantenimiento
 
-`backend/scripts/maintenance/` contiene backfills puntuales (`backfill_priority_breakdown.py`, `backfill_report_duplicate_of.py`, `backfill_merged_report_links.py`), ligados a migraciones específicas ya aplicadas. `backend/scripts/verification/` contiene scripts de verificación manual por ticket (`verify_b02.py`, etc.). Ninguno corre automáticamente — son de ejecución manual, puntual, documentados en sus propios docstrings.
+`backend/scripts/maintenance/` contiene scripts de mantenimiento puntual (ej. `create_incidents_from_reports.py`). Los 3 backfills ligados a las migraciones 007/008 (`backfill_priority_breakdown.py`, `backfill_report_duplicate_of.py`, `backfill_merged_report_links.py`) ya cumplieron su propósito (confirmado sin candidatos pendientes en producción) y fueron eliminados. `backend/scripts/verification/` contiene scripts de verificación manual por ticket (`verify_b02.py`, etc.). Ninguno corre automáticamente — son de ejecución manual, puntual, documentados en sus propios docstrings.

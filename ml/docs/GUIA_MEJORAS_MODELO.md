@@ -34,7 +34,7 @@
 
 **Problema**: Hay ~1,699 grupos de imágenes duplicadas entre RDD2020 y RDD2022. Si un duplicado aparece en train y en val/test, las métricas están **infladas**.
 
-**Solución**: El notebook `SIRCCD_Training_v3_FromScratch.ipynb` incluye deduplicación automática.
+**Solución**: El notebook `SIRCCD_Training_v3_FromScratch.ipynb` (archivado en `ml/notebooks/archive/`, ya no es el vigente — ver `ml/notebooks/SIRCCD_Training_v5_H100_Optimized.ipynb`) incluía deduplicación automática. **No verificado si `v5` conserva esta misma lógica** — revisar antes de asumir que el paso de deduplicación sigue aplicándose.
 
 **Impacto esperado**: Las métricas podrían BAJAR ligeramente (porque eliminamos el leakage), pero serán más **fiables**. El modelo real será mejor.
 
@@ -193,7 +193,8 @@ models = [
 
 ## 📂 Archivos Relacionados
 
-- **Notebook v3 (YOLO26)**: `ml/notebooks/SIRCCD_Training_v3_FromScratch.ipynb` ⭐
+- **Notebook vigente (v5, H100 Optimized)**: `ml/notebooks/SIRCCD_Training_v5_H100_Optimized.ipynb` ⭐ (confirmado 2026-07-19)
+- **Notebook v3 (YOLO26), archivado**: `ml/notebooks/archive/SIRCCD_Training_v3_FromScratch.ipynb`
 - **Notebook v1 (baseline)**: `ml/notebooks/SIRCCD_Training_Colab.ipynb`
 - **Anonimización**: `ml/anonymization/notebooks/SIRCCD_Anonymizer_Colab.ipynb`
 - **Guía Colab**: `ml/docs/GUIA_INICIO_RAPIDO_COLAB.md`

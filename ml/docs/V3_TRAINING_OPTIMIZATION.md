@@ -1,8 +1,10 @@
 # 🎯 Optimización Entrenamiento v3 para A100
 
+> **Nota (2026-07-19)**: el notebook `v3_FromScratch` fue archivado en `ml/notebooks/archive/`. El vigente es `ml/notebooks/SIRCCD_Training_v5_H100_Optimized.ipynb` (para H100, no A100). Este documento queda como referencia histórica de la optimización para v3/A100 — no asumir que sus recomendaciones aplican directamente a v5/H100 sin revisar.
+
 ## Revisión Configuración Actual
 
-**Notebook**: `ml/notebooks/SIRCCD_Training_v3_FromScratch.ipynb`
+**Notebook**: `ml/notebooks/archive/SIRCCD_Training_v3_FromScratch.ipynb` (archivado)
 
 ### Configuración Base (Buena)
 
