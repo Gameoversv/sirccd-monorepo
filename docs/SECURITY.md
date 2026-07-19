@@ -4,6 +4,8 @@
 
 > Este documento describe únicamente controles de seguridad **confirmados en el código**. No se afirma la existencia de protecciones que no se pudieron verificar.
 
+> Ver [SECURITY_AUDIT.md](SECURITY_AUDIT.md) para la auditoría completa con hallazgos concretos, severidad y remediación (vulnerabilidades de dependencias, validación de archivos, superficie de la API) — este documento es la referencia de mecanismos existentes, aquel es el reporte de auditoría.
+
 ## Autenticación
 
 - JWT (HS256) emitido por `backend/core/security.py`: `create_access_token` (expira en `ACCESS_TOKEN_EXPIRE_MINUTES`, default 30) y `create_refresh_token` (7 días).
@@ -37,6 +39,7 @@
 - Imágenes de reportes se suben a MinIO (`backend/services/storage.py`), con fallback a disco local si MinIO no está disponible.
 - Pipeline de anonimización (`backend/services/anonymizer.py`) usa YOLO localmente para difuminar rostros y placas antes de exponer la imagen — confirmado en código, pero no se verificó en esta fase si se aplica a **todas** las imágenes subidas o solo a un subconjunto de flujos.
 - Servido de imágenes vía proxy del backend (no URLs directas y anónimas de MinIO), según el propio `README.md` del proyecto ("servir las imagenes por un proxy en vez de URLs de MinIO").
+- La validación de subida (`_validate_image` en `storage.py`) solo verifica `content_type` (header del cliente, falsificable) y extensión — no abre el archivo para confirmar que el contenido real sea una imagen válida. Ver hallazgo detallado en [SECURITY_AUDIT.md](SECURITY_AUDIT.md#medio).
 
 ## Variables sensibles
 

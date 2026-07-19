@@ -11,6 +11,7 @@
 - [Configuración](CONFIGURATION.md) — qué hace cada archivo de configuración del repositorio.
 - [Variables de entorno](ENVIRONMENT_VARIABLES.md) — tabla completa por componente.
 - [Seguridad](SECURITY.md) — autenticación, autorización, manejo de secretos, riesgos.
+- [Auditoría de seguridad completa](SECURITY_AUDIT.md) — vulnerabilidades de dependencias, hallazgos con severidad y remediación (2026-07-19).
 - [Decisiones arquitectónicas (ADR)](decisions/README.md)
 - [Reporte de limpieza](CLEANUP_REPORT.md) — resumen completo de todo lo hecho en esta sesión (Fase 6).
 - [Estructura del proyecto](PROJECT_STRUCTURE.md) — árbol final del repositorio.

@@ -2,6 +2,14 @@
 
 > Documento generado como Fase 1 de un proceso de limpieza y documentación incremental. **No se realizó ningún cambio de código en esta fase.** Todo lo aquí descrito refleja el estado real del repositorio en el momento del análisis (commit más reciente en `main`: `794bb05`, 2026-07-17).
 
+> **Estado al 2026-07-19** — la mayoría de los hallazgos de este documento ya están resueltos (marcados `✅`/tachados inline). Lo que **sigue genuinamente abierto**, verificado contra el repositorio real en esta fecha:
+>
+> - `frontend/src/pages/.gitkeep` — carpeta residual del Pages Router, aún presente, aún referenciada en el glob de `tailwind.config.js` (sección 5).
+> - `infra/ci-cd/.gitkeep`, `infra/docker/.gitkeep` — siguen vacías (sección 5).
+> - `frontend/src/lib/` vs `frontend/src/utils/` — split sin resolver, marcado deliberadamente "No recomendado" tocar sin un refactor dedicado (sección 9).
+> - Todos los ítems de la sección 8 marcados sin tachar (protección de rutas solo en cliente, ausencia de CI para frontend/mobile/ml, ausencia de workflow de despliegue, fallbacks silenciosos sin alerta, formato irregular de `worker_windows.py`) — siguen abiertos, marcados "No recomendado" para esta limpieza (son decisiones de arquitectura/feature, no de organización).
+> - Ver [CLEANUP_REPORT.md](CLEANUP_REPORT.md) para deuda técnica adicional descubierta después de este documento (cobertura de tests, endpoints sin probar).
+
 ## Tabla de contenido
 
 - [1. Resumen del estado actual](#1-resumen-del-estado-actual)
@@ -116,7 +124,7 @@ graph TD
 
 | Problema | Ubicación | Detalle |
 |---|---|---|
-| `README.md` raíz desactualizado | `README.md` | Referencia `docker-compose.minio.yml` y `docs/` en la raíz (ya no existen ahí) y describe `dev.ps1`/`dev-stop.ps1` como archivos raíz cuando en realidad viven en `scripts/`. |
+| ~~`README.md` raíz desactualizado~~ | ~~`README.md`~~ | **Resuelto en Fase 2**: reescrito con rutas reales (`scripts/dev.ps1`, `infra/compose/docker-compose.minio.yml`), corregido un typo ("do#" al inicio del título) y la descripción de mobile como "espacio reservado" (ya está implementado). |
 | Dataset ajeno dentro de `ml/` | ~~`ml/datasets/pois_google/`~~ → `backend/db/seed/pois_google/` | Contenía datos semilla de PostgreSQL (GeoJSON + `pois_insert.sql`) para la tabla `pois`, no datos de entrenamiento ML. **Reubicado en Fase 4** — ver sección 9. |
 | ~~Cuatro scripts de arranque de backend redundantes~~ | ~~`backend/start.py`, `start_server.py`, `start.sh`, `start.bat`~~ | **Resuelto en Fase 4**: eliminados `start.py` y `start_server.py` (ninguno referenciado por Dockerfile/CI; solo un `print()` en `tests/manual/test_auth_manual.py` sugería `python start_server.py`, corregido a `python main.py`). Se conservaron `start.sh` y `start.bat` — son los scripts equivalentes por sistema operativo, con lógica de setup de entorno virtual + `.env` + instalación de dependencias, sin solapamiento entre sí. |
 | Utilidades del frontend en dos ubicaciones paralelas | `frontend/src/lib/` vs `frontend/src/utils/` | `lib/` tiene `exifGps.ts`, `geocode.ts`; `utils/` tiene `cn.ts`, `labels.ts`. No hay duplicación literal, pero la separación no es evidente para un desarrollador nuevo. |
@@ -133,7 +141,6 @@ graph TD
 | `QueueService` y helpers en desuso | *(ya resuelto)* | `clear_queue()` fue eliminado en la limpieza previa de esta sesión tras confirmar cero referencias. | — (ya aplicado) |
 | ~~Scripts de mantenimiento con backfills antiguos~~ | ~~`backend/scripts/maintenance/backfill_priority_breakdown.py`, `backfill_report_duplicate_of.py`, `backfill_merged_report_links.py`~~ | Ligados a migraciones ya aplicadas (007/008). | **Resuelto**: 0 candidatos pendientes en producción para los 3 scripts, confirmado por consulta directa a la BD. Eliminados. |
 | ~~Cuatro scripts de arranque redundantes en backend~~ | ~~Ver sección 5~~ | ~~No usados por Docker ni CI.~~ | **Resuelto en Fase 4** — ver sección 5. |
-| Notebooks de ML superados | `ml/notebooks/SIRCCD_Training_v3_FromScratch.ipynb`, `_v4_`, posiblemente `_v5_` es el vigente | Nomenclatura versionada sugiere que v3/v4 quedaron obsoletos al llegar v5. | Confirmar con quien entrena el modelo cuál versión sigue siendo de referencia antes de archivar/eliminar. |
 | `tests/pytest.log` | `backend/tests/pytest.log` | Artefacto de ejecución local. **Corrección tras verificar con `git ls-files`**: no estaba trackeado por git (ya cubierto por `*.log` en `.gitignore`) — el hallazgo original de este documento decía "commiteado por accidente", lo cual era incorrecto; era solo clutter en disco local. | Resuelto en Fase 4: archivo eliminado del disco (no requería `git rm`). |
 | `frontend/tsconfig.tsbuildinfo` | raíz de `frontend/` | Artefacto de build de TypeScript, normalmente no se versiona. | Confirmar que `.gitignore` no lo excluye ya por error; si no está ignorado, añadirlo y eliminar el tracked. |
 | `.gitkeep` residuales en carpetas ya pobladas | `frontend/src/components/.gitkeep`, `src/store/.gitkeep`, `src/hooks/.gitkeep` | Estas carpetas ya tienen contenido real, el placeholder es innecesario. | Bajo riesgo — candidato a eliminar directamente. |
@@ -193,7 +200,9 @@ Clasificadas según el criterio pedido: **Seguro**, **Riesgo bajo**, **Requiere 
 
 ## 10. Estado de git pendiente de cerrar
 
-Al momento de esta auditoría, el árbol de trabajo tiene cambios **ya aplicados pero no commiteados** de una limpieza previa realizada en esta misma sesión:
+> **Resuelto** — esta sección es ahora histórica. Todo lo descrito abajo fue commiteado en las Fases 1-4 (ver [CLEANUP_REPORT.md](CLEANUP_REPORT.md) para el detalle completo por commit). Se conserva sin editar como registro del estado en que se encontró el repositorio al empezar.
+
+Al momento de esta auditoría, el árbol de trabajo tenía cambios **ya aplicados pero no commiteados** de una limpieza previa realizada en esta misma sesión:
 
 - Eliminación completa de la carpeta `docs/` anterior (incluyendo PDFs y `.md` desactualizados).
 - Eliminación del submódulo huérfano `sirccd-monorepo/sirccd-monorepo` (gitlink apuntando a un fork stale de 2026-05-13, sin `.gitmodules` registrado).
