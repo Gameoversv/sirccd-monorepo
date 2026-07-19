@@ -12,6 +12,8 @@
 - [Variables de entorno](ENVIRONMENT_VARIABLES.md) — tabla completa por componente.
 - [Seguridad](SECURITY.md) — autenticación, autorización, manejo de secretos, riesgos.
 - [Decisiones arquitectónicas (ADR)](decisions/README.md)
+- [Reporte de limpieza](CLEANUP_REPORT.md) — resumen completo de todo lo hecho en esta sesión (Fase 6).
+- [Estructura del proyecto](PROJECT_STRUCTURE.md) — árbol final del repositorio.
 
 ## Backend
 
@@ -66,4 +68,12 @@ Documentos que quedan fuera del alcance de esta fase, a validar con el equipo an
 
 - ~~`reportsService.deleteReport`/`updateReport` apuntaban a endpoints inexistentes~~ — eran código muerto, nunca usado desde ninguna página; eliminados. Ver [frontend/API_INTEGRATION.md](frontend/API_INTEGRATION.md).
 - ~~`SECRET_KEY` con valor por defecto en código~~ — confirmado que producción usa un valor real distinto del default. Ver [SECURITY.md](SECURITY.md).
+- ~~`refresh_token` ausente en `LoginResponse`~~ — `POST /auth/refresh` existía pero era inalcanzable. Arreglado. Ver [backend/TESTING.md](backend/TESTING.md).
+- ~~Tabla `pois` vacía en producción~~ — incidente real, diagnosticado y resuelto en vivo. Ver [CLEANUP_REPORT.md](CLEANUP_REPORT.md#incidente-de-producción-resuelto).
 - Resto de hallazgos, clasificados por severidad, en [REPOSITORY_AUDIT.md](REPOSITORY_AUDIT.md).
+
+## Pendiente real (no resuelto en esta sesión)
+
+- Cobertura de tests del backend: **39.51%**, con 6 servicios en 0% — ver [backend/TESTING.md](backend/TESTING.md).
+- `GET /pois` sin ningún test.
+- Detalle completo de deuda técnica en [CLEANUP_REPORT.md](CLEANUP_REPORT.md#riesgos-y-deuda-técnica-pendiente).
