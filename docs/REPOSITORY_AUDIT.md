@@ -153,7 +153,7 @@ No se encontraron archivos con patrones típicos de copias temporales (`-old`, `
 
 | Riesgo | Severidad | Detalle |
 |---|---|---|
-| `SECRET_KEY` con valor por defecto hardcodeado | Alto (a validar) | `backend/core/config.py` define un default con comentario `# CAMBIAR en producción!`. Debe confirmarse que Railway efectivamente sobreescribe esta variable — **no se debe asumir que está resuelto sin verificar las variables de entorno reales del entorno de producción**. |
+| ~~`SECRET_KEY` con valor por defecto hardcodeado~~ | ~~Alto~~ | **Resuelto**: verificado contra las variables reales de Railway — `SECRET_KEY` en producción difiere del default de `core/config.py` (64 caracteres, no coincide). El código sigue teniendo el default hardcodeado (no se tocó, es una decisión de diseño válida como fallback de desarrollo), pero producción no depende de él. |
 | ~~`.env.example` incompleto~~ | ~~Medio~~ | **Resuelto en Fase 4** — `.env.example` ahora incluye las ~35 variables que `core/config.py` realmente lee, con nombres y defaults verificados directamente contra el código (no aproximados), agrupadas por área y con valores ficticios/seguros. |
 | Protección de rutas del frontend solo en cliente | Medio | No existe `middleware.ts` de Next.js; la protección de `/dashboard/*` depende enteramente del hook `useAuth()` en el cliente. Cualquier fuga de HTML/datos antes de la hidratación de React debe ser evaluada por el equipo de seguridad. |
 | Ausencia de CI para frontend, mobile y ml | Medio | Solo existe `backend-tests.yml`. Cambios en frontend/mobile se despliegan sin verificación automática de tests/build en PR. |
@@ -183,7 +183,7 @@ Clasificadas según el criterio pedido: **Seguro**, **Riesgo bajo**, **Requiere 
 - Eliminar los 3 scripts de backfill en `backend/scripts/maintenance/` — depende del historial real de despliegues en Railway, no verificable desde el repositorio.
 - Archivar o eliminar notebooks de ML superados (`v3`, `v4`) — depende de a quién pertenezca el criterio de "versión vigente" del modelo, información que no vive en el código.
 - Revisar y posiblemente retirar `frontend/docs/W-04-MAPA-IMPLEMENTACION.md` — requiere lectura de contenido y comparación con el estado actual de los componentes de mapa.
-- Confirmar en el panel de Railway que `SECRET_KEY`, `FIELD_ENCRYPTION_KEY` y demás secretos de producción están efectivamente configurados como variables de entorno y no dependen del valor por defecto del código.
+- ✅ **Resuelto**: `SECRET_KEY`, `FIELD_ENCRYPTION_KEY`, `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `MINIO_SECRET_KEY` confirmados como variables de entorno reales en Railway (`railway variables --service backend`). `SECRET_KEY` verificado explícitamente distinto del default hardcodeado en `core/config.py` (64 caracteres, no coincide). Ningún valor real fue expuesto en esta verificación.
 
 ### No recomendado (fuera de alcance de esta limpieza)
 

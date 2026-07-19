@@ -40,7 +40,7 @@
 
 ## Variables sensibles
 
-- `SECRET_KEY` (firma JWT) tiene un **valor por defecto hardcodeado** en `backend/core/config.py`, con comentario explícito `# CAMBIAR en producción!`. **Riesgo confirmado en código, no en configuración de despliegue** — se recomienda verificar en el panel de Railway que la variable de entorno real sobreescribe este default antes de considerar el sistema seguro en producción.
+- `SECRET_KEY` (firma JWT) tiene un **valor por defecto hardcodeado** en `backend/core/config.py`, con comentario explícito `# CAMBIAR en producción!` — es el fallback usado solo si no hay variable de entorno. **Verificado contra Railway**: la variable real en producción difiere del default (64 caracteres, no coincide) — el riesgo en código sigue ahí como posibilidad si algún entorno futuro olvida configurarla, pero producción actual no depende de él.
 - `FIELD_ENCRYPTION_KEY` cifra campos sensibles en base de datos (ej. teléfono) con Fernet (AES-128-CBC + HMAC-SHA256). Importante: `backend/core/field_encryption.py` está diseñado para **degradar silenciosamente a texto plano si la clave no está configurada** ("Retorna texto plano si no hay clave"). Esto es una decisión de disponibilidad sobre seguridad — confirmar que es intencional y que hay alerta operativa si ocurre en producción.
 - Ningún secreto real fue incluido en esta documentación ni se copiaron valores del `.env` local.
 
@@ -56,7 +56,7 @@
 
 Ver tabla completa con severidad en [REPOSITORY_AUDIT.md](REPOSITORY_AUDIT.md#8-riesgos-detectados). Resumen de los relevantes a seguridad:
 
-- `SECRET_KEY` con default hardcodeado — validar en producción.
+- ~~`SECRET_KEY` con default hardcodeado~~ — verificado en producción, no aplica (ver arriba).
 - Ausencia de rate limiting en endpoints públicos (login, creación de reportes).
 - Degradación silenciosa a texto plano si falta `FIELD_ENCRYPTION_KEY`.
 - Protección de rutas del dashboard únicamente en cliente.
@@ -64,7 +64,7 @@ Ver tabla completa con severidad en [REPOSITORY_AUDIT.md](REPOSITORY_AUDIT.md#8-
 
 ## Recomendaciones
 
-- Confirmar y documentar (fuera de este repositorio, por tratarse de configuración de producción) que `SECRET_KEY`, `FIELD_ENCRYPTION_KEY`, `POSTGRES_PASSWORD`, `REDIS_PASSWORD` y `MINIO_SECRET_KEY` están correctamente configurados como secretos en Railway y no dependen de los defaults del código.
+- ✅ Confirmado: `SECRET_KEY`, `FIELD_ENCRYPTION_KEY`, `POSTGRES_PASSWORD`, `REDIS_PASSWORD` y `MINIO_SECRET_KEY` están configurados como secretos reales en Railway y no dependen de los defaults del código.
 - Evaluar rate limiting básico en `/api/v1/auth/login` y `/api/v1/reportes` para mitigar abuso.
 - Evaluar migrar el almacenamiento del token JWT en el frontend web de `localStorage` a una cookie httpOnly + `SameSite`, si el riesgo de XSS se considera relevante para este proyecto.
 - Añadir alerta/log explícito cuando `FIELD_ENCRYPTION_KEY` no está configurada, dado que el comportamiento actual es degradar sin fallar.
