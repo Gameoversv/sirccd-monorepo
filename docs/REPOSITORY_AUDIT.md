@@ -134,7 +134,7 @@ graph TD
 | Scripts de mantenimiento con backfills antiguos | `backend/scripts/maintenance/backfill_priority_breakdown.py`, `backfill_report_duplicate_of.py`, `backfill_merged_report_links.py` | Ligados a migraciones ya aplicadas (007/008), sin referencia desde otro código ni desde `scripts/maintenance/README.md`. | Confirmar contra el historial de despliegues en Railway si ya se ejecutaron en producción antes de borrar. |
 | Cuatro scripts de arranque redundantes en backend | Ver sección 5 | No usados por Docker ni CI. | Confirmar con el equipo si algún flujo local (fuera de este repo, ej. documentación externa) los referencia. |
 | Notebooks de ML superados | `ml/notebooks/SIRCCD_Training_v3_FromScratch.ipynb`, `_v4_`, posiblemente `_v5_` es el vigente | Nomenclatura versionada sugiere que v3/v4 quedaron obsoletos al llegar v5. | Confirmar con quien entrena el modelo cuál versión sigue siendo de referencia antes de archivar/eliminar. |
-| `tests/pytest.log` | `backend/tests/pytest.log` | Parece un artefacto de ejecución local commiteado por accidente, no código fuente. | Bajo riesgo — candidato a eliminar directamente (ver sección 9, "Seguro"). |
+| `tests/pytest.log` | `backend/tests/pytest.log` | Artefacto de ejecución local. **Corrección tras verificar con `git ls-files`**: no estaba trackeado por git (ya cubierto por `*.log` en `.gitignore`) — el hallazgo original de este documento decía "commiteado por accidente", lo cual era incorrecto; era solo clutter en disco local. | Resuelto en Fase 4: archivo eliminado del disco (no requería `git rm`). |
 | `frontend/tsconfig.tsbuildinfo` | raíz de `frontend/` | Artefacto de build de TypeScript, normalmente no se versiona. | Confirmar que `.gitignore` no lo excluye ya por error; si no está ignorado, añadirlo y eliminar el tracked. |
 | `.gitkeep` residuales en carpetas ya pobladas | `frontend/src/components/.gitkeep`, `src/store/.gitkeep`, `src/hooks/.gitkeep` | Estas carpetas ya tienen contenido real, el placeholder es innecesario. | Bajo riesgo — candidato a eliminar directamente. |
 | `frontend/docs/W-04-MAPA-IMPLEMENTACION.md` | `frontend/docs/` | Documento de una implementación específica (mapa), fecha de último commit 2026-03-24; no se pudo confirmar si sigue vigente o es notas de una feature ya cerrada. | Revisar contenido manualmente contra el estado actual de `MapView.tsx`/`PortalMap.tsx` antes de decidir. |
@@ -167,10 +167,10 @@ Clasificadas según el criterio pedido: **Seguro**, **Riesgo bajo**, **Requiere 
 
 ### Seguro (aplicable en la fase de limpieza, Fase 4)
 
-- Eliminar `backend/tests/pytest.log` (artefacto de ejecución, no código fuente).
-- Eliminar `.gitkeep` en `frontend/src/components/`, `src/store/`, `src/hooks/` (carpetas ya pobladas).
-- Confirmar que `frontend/tsconfig.tsbuildinfo` esté en `.gitignore`; si no lo está, añadirlo y remover del tracking.
-- Actualizar `README.md` raíz para reflejar rutas reales (`scripts/dev.ps1`, `infra/compose/docker-compose.minio.yml`, ausencia de `docs/` en la raíz tras esta reorganización).
+- ✅ Eliminar `backend/tests/pytest.log` (artefacto de ejecución local, no trackeado por git) — hecho en Fase 4.
+- ✅ Eliminar `.gitkeep` en `frontend/src/components/`, `src/store/`, `src/hooks/` (carpetas ya pobladas) — hecho en Fase 4.
+- ✅ Confirmar que `frontend/tsconfig.tsbuildinfo` esté en `.gitignore` — ya estaba cubierto por el patrón `*.tsbuildinfo` (línea 222) y nunca estuvo trackeado; no requirió acción.
+- ✅ Actualizar `README.md` raíz para reflejar rutas reales — hecho en Fase 2.
 
 ### Riesgo bajo (requiere una verificación rápida antes de aplicar)
 
