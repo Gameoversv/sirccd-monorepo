@@ -110,27 +110,6 @@ export enum IncidentStatus {
   CERRADO = 'cerrado',
 }
 
-// Types for POIs
-export interface POI {
-  id: number;
-  name: string;
-  category: POICategory;
-  location: GeoPoint;
-  address?: string;
-  risk_weight: number;
-  created_at: string;
-}
-
-export enum POICategory {
-  ESCUELA = 'escuela',
-  UNIVERSIDAD = 'universidad',
-  HOSPITAL = 'hospital',
-  CLINICA = 'clinica',
-  BOMBEROS = 'bomberos',
-  POLICIA = 'policia',
-  PUENTE = 'puente',
-}
-
 // Types for metrics and KPIs
 export interface SystemMetrics {
   total_reports: number;
@@ -151,15 +130,6 @@ export interface PaginatedResponse<T> {
   total: number;
   page: number;
   per_page: number;
-  total_pages: number;
-}
-
-// Incident list response (matches backend schema)
-export interface IncidentListResponse {
-  total: number;
-  incidents: any[]; // Using any temporarily, could be typed as IncidentBrief[]
-  page: number;
-  page_size: number;
   total_pages: number;
 }
 
@@ -189,20 +159,7 @@ export interface ApiError {
   status_code?: number;
 }
 
-export interface ApiResponse<T> {
-  data?: T;
-  error?: ApiError;
-  message?: string;
-}
-
 // Map and visualization types
-export interface MapBounds {
-  north: number;
-  south: number;
-  east: number;
-  west: number;
-}
-
 export interface MapFilter {
   showReports: boolean;
   showIncidents: boolean;
@@ -253,24 +210,6 @@ export interface ExportOptions {
   format: 'csv' | 'geojson';
   filters?: IncidentFilters;
   include_kpis?: boolean;
-}
-
-// Backend incident statuses (English values from API)
-export enum BackendIncidentStatus {
-  OPEN = 'open',
-  ASSIGNED = 'assigned',
-  IN_PROGRESS = 'in_progress',
-  RESOLVED = 'resolved',
-  VERIFIED = 'verified',
-  CLOSED = 'closed',
-}
-
-// Backend priority levels
-export enum BackendPriorityLevel {
-  BAJA = 'baja',
-  MEDIA = 'media',
-  ALTA = 'alta',
-  CRITICA = 'critica',
 }
 
 // Valid status transitions (backend rules: open, in_progress, resolved, verified, closed)
@@ -388,7 +327,7 @@ export interface SLAStatusResponse {
   started_at: string | null;
 }
 
-export interface SLAExpiringItem {
+interface SLAExpiringItem {
   incident_id: number;
   status: SLAStatus;
   sla_deadline: string | null;
@@ -446,7 +385,7 @@ export interface IncidentDetail {
   updated_at: string;
 }
 
-export interface MemberReport {
+interface MemberReport {
   report_id: number;
   is_primary: boolean;
   status: string;

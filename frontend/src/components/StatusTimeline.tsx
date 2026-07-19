@@ -4,7 +4,7 @@ import { CheckCircle2, Clock, UserCheck, Wrench, ShieldCheck, XCircle, Circle, R
 import { getStatusLabel } from '@/utils';
 import type { AuditLogEntry } from '@/types';
 
-export interface TimelineEntry {
+interface TimelineEntry {
   timestamp: string;
   status?: string;
   from_status?: string;

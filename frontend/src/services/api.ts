@@ -89,6 +89,3 @@ export const handleApiError = (error: unknown): string => {
   return 'Error desconocido';
 };
 
-export const isApiError = (error: unknown): error is ApiError => {
-  return typeof error === 'object' && error !== null && 'detail' in error;
-};

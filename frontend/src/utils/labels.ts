@@ -1,4 +1,4 @@
-import type { DamageClass, SeverityLevel, IncidentStatus, ReportStatus } from '@/types';
+import type { DamageClass, SeverityLevel, IncidentStatus } from '@/types';
 import i18n from '@/i18n/config';
 
 function isEnglish(): boolean {
@@ -34,20 +34,6 @@ export function getStatusColor(status: IncidentStatus | string): string {
     resolved: 'text-success-700 bg-success-50 dark:bg-success-500/35 dark:text-success-100',
     verified: 'text-primary-700 bg-primary-50 dark:bg-primary-500/35 dark:text-primary-100',
     closed: 'text-gray-700 bg-gray-100 dark:bg-gray-700/40 dark:text-gray-100',
-  };
-  return colors[String(status).toLowerCase()] || 'text-gray-700 bg-gray-50 dark:bg-gray-700/40 dark:text-gray-100';
-}
-
-/**
- * Get color class for report status
- */
-export function getReportStatusColor(status: ReportStatus | string): string {
-  const colors: Record<string, string> = {
-    pendiente: 'text-warning-700 bg-warning-50 dark:bg-warning-500/35 dark:text-warning-100',
-    en_revision: 'text-blue-700 bg-blue-50 dark:bg-blue-500/35 dark:text-blue-100',
-    aprobado: 'text-success-700 bg-success-50 dark:bg-success-500/35 dark:text-success-100',
-    rechazado: 'text-danger-700 bg-danger-50 dark:bg-danger-500/35 dark:text-danger-100',
-    duplicado: 'text-gray-700 bg-gray-100 dark:bg-gray-700/40 dark:text-gray-100',
   };
   return colors[String(status).toLowerCase()] || 'text-gray-700 bg-gray-50 dark:bg-gray-700/40 dark:text-gray-100';
 }
@@ -141,23 +127,4 @@ export function getPriorityColor(priority: string): string {
     critica: 'text-red-700 bg-red-50 dark:bg-red-500/35 dark:text-red-100',
   };
   return colors[String(priority).toLowerCase()] || 'text-gray-700 bg-gray-50 dark:bg-gray-700/40 dark:text-gray-100';
-}
-
-export function getReportStatusLabel(status: ReportStatus | string): string {
-  const labels: Record<string, string> = isEnglish()
-    ? {
-        pendiente: 'Pending',
-        en_revision: 'In Review',
-        aprobado: 'Approved',
-        rechazado: 'Rejected',
-        duplicado: 'Duplicate',
-      }
-    : {
-        pendiente: 'Pendiente',
-        en_revision: 'En Revisión',
-        aprobado: 'Aprobado',
-        rechazado: 'Rechazado',
-        duplicado: 'Duplicado',
-      };
-  return labels[String(status).toLowerCase()] || String(status);
 }
