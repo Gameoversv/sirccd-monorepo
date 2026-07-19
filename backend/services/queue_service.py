@@ -164,12 +164,6 @@ class QueueService:
             logger.error(f"Error obteniendo estadísticas: {e}")
             return {"error": str(e)}
     
-    def clear_queue(self):
-        """Limpia la cola (útil para testing)"""
-        if self.queue:
-            self.queue.empty()
-            logger.info(" Cola limpiada")
-
 
 # Instancia global del servicio de cola
 queue_service = QueueService()
