@@ -80,9 +80,9 @@ Módulos con **0% de cobertura** — sin ningún test automático, solo scripts 
 | `tasks/ml_tasks.py` | 26 |
 | `tasks/sla_tasks.py` | 38 |
 
-Módulos con cobertura muy baja (<25%): `services/priority_service.py` (15.91%), `services/export_service.py` (18.66%), `services/sla_service.py` (23.29%), `services/spatial_clustering_service.py` (24.47%), `services/report_processing_service.py` (13.26%).
+Módulos con cobertura muy baja (<25%) tras la sesión del 2026-08-02: `services/export_service.py` (18.66%), `services/spatial_clustering_service.py` (24.47%), `services/report_processing_service.py` (13.26%). `sla_service.py` y `priority_service.py` salieron de esta lista (ver la sección de tests añadidos).
 
-`api/routes/pois.py` en 39.53% — sin ningún test dedicado, la cobertura parcial viene de imports/fixtures compartidos con otros tests, no de pruebas reales del endpoint.
+`api/routes/pois.py` sigue en 39.53%: ya tiene tests de RBAC, de validación de parámetros y del mapeo de capas (`tests/test_pois.py`), pero el cuerpo del endpoint necesita la tabla PostGIS, así que el porcentaje no se mueve.
 
 En contraste, `models/*` está en 100% (cubierto indirectamente por fixtures de `conftest.py`) y varios `schemas/*` también en 100%.
 
@@ -98,7 +98,7 @@ Las pruebas usan una base SQLite en memoria (no Postgres real) y mocks de Redis/
 
 - Sin pruebas de carga/performance documentadas.
 - `tests/manual/` no forma parte de la cobertura reportada — cualquier regresión que solo esas pruebas detectarían no se atrapa en CI. Esto incluye toda la lógica de deduplicación (`test_b07_*.py`), scoring de prioridad (`test_b08_*.py`), exportación (`test_b09_export.py`) y cola ML (`test_b06_queue_inference.py`).
-- **`GET /pois` no tiene ningún test dedicado** — ni RBAC ni funcional. Es el endpoint del incidente de producción del 2026-07-19 (capa de POIs vacía); su ausencia de cobertura no habría atrapado ese problema de todos modos (el bug era de datos, no de código), pero sí deja sin probar la lógica de agrupación por categorías de riesgo (`LAYER_TO_SOURCE_CATEGORIES` en `api/routes/pois.py`).
+- **`GET /pois` no tiene test funcional del cuerpo del endpoint** — desde el 2026-08-02 sí tiene RBAC y cobertura de `LAYER_TO_SOURCE_CATEGORIES`, pero consultar la tabla `pois` requiere PostGIS. Es el endpoint del incidente de producción del 2026-07-19 (capa de POIs vacía), que de todos modos era un problema de datos, no de código.
 - `pytest.ini` declara una sección `[env]` que requiere el plugin `pytest-env` — **no está en `requirements.txt`**, por lo que esa configuración es ignorada silenciosamente (sin error visible). `conftest.py` logra el mismo resultado seteando variables de entorno manualmente antes de importar la app, así que no rompe nada, pero la sección `[env]` de `pytest.ini` es configuración muerta.
 - ✅ **Resuelto**: `POST /auth/login` no incluía `refresh_token` en la respuesta pese a que `POST /auth/refresh` existía y lo requería. Confirmado que `api/openapi.yaml` (spec usado por los tests de contrato) **siempre documentó `refresh_token`** en la respuesta de login — el código había quedado atrás del contrato, no al revés. Arreglado: `LoginResponse` ahora incluye `refresh_token` (`schemas/auth.py`), y `login()` lo genera con `create_refresh_token()` (`api/routes/auth.py`). `test_refresh_token_success` ya no se autosalta — pasa de verdad. El frontend web no se tocó: nunca consume `/auth/refresh` (usa redirect a login en 401 en vez de refresh silencioso), así que no había nada que conectar ahí; el par login/refresh queda disponible para mobile u otros clientes.
 - Bajo SQLite local, 48 tests se saltan (`PostGIS tables not available in SQLite test env`) — sí corren completos en CI contra Postgres+PostGIS real.
