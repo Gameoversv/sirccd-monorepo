@@ -53,6 +53,30 @@ Al importar la app en una consola con codificación `cp1252`, `services/anonymiz
 | `tests/test_priority_service.py` | Tramos de score (POIs, duplicados, edad), límites de nivel de prioridad, normalización de pesos y la matriz completa de transiciones de estado | `priority_service.py`: 15.91% → **47.73%** |
 | `tests/test_pois.py` | RBAC del endpoint, validación de parámetros y coherencia del mapeo capa ↔ categorías de origen | `api/routes/pois.py`: 39.53% (sin cambio, ver abajo) |
 
+Segunda tanda, cadena completa de alertas de SLA:
+
+| Archivo | Cubre | Cobertura del módulo |
+|---|---|---|
+| `tests/test_notification_service.py` | Construcción del email (cabeceras, HTML, acentos y emoji), `_send` con SMTP desactivado / activo / caído, y el contenido de los avisos de vencimiento próximo y consumado | `notification_service.py`: 0% → **100%** |
+| `tests/test_sla_tasks.py` | Orquestación de `check_sla_alerts`: destinatarios, producto incidentes × destinatarios, envíos fallidos que no se cuentan, sin destinatarios, y cierre de sesión incluso si el job revienta | `tasks/sla_tasks.py`: 0% → **98.08%** |
+| `tests/test_queue_service.py` | Degradación cuando Redis no responde, parámetros de encolado (timeout y TTLs), estado de jobs terminados/fallidos/inexistentes y estadísticas de cola | `queue_service.py`: 0% → **100%** |
+
+### Por qué cinco módulos estaban condenados al 0%
+
+`tests/conftest.py` (líneas 42-46) sustituye estos módulos por `MagicMock` en `sys.modules` **antes** de importar la app, para que importar los routers no intente conectarse a Redis, MinIO o cargar modelos:
+
+```python
+sys.modules['services.anonymizer'] = MagicMock()
+sys.modules['services.storage'] = MagicMock()
+sys.modules['services.ml_service'] = MagicMock()
+sys.modules['services.queue_service'] = MagicMock()
+sys.modules['services.deduplication_service'] = MagicMock()
+```
+
+Con eso, `from services.queue_service import QueueService` devuelve un mock dentro de la suite: el código real nunca se ejecuta, y por eso esos cinco módulos aparecían en 0% por más tests que se escribieran.
+
+`tests/test_queue_service.py` lo resuelve cargando el archivo real bajo otro nombre de módulo (`importlib.util.spec_from_file_location`), sin tocar la entrada de `sys.modules` de la que dependen los demás tests. Es el patrón a seguir para atacar `anonymizer`, `storage`, `ml_service` y `deduplication_service`.
+
 ### Qué queda fuera y por qué
 
 `tests/conftest.py` solo crea la tabla `users` en SQLite: todo lo que use columnas PostGIS (`incidents`, `reports`, `pois`) no se puede materializar ahí. Por eso estos tests trabajan con objetos en memoria y con las tablas de configuración (`sla_configs`, `priority_settings`), que sí son columnas planas.
@@ -75,10 +99,9 @@ Módulos con **0% de cobertura** — sin ningún test automático, solo scripts 
 |---|---|
 | `services/anonymizer.py` | 109 |
 | `services/deduplication_service.py` | 462 |
-| `services/notification_service.py` | 37 |
-| `services/queue_service.py` | 59 |
 | `tasks/ml_tasks.py` | 26 |
-| `tasks/sla_tasks.py` | 38 |
+
+Ya no están en 0% tras la sesión del 2026-08-02: `notification_service.py` (100%), `queue_service.py` (100%), `tasks/sla_tasks.py` (98.08%).
 
 Módulos con cobertura muy baja (<25%) tras la sesión del 2026-08-02: `services/export_service.py` (18.66%), `services/spatial_clustering_service.py` (24.47%), `services/report_processing_service.py` (13.26%). `sla_service.py` y `priority_service.py` salieron de esta lista (ver la sección de tests añadidos).
 
