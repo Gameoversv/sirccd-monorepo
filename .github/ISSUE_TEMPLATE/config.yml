@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Reporte de vulnerabilidad de seguridad
+    url: https://github.com/Gameoversv/sirccd-monorepo/blob/main/docs/SECURITY.md
+    about: No abras un issue público. Reporta la vulnerabilidad en privado al mantenedor.
+  - name: Documentación del proyecto
+    url: https://github.com/Gameoversv/sirccd-monorepo/blob/main/docs/README.md
+    about: Índice completo de la documentación técnica antes de abrir un issue.
