@@ -18,6 +18,13 @@ on:
 env:
   BACKEND_PORT: 8000
   FRONTEND_PORT: 3001
+  # settings.DATABASE_URL es una property calculada a partir de estas
+  # variables: exportar DATABASE_URL directamente no tiene ningún efecto.
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  POSTGRES_USER: test
+  POSTGRES_PASSWORD: testpass
+  POSTGRES_DB: sirccd_e2e
   E2E_CIUDADANO_USER: test_ciudadano
   E2E_CIUDADANO_PASSWORD: Test1234!
   E2E_ADMIN_USER: test_admin
@@ -80,14 +87,11 @@ jobs:
 
       - name: Run database migrations
         working-directory: ./backend
-        env:
-          DATABASE_URL: postgresql://test:testpass@localhost:5432/sirccd_e2e
         run: alembic upgrade head
 
       - name: Start backend
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://test:testpass@localhost:5432/sirccd_e2e
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: e2e_secret_key_not_a_real_credential
           ALGORITHM: HS256
@@ -112,7 +116,6 @@ jobs:
       - name: Seed test users
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://test:testpass@localhost:5432/sirccd_e2e
           SECRET_KEY: e2e_secret_key_not_a_real_credential
           ADMIN_EMAIL: test_admin@sirccd.test
           ADMIN_FULL_NAME: Admin E2E
