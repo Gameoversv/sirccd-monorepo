@@ -61,6 +61,20 @@ Segunda tanda, cadena completa de alertas de SLA:
 | `tests/test_sla_tasks.py` | Orquestación de `check_sla_alerts`: destinatarios, producto incidentes × destinatarios, envíos fallidos que no se cuentan, sin destinatarios, y cierre de sesión incluso si el job revienta | `tasks/sla_tasks.py`: 0% → **98.08%** |
 | `tests/test_queue_service.py` | Degradación cuando Redis no responde, parámetros de encolado (timeout y TTLs), estado de jobs terminados/fallidos/inexistentes y estadísticas de cola | `queue_service.py`: 0% → **100%** |
 
+Tercera tanda, núcleo de deduplicación:
+
+| Archivo | Cubre | Cobertura del módulo |
+|---|---|---|
+| `tests/test_deduplication_service.py` | Helpers numéricos (coseno, normalización L2, división segura), similitud de texto, alias de modelos, distancia Haversine, `FAISSIndex` completo (alta, búsqueda, recorte de k, limpieza, persistencia), `VisualEmbedder` con backend de histograma, y el score fusionado con sus pesos | `deduplication_service.py`: 0% → **39.49%** |
+
+Corre entero offline: usa el backend de histograma (OpenCV + numpy), nunca ResNet ni CLIP, así que no descarga pesos ni necesita GPU.
+
+#### Comportamiento a vigilar: techo de 0.75 con un solo modelo visual
+
+`_fusion_score` divide entre la suma de los cuatro pesos (`0.45 + 0.25 + 0.20 + 0.10`), incluido el del modelo secundario, **exista o no dicho modelo**. Con un único modelo configurado, una coincidencia perfecta puntúa como mucho `0.75`, frente a un `DEDUPLICATION_SCORE_THRESHOLD` de `0.72`: quedan 3 centésimas de margen para declarar un duplicado.
+
+En producción no muerde, porque `DEDUPLICATION_SECONDARY_MODEL` viene con `clip-vit-base-patch32` por defecto. Pero dejar esa variable vacía degrada la deduplicación de forma silenciosa. Está capturado en `test_con_un_solo_modelo_el_score_maximo_es_075`.
+
 ### Por qué cinco módulos estaban condenados al 0%
 
 `tests/conftest.py` (líneas 42-46) sustituye estos módulos por `MagicMock` en `sys.modules` **antes** de importar la app, para que importar los routers no intente conectarse a Redis, MinIO o cargar modelos:
