@@ -52,7 +52,7 @@ sirccd-monorepo/
 ├── infra/            Nginx y Docker Compose de MinIO
 ├── scripts/          Scripts de desarrollo local (dev.ps1, dev-stop.ps1)
 ├── docs/             Documentación técnica (ver docs/README.md)
-├── .github/          Workflow de CI del backend, plantillas de issue y PR
+├── .github/          Workflows de CI (backend, E2E), plantillas de issue y PR
 ├── docker-compose.yml
 ├── docker-compose.prod.yml
 ├── CONTRIBUTING.md
@@ -109,7 +109,7 @@ cd backend
 
 # Frontend (E2E, Playwright)
 cd frontend
-npx playwright test
+npm run test:e2e        # requiere backend + frontend arriba y usuarios sembrados
 ```
 
 ## Documentación
@@ -141,8 +141,8 @@ Ver [docs/SECURITY.md](docs/SECURITY.md) para autenticación, autorización, man
 
 ## Limitaciones conocidas
 
-- Sin CI para frontend, mobile ni `ml/` (solo backend).
-- El workflow de CI apunta a `main`/`develop`, pero la rama de integración remota se llama `dev`, así que no se dispara en ella (ver [docs/infrastructure/CI_CD.md](docs/infrastructure/CI_CD.md)).
+- Sin CI para mobile ni `ml/` (backend y E2E del frontend sí tienen pipeline).
+- El CI del frontend cubre E2E con Playwright, pero no `next lint` ni `tsc --noEmit` como pasos propios.
 - Protección de rutas del dashboard únicamente del lado cliente.
 - El modelo propio de detección (`ml/`) aún no reemplaza al servicio externo (Roboflow) en producción.
 

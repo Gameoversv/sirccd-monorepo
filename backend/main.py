@@ -3,6 +3,8 @@ FastAPI Application - SIRCCD Backend
 Sistema Inteligente de Reporte Ciudadano de Calles Dañadas
 """
 
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -45,8 +47,12 @@ app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["U
 app.include_router(settings_routes.router, prefix=settings.API_V1_STR, tags=["Ajustes"])
 app.include_router(zones.router, prefix=f"{settings.API_V1_STR}/zones", tags=["Zonas"])
 
-# Montar archivos estáticos (imágenes subidas)
-app.mount("/storage", StaticFiles(directory="storage"), name="storage")
+# Montar archivos estáticos (imágenes subidas).
+# El directorio está gitignoreado, así que en un checkout limpio (CI, contenedor
+# nuevo) no existe y StaticFiles fallaría al importar la app.
+STORAGE_DIR = "storage"
+os.makedirs(STORAGE_DIR, exist_ok=True)
+app.mount("/storage", StaticFiles(directory=STORAGE_DIR), name="storage")
 
 
 @app.on_event("startup")

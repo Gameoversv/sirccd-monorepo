@@ -1,0 +1,229 @@
+name: E2E Tests (Playwright)
+
+on:
+  push:
+    branches: [ main, dev ]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - '.github/workflows/e2e-tests.yml'
+  pull_request:
+    branches: [ main, dev ]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - '.github/workflows/e2e-tests.yml'
+  workflow_dispatch:
+
+env:
+  BACKEND_PORT: 8000
+  FRONTEND_PORT: 3001
+  # settings.DATABASE_URL es una property calculada a partir de estas
+  # variables: exportar DATABASE_URL directamente no tiene ningún efecto.
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  POSTGRES_USER: test
+  POSTGRES_PASSWORD: testpass
+  POSTGRES_DB: sirccd_e2e
+  E2E_CIUDADANO_USER: test_ciudadano
+  E2E_CIUDADANO_PASSWORD: Test1234!
+  E2E_ADMIN_USER: test_admin
+  # seed_admin exige 12 caracteres como mínimo.
+  E2E_ADMIN_PASSWORD: E2eAdmin1234!
+
+jobs:
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgis/postgis:15-3.3
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: sirccd_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ==========================================
+      # Backend
+      # ==========================================
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run database migrations
+        working-directory: ./backend
+        run: alembic upgrade head
+
+      - name: Start backend
+        working-directory: ./backend
+        env:
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: e2e_secret_key_not_a_real_credential
+          # settings.ALLOWED_ORIGINS solo trae 3000/5173/8080 por defecto: sin
+          # esto el navegador bloquea por CORS todo lo que salga del 3001.
+          ALLOWED_ORIGINS: '["http://localhost:3001","http://localhost:3000"]'
+          ALGORITHM: HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES: 30
+          # Sin ROBOFLOW_API_KEY el backend usa el detector mock, y sin MinIO
+          # storage.py cae a disco local. Ambos son suficientes para E2E.
+          PYTHONIOENCODING: utf-8
+        run: |
+          nohup uvicorn main:app --host 0.0.0.0 --port "$BACKEND_PORT" > backend.log 2>&1 &
+          echo "Esperando al backend..."
+          # Se usa el liveness probe, no /health: sin MinIO el health agregado
+          # responde 503 y el runner no tiene MinIO. Para estos flujos basta
+          # con que el proceso esté vivo y la base de datos responda.
+          for i in $(seq 1 90); do
+            if curl -sf "http://localhost:$BACKEND_PORT/api/v1/health/live" > /dev/null; then
+              echo "Backend arriba tras ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "El backend no respondió en 90s"
+          cat backend.log
+          exit 1
+
+      - name: Seed test users
+        working-directory: ./backend
+        env:
+          SECRET_KEY: e2e_secret_key_not_a_real_credential
+          # El TLD .test lo rechaza email-validator, y LoginResponse.email es
+          # EmailStr: un admin con .test se siembra pero su login devuelve 500.
+          ADMIN_EMAIL: test_admin@example.com
+          ADMIN_FULL_NAME: Admin E2E
+        run: |
+          # El admin se siembra con el script existente (idempotente).
+          ADMIN_USERNAME="$E2E_ADMIN_USER" ADMIN_PASSWORD="$E2E_ADMIN_PASSWORD" \
+            python -m scripts.seed_admin
+
+          # El ciudadano se crea por la API pública de registro. El nombre
+          # importa: la suite verifica el saludo del portal.
+          cat > /tmp/register.json <<JSON
+          {"email":"test_ciudadano@example.com","username":"$E2E_CIUDADANO_USER","password":"$E2E_CIUDADANO_PASSWORD","full_name":"Juan Perez"}
+          JSON
+
+          CODE=$(curl -s -o /tmp/register-response.json -w '%{http_code}' \
+            -X POST "http://localhost:$BACKEND_PORT/api/v1/auth/register" \
+            -H 'Content-Type: application/json' \
+            --data-binary @/tmp/register.json)
+          echo "register HTTP $CODE"
+
+          # 400 = ya existía. Cualquier otro error no-2xx sí debe cortar el job:
+          # si el ciudadano no existe, la suite del portal falla entera y el
+          # motivo real queda enterrado en 22 timeouts.
+          if [ "$CODE" != "201" ] && [ "$CODE" != "200" ] && [ "$CODE" != "400" ]; then
+            echo "Fallo el registro del ciudadano:"
+            cat /tmp/register-response.json
+            exit 1
+          fi
+
+      # ==========================================
+      # Frontend
+      # ==========================================
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./frontend
+        env:
+          # Next.js inlinea NEXT_PUBLIC_* en build, no en runtime.
+          NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+        run: npm run build
+
+      - name: Start frontend
+        working-directory: ./frontend
+        run: |
+          nohup npm run start -- --port "$FRONTEND_PORT" > frontend.log 2>&1 &
+          echo "Esperando al frontend..."
+          for i in $(seq 1 60); do
+            if curl -sf "http://localhost:$FRONTEND_PORT/login" > /dev/null; then
+              echo "Frontend arriba tras ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "El frontend no respondió en 60s"
+          cat frontend.log
+          exit 1
+
+      # ==========================================
+      # Playwright
+      # ==========================================
+      - name: Install Playwright browsers
+        working-directory: ./frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: ./frontend
+        env:
+          E2E_BASE_URL: http://localhost:3001
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
+      - name: Upload failure traces and videos
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: frontend/test-results/
+          retention-days: 7
+
+      - name: Dump service logs on failure
+        if: failure()
+        run: |
+          echo "===== backend.log ====="
+          tail -n 200 backend/backend.log || true
+          echo "===== frontend.log ====="
+          tail -n 200 frontend/frontend.log || true
