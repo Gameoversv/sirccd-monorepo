@@ -85,8 +85,7 @@ Desarrollo activo (último commit en `main`: 2026-07-19). El backend está despl
 
 ## Limitaciones conocidas
 
-- No existe CI para frontend, mobile ni `ml/` (solo hay pipeline de pruebas para backend).
 - La protección de rutas del dashboard es únicamente del lado cliente (no hay `middleware.ts` de Next.js).
-- El workflow de CI se dispara en `main`/`develop`, pero la rama de integración remota se llama `dev`: los PR contra `dev` no ejecutan pruebas (ver [infrastructure/CI_CD.md](infrastructure/CI_CD.md)).
+- Sin CI para `mobile/` ni `ml/`; el backend y el E2E del frontend sí corren en cada PR (ver [infrastructure/CI_CD.md](infrastructure/CI_CD.md)).
 - El modelo propio de detección de daños (entrenado en `ml/`) todavía no reemplaza al servicio externo de Roboflow en producción.
-- Cobertura de pruebas end-to-end del frontend limitada a un solo spec de Playwright (portal ciudadano); el dashboard no tiene pruebas automatizadas.
+- El E2E del frontend cubre rutas públicas, portal ciudadano y humo del dashboard, pero no el flujo completo de creación de reporte con imagen (subida + inferencia + deduplicación).
