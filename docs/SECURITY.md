@@ -17,7 +17,7 @@
 ## Autorización
 
 - RBAC por rol (`UserRole` en `backend/models/user.py`), aplicado por dependencia FastAPI en `backend/api/deps.py`: `require_role`, `require_admin`, `require_supervisor`.
-- Cada router decide explícitamente qué dependencia de autorización usar; no hay una capa transversal que aplique el RBAC automáticamente a todos los endpoints — **una ruta nueva sin la dependencia correcta quedaría accesible sin el control esperado**. No se auditó endpoint por endpoint en esta fase (pendiente en `backend/API.md`, Fase 3).
+- Cada router decide explícitamente qué dependencia de autorización usar; no hay una capa transversal que aplique el RBAC automáticamente a todos los endpoints — **una ruta nueva sin la dependencia correcta quedaría accesible sin el control esperado**. La auditoría endpoint por endpoint sí existe: [backend/API.md](backend/API.md) lista los 60 endpoints con la dependencia de autorización exacta de cada uno.
 
 ## Manejo de sesiones o tokens
 

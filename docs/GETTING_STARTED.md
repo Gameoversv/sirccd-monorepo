@@ -82,6 +82,8 @@ powershell -ExecutionPolicy Bypass -File scripts/dev.ps1
 
 Este script libera los puertos 8000/3000 si están ocupados, verifica que exista `.venv` y `node_modules`, y levanta backend + frontend en paralelo con logs en `backend/dev.log` / `frontend/dev.log`. Para detener: `scripts/dev-stop.ps1`.
 
+> `dev.ps1` busca el intérprete en `.venv/Scripts/python.exe` **en la raíz del repositorio**, no en `backend/.venv/`. Si creaste el entorno virtual dentro de `backend/`, el script aborta con `No se encontro .venv`. Crea el entorno en la raíz (como en el bloque de arriba, `python -m venv ../.venv`) o ajusta la ruta en el script.
+
 ## Base de datos y migraciones
 
 Las migraciones viven en `backend/alembic/versions/` (9 migraciones al momento de esta guía). Para aplicarlas manualmente:
@@ -133,3 +135,5 @@ Requiere apuntar `lib/core/network/backend_url.dart` (o la configuración equiva
 | Imágenes no se ven en el frontend | MinIO no configurado o buckets no creados | Confirmar que el contenedor `minio-init` corrió sin error y creó `sirccd-images`/`sirccd-models` |
 | Reportes se quedan sin clasificar | `ROBOFLOW_API_KEY` vacía | El backend usa un detector simulado (mock) si falta la key — definirla en `.env` para inferencia real |
 | Puerto 8000 o 3000 ocupado al usar `dev.ps1` | Proceso previo no se cerró bien | El script ya intenta liberar esos puertos automáticamente; si falla, cerrar manualmente el proceso con `Stop-Process` |
+| `dev.ps1` termina con `No se encontro .venv` | El entorno virtual está en `backend/.venv/`, no en la raíz | Crear el entorno en la raíz del repositorio (`python -m venv .venv`) o editar la ruta en `scripts/dev.ps1` |
+| `UnicodeEncodeError: 'charmap' codec can't encode character '⚠'` al arrancar el backend en Windows | `ultralytics` no instalado + consola en `cp1252`: el mensaje de aviso de `services/anonymizer.py` no se puede imprimir y aborta el import | `$env:PYTHONIOENCODING = "utf-8"` antes de arrancar, o instalar `ultralytics` |

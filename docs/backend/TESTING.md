@@ -4,7 +4,9 @@
 
 ## Framework y configuración
 
-pytest (`pytest.ini`), con marcadores: `unit`, `integration`, `contract`, `slow`, `auth`, `reports`, `incidents`, `ml`. `tests/conftest.py` configura una base de datos SQLite en memoria y mockea Redis/MinIO/ML mediante variables de entorno antes de importar la app, con fixtures de `TestClient` y usuarios de prueba por rol.
+pytest (`pytest.ini`), con marcadores: `unit`, `integration`, `contract`, `slow`, `auth`, `reports`, `incidents`, `ml`, `db`. `pytest.ini` usa `--strict-markers`, así que un marcador no declarado hace fallar la corrida. `tests/conftest.py` configura una base de datos SQLite en memoria y mockea Redis/MinIO/ML mediante variables de entorno antes de importar la app, con fixtures de `TestClient` y usuarios de prueba por rol.
+
+Convenciones de escritura de tests (estructura AAA, nombres, cuándo son obligatorios) en [../../CONTRIBUTING.md](../../CONTRIBUTING.md#pruebas).
 
 ## Ejecución
 
@@ -26,6 +28,18 @@ En Windows: `run_tests.bat` (mismo comportamiento).
 ## Qué cubre la suite automática (`tests/test_*.py`)
 
 Auth, contrato (`test_contract.py`, basado en `schemathesis` — valida la API contra su propio `api/openapi.yaml`), servicio EXIF, health, proxy de imágenes, incidentes (incluyendo filtros P03), reportes, RBAC (S02 + extendido), cifrado de campos (S03), modelo de zonas.
+
+## Tests que se saltan en local (SQLite sin PostGIS)
+
+Correr solo los unitarios en local (`pytest -m unit`) deja **25 tests en estado `skipped`**: los de `tests/test_reports.py` que necesitan la tabla `reports` con columnas geográficas (`ST_GeogFromText`), que SQLite no soporta. Se saltan de forma explícita con el mensaje `PostGIS tables not available in SQLite test env`, no fallan.
+
+En CI sí corren, porque el workflow levanta `postgis/postgis:15-3.3` como servicio. Para reproducir el entorno completo en local, apunta `DATABASE_URL` a una instancia PostGIS (por ejemplo la del `docker compose` de desarrollo) en vez de usar el default SQLite en memoria.
+
+Medición de referencia local (2026-08-02, `pytest -m unit`): 59 pasados, 25 saltados, 202 deseleccionados; cobertura parcial de 30.54% (solo unitarios, no comparable con el 39.51% de la suite completa más abajo).
+
+## Nota para Windows
+
+Al importar la app en una consola con codificación `cp1252`, `services/anonymizer.py` intenta imprimir un mensaje con caracteres Unicode (`⚠`, `—`) cuando `ultralytics` no está instalado, y el `print` revienta con `UnicodeEncodeError`, abortando el arranque completo. Solución: exportar `PYTHONIOENCODING=utf-8` antes de correr pytest o el servidor, o instalar `ultralytics` para que la rama del mensaje no se ejecute.
 
 ## `tests/manual/` — no cubierto por CI
 

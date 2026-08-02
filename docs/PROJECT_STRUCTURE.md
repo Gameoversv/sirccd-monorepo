@@ -15,7 +15,7 @@ sirccd-monorepo/
 │   ├── models/                  9 modelos SQLAlchemy
 │   ├── schemas/                 Esquemas Pydantic de request/response
 │   ├── scripts/                 Setup inicial (seed_admin.py) + verification/ (manual)
-│   ├── services/                12 servicios de lógica de negocio
+│   ├── services/                13 servicios de lógica de negocio
 │   ├── tasks/                   Jobs RQ (ml_tasks.py, sla_tasks.py)
 │   ├── tests/                   Suite pytest (unit/integration/contract) + manual/ (excluido de CI)
 │   ├── main.py                  Entry point de la API
@@ -25,7 +25,7 @@ sirccd-monorepo/
 │   └── Dockerfile
 │
 ├── frontend/                   Dashboard operativo + portal ciudadano (Next.js 14)
-│   ├── src/app/                  Rutas (App Router): dashboard/*, portal, login, register
+│   ├── src/app/                  Rutas (App Router): dashboard/*, portal, login, register, guia
 │   ├── src/components/           18 componentes (mapa, tablas, modales, layout)
 │   ├── src/hooks/                useAuth, useToast
 │   ├── src/lib/                  exifGps.ts, geocode.ts
@@ -65,13 +65,19 @@ sirccd-monorepo/
 │   │   CONFIGURATION.md, ENVIRONMENT_VARIABLES.md, SECURITY.md   (Fase 2)
 │   ├── backend/, frontend/, database/, infrastructure/, mobile/, ml/  (Fase 3)
 │   ├── decisions/                 ADR-001 (arquitectura actual)
+│   ├── SECURITY_AUDIT.md          Auditoría de seguridad completa
+│   ├── MANUAL_USUARIO.md          Manual para usuarios finales (versión web en /guia)
 │   ├── CLEANUP_REPORT.md          Reporte de esta limpieza (Fase 6)
 │   └── PROJECT_STRUCTURE.md       Este archivo
 │
 ├── docker-compose.yml           Orquestación de desarrollo
 ├── docker-compose.prod.yml      Orquestación de producción (TLS, secretos por env, SSE-S3)
 ├── .env.example                 Plantilla completa de variables (backend, raíz)
-├── .github/workflows/           CI: backend-tests.yml (único pipeline existente)
+├── .github/
+│   ├── workflows/                 CI: backend-tests.yml (único pipeline existente)
+│   ├── ISSUE_TEMPLATE/            Plantillas de bug y propuesta de funcionalidad
+│   └── PULL_REQUEST_TEMPLATE.md   Plantilla de PR con checklist
+├── CONTRIBUTING.md              Guía de contribución (ramas, commits, tests, revisión)
 └── README.md                    Punto de entrada del repositorio
 ```
 

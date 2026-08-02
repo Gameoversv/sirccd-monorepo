@@ -1,6 +1,13 @@
 # SIRCCD Monorepo
 
+[![Backend Tests](https://github.com/Gameoversv/sirccd-monorepo/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/Gameoversv/sirccd-monorepo/actions/workflows/backend-tests.yml)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
+[![Next.js 14](https://img.shields.io/badge/next.js-14-black)](https://nextjs.org/)
+[![Flutter](https://img.shields.io/badge/flutter-mobile-02569B)](https://flutter.dev/)
+
 Sistema Inteligente Urbano para Reporte y Priorización de Daños Viales.
+
+Los ciudadanos reportan baches y grietas con una foto georreferenciada; el sistema detecta el tipo de daño, descarta duplicados, calcula la prioridad según la cercanía a puntos sensibles (hospitales, escuelas) y entrega a los equipos operativos una cola de incidentes con seguimiento de SLA.
 
 ## Estado
 
@@ -14,8 +21,9 @@ Desarrollo activo. Backend y frontend desplegados en Railway. Ver [docs/PROJECT_
 - Priorización según proximidad a puntos de interés sensibles (hospitales, escuelas, etc.).
 - Gestión de incidentes con seguimiento de SLA y alertas.
 - Anonimización automática de rostros y placas en las imágenes.
+- Guía de usuario pública en `/guia`, sin necesidad de sesión.
 
-Detalle completo en [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md).
+Detalle completo en [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md). Manual para usuarios finales en [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md).
 
 ## Arquitectura resumida
 
@@ -44,8 +52,10 @@ sirccd-monorepo/
 ├── infra/            Nginx y Docker Compose de MinIO
 ├── scripts/          Scripts de desarrollo local (dev.ps1, dev-stop.ps1)
 ├── docs/             Documentación técnica (ver docs/README.md)
+├── .github/          Workflow de CI del backend, plantillas de issue y PR
 ├── docker-compose.yml
 ├── docker-compose.prod.yml
+├── CONTRIBUTING.md
 ├── .env.example
 └── .gitignore
 ```
@@ -106,14 +116,24 @@ npx playwright test
 
 Índice completo en [docs/README.md](docs/README.md). Documentos clave:
 
-- [Auditoría del repositorio](docs/REPOSITORY_AUDIT.md)
-- [Arquitectura](docs/ARCHITECTURE.md)
 - [Guía de inicio rápido](docs/GETTING_STARTED.md)
+- [Arquitectura](docs/ARCHITECTURE.md)
+- [API del backend](docs/backend/API.md)
+- [Esquema de base de datos](docs/database/SCHEMA.md)
+- [Variables de entorno](docs/ENVIRONMENT_VARIABLES.md)
 - [Seguridad](docs/SECURITY.md)
+- [Manual de usuario](docs/MANUAL_USUARIO.md)
+- [Auditoría del repositorio](docs/REPOSITORY_AUDIT.md)
 
 ## Contribución
 
-Ramas de feature (`feat/mod-XX-*`), PR hacia `main`. Convenciones de commit: `feat|fix|refactor|docs|test|chore|perf|ci: descripción`.
+Lee [CONTRIBUTING.md](CONTRIBUTING.md) antes de abrir un PR. En resumen:
+
+- Ramas de feature: `feat/mod-XX-descripcion`, `fix/mod-XX-descripcion`. Nunca push directo a `main`.
+- Commits en formato Conventional Commits: `feat|fix|refactor|docs|test|chore|perf|ci(alcance): descripción`.
+- Los tests del componente tocado y el linter deben pasar antes del PR.
+- Cambios de esquema requieren migración de Alembic; variables nuevas van a `.env.example` y a `docs/ENVIRONMENT_VARIABLES.md`.
+- PR hacia `main`, usando la plantilla, con el CI en verde y al menos una aprobación.
 
 ## Seguridad
 
@@ -122,6 +142,7 @@ Ver [docs/SECURITY.md](docs/SECURITY.md) para autenticación, autorización, man
 ## Limitaciones conocidas
 
 - Sin CI para frontend, mobile ni `ml/` (solo backend).
+- El workflow de CI apunta a `main`/`develop`, pero la rama de integración remota se llama `dev`, así que no se dispara en ella (ver [docs/infrastructure/CI_CD.md](docs/infrastructure/CI_CD.md)).
 - Protección de rutas del dashboard únicamente del lado cliente.
 - El modelo propio de detección (`ml/`) aún no reemplaza al servicio externo (Roboflow) en producción.
 

@@ -59,7 +59,7 @@ Fuente: `backend/core/config.py` (clase `Settings`).
 | `SLA_CHECK_INTERVAL_MINUTES` | Frecuencia del chequeo periódico de SLA | No (default `30`) | `30` | Todos | Usa default |
 | `LOG_LEVEL` | Nivel de logging | No (default `INFO`) | `INFO` | Todos | Usa default |
 | `DOMAIN` | Dominio de producción (usado en plantillas de despliegue) | Sí en producción | `sirccd.example.com` | Prod | Solo relevante para `docker-compose.prod.yml`/proxy |
-| `ADMIN_USERNAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_FULL_NAME` | Usadas únicamente por `scripts/seed_admin.py` para crear el admin inicial | Sí, al ejecutar el script | — | Setup inicial | El script falla explícitamente si `ADMIN_PASSWORD` no está definida (no hay contraseña por defecto) |
+| `ADMIN_USERNAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_FULL_NAME` | Usadas únicamente por `backend/scripts/seed_admin.py` para crear el admin inicial | Sí, al ejecutar el script | — | Setup inicial | El script falla explícitamente si `ADMIN_PASSWORD` no está definida (no hay contraseña por defecto) |
 | `INTEGRATION_TEST` | Bandera usada por `tests/test_contract.py` para habilitar pruebas de contrato contra un servidor real | No | — | Test | Sin ella, las pruebas de contrato se saltan/usan modo local |
 
 ## Frontend
