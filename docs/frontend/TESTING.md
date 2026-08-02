@@ -51,12 +51,12 @@ npm run test:e2e:report     # ver el último reporte HTML
 3. Usuarios de prueba sembrados:
    ```bash
    cd backend
-   ADMIN_USERNAME=test_admin ADMIN_EMAIL=test_admin@sirccd.test \
+   ADMIN_USERNAME=test_admin ADMIN_EMAIL=test_admin@example.com \
      ADMIN_PASSWORD='E2eAdmin1234!' python -m scripts.seed_admin   # mínimo 12 caracteres
 
    curl -X POST http://localhost:8000/api/v1/auth/register \
      -H 'Content-Type: application/json' \
-     -d '{"email":"test_ciudadano@sirccd.test","username":"test_ciudadano","password":"Test1234!","full_name":"Juan Pérez"}'
+     -d '{"email":"test_ciudadano@example.com","username":"test_ciudadano","password":"Test1234!","full_name":"Juan Pérez"}'
    ```
 
 Para apuntar a otro host: `E2E_BASE_URL=http://localhost:3000 npm run test:e2e`.

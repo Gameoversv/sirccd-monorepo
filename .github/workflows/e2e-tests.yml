@@ -124,7 +124,9 @@ jobs:
         working-directory: ./backend
         env:
           SECRET_KEY: e2e_secret_key_not_a_real_credential
-          ADMIN_EMAIL: test_admin@sirccd.test
+          # El TLD .test lo rechaza email-validator, y LoginResponse.email es
+          # EmailStr: un admin con .test se siembra pero su login devuelve 500.
+          ADMIN_EMAIL: test_admin@example.com
           ADMIN_FULL_NAME: Admin E2E
         run: |
           # El admin se siembra con el script existente (idempotente).
@@ -133,10 +135,24 @@ jobs:
 
           # El ciudadano se crea por la API pública de registro. El nombre
           # importa: la suite verifica el saludo del portal.
-          curl -sf -X POST "http://localhost:$BACKEND_PORT/api/v1/auth/register" \
+          cat > /tmp/register.json <<JSON
+          {"email":"test_ciudadano@example.com","username":"$E2E_CIUDADANO_USER","password":"$E2E_CIUDADANO_PASSWORD","full_name":"Juan Perez"}
+          JSON
+
+          CODE=$(curl -s -o /tmp/register-response.json -w '%{http_code}' \
+            -X POST "http://localhost:$BACKEND_PORT/api/v1/auth/register" \
             -H 'Content-Type: application/json' \
-            -d "{\"email\":\"test_ciudadano@sirccd.test\",\"username\":\"$E2E_CIUDADANO_USER\",\"password\":\"$E2E_CIUDADANO_PASSWORD\",\"full_name\":\"Juan Pérez\"}" \
-            || echo "El ciudadano ya existía, se continúa"
+            --data-binary @/tmp/register.json)
+          echo "register HTTP $CODE"
+
+          # 400 = ya existía. Cualquier otro error no-2xx sí debe cortar el job:
+          # si el ciudadano no existe, la suite del portal falla entera y el
+          # motivo real queda enterrado en 22 timeouts.
+          if [ "$CODE" != "201" ] && [ "$CODE" != "200" ] && [ "$CODE" != "400" ]; then
+            echo "Fallo el registro del ciudadano:"
+            cat /tmp/register-response.json
+            exit 1
+          fi
 
       # ==========================================
       # Frontend

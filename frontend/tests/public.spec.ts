@@ -19,9 +19,13 @@ test.describe('Rutas públicas', () => {
     await expect(page.locator('button[type="submit"]')).toBeEnabled();
   });
 
+  // A diferencia de /login, este formulario identifica los campos por id.
   test('/register renderiza el formulario de ciudadano', async ({ page }) => {
     await page.goto('/register');
-    await expect(page.locator('input[name="username"]')).toBeVisible();
+    await expect(page.locator('#username')).toBeVisible();
+    await expect(page.locator('#email')).toBeVisible();
+    await expect(page.locator('#password')).toBeVisible();
+    await expect(page.locator('#confirm_password')).toBeVisible();
     await expect(page.locator('button[type="submit"]')).toBeVisible();
   });
 
