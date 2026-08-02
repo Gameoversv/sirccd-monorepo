@@ -21,11 +21,11 @@ Todas las rutas están bajo el prefijo `/api/v1` (`settings.API_V1_STR`). Docume
 |---|---|---|---|---|---|---|
 | POST `/auth/register` | Registra un ciudadano (rol forzado a `ciudadano`) | none | `RegisterRequest` | `RegisterResponse` (201) | 400 email/username ya en uso | `api/routes/auth.py:39` |
 | POST `/auth/login` | Login por username o email + password | none | `LoginRequest` | `LoginResponse` | 401 credenciales inválidas, 403 usuario inactivo | `api/routes/auth.py:103` |
-| POST `/auth/login/oauth2` | Login compatible OAuth2 (form-encoded, para tooling/Swagger) | none | form OAuth2 | `Token` | 401, 403 | `api/routes/auth.py:168` |
-| GET `/auth/me` | Datos del usuario autenticado | ActiveUser | — | `UserResponse` | — | `api/routes/auth.py:213` |
-| POST `/auth/verify-token` | Verifica validez de un JWT | none | query `token` | `TokenVerification` | — | `api/routes/auth.py:225` |
-| POST `/auth/refresh` | Cambia refresh token por access token nuevo | none | `RefreshTokenRequest` | `Token` | 401 token inválido/expirado/tipo incorrecto, usuario no encontrado/inactivo | `api/routes/auth.py:259` |
-| POST `/auth/logout` | Logout (JWT stateless, el cliente descarta el token) | ActiveUser | — | dict | — | `api/routes/auth.py:314` |
+| POST `/auth/login/oauth2` | Login compatible OAuth2 (form-encoded, para tooling/Swagger) | none | form OAuth2 | `Token` | 401, 403 | `api/routes/auth.py:170` |
+| GET `/auth/me` | Datos del usuario autenticado | ActiveUser | — | `UserResponse` | — | `api/routes/auth.py:215` |
+| POST `/auth/verify-token` | Verifica validez de un JWT | none | query `token` | `TokenVerification` | — | `api/routes/auth.py:227` |
+| POST `/auth/refresh` | Cambia refresh token por access token nuevo | none | `RefreshTokenRequest` | `Token` | 401 token inválido/expirado/tipo incorrecto, usuario no encontrado/inactivo | `api/routes/auth.py:261` |
+| POST `/auth/logout` | Logout (JWT stateless, el cliente descarta el token) | ActiveUser | — | dict | — | `api/routes/auth.py:316` |
 
 ## Deduplicación (`/api/v1/deduplication`)
 

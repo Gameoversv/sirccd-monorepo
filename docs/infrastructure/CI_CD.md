@@ -10,6 +10,8 @@ Existe **un único workflow** de GitHub Actions: `.github/workflows/backend-test
 
 **Disparadores**: `push`/`pull_request` a `main`/`develop` con filtro de path (`backend/**`, el propio workflow), más `workflow_dispatch` para ejecución manual.
 
+> **Desajuste de nombre de rama**: el workflow apunta a `develop`, pero la rama de integración que existe en el remoto se llama `dev` (`origin/dev`). Con la configuración actual, ningún push o PR contra `dev` dispara el CI: solo lo hacen los de `main`. Se corrige cambiando `develop` por `dev` en las dos listas `branches:` del workflow, o renombrando la rama remota.
+
 ### Job `unit-tests`
 
 - Matriz: Python 3.11 y 3.12.
@@ -38,5 +40,6 @@ Existe **un único workflow** de GitHub Actions: `.github/workflows/backend-test
 - Sin pipeline de CI para `mobile/` (no se corre `flutter analyze` ni `flutter test`).
 - Sin pipeline de CI para `ml/` (no aplica de la misma forma al ser entrenamiento offline, pero tampoco hay validación automática de los scripts de `ml/scripts/`).
 - Sin workflow de CD — el despliegue a Railway no está automatizado desde este repositorio.
+- El workflow solo se dispara en `main` por el desajuste `develop` / `dev` descrito arriba.
 
 Ver clasificación de este hallazgo como riesgo en [REPOSITORY_AUDIT.md](../REPOSITORY_AUDIT.md#8-riesgos-detectados).

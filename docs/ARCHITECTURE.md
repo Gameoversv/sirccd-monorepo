@@ -80,7 +80,7 @@ graph TB
 - **Backend → MinIO**: SDK oficial de MinIO (S3-compatible), con fallback a disco local si el servicio no está disponible (`services/storage.py`).
 - **Backend → Roboflow**: HTTP saliente a `serverless.roboflow.com` (inferencia) y `api.roboflow.com` (métricas del modelo), con fallback a un detector simulado si no hay `ROBOFLOW_API_KEY` configurada.
 - **Worker → Redis → Backend**: el worker consume trabajos encolados por el backend (`enqueue_ml_detection`) y escribe resultados de vuelta en PostgreSQL a través de las mismas capas de servicio.
-- **`ml/` → MinIO**: intercambio manual/batch de artefactos de entrenamiento (`scripts/upload_to_minio.py`, `download_from_minio.py`), sin llamada de código directa desde el backend.
+- **`ml/` → MinIO**: intercambio manual/batch de artefactos de entrenamiento (`ml/scripts/upload_to_minio.py`, `ml/scripts/download_from_minio.py`), sin llamada de código directa desde el backend.
 
 ## Flujo de datos
 

@@ -8,6 +8,8 @@
 - [Visión general del proyecto](PROJECT_OVERVIEW.md) — propósito, usuarios, funcionalidades, estado actual.
 - [Arquitectura](ARCHITECTURE.md) — componentes, comunicación entre ellos, decisiones y deuda técnica.
 - [Guía de inicio rápido](GETTING_STARTED.md) — cómo levantar el proyecto desde cero.
+- [Guía de contribución](../CONTRIBUTING.md) — ramas, commits, estándares de código, checklist de PR y proceso de revisión.
+- [Manual de usuario](MANUAL_USUARIO.md) — uso del portal ciudadano y del dashboard, dirigido a usuarios finales (versión web en `/guia`).
 - [Configuración](CONFIGURATION.md) — qué hace cada archivo de configuración del repositorio.
 - [Variables de entorno](ENVIRONMENT_VARIABLES.md) — tabla completa por componente.
 - [Seguridad](SECURITY.md) — autenticación, autorización, manejo de secretos, riesgos.
@@ -60,7 +62,7 @@
 
 Documentos que quedan fuera del alcance de esta fase, a validar con el equipo antes de escribirse como oficiales:
 
-- `DEVELOPMENT_GUIDE.md`, `DEPLOYMENT.md`, `TROUBLESHOOTING.md`, `CHANGELOG_GUIDE.md`, `CONTRIBUTING.md`
+- `DEVELOPMENT_GUIDE.md`, `DEPLOYMENT.md`, `TROUBLESHOOTING.md`, `CHANGELOG_GUIDE.md`
 - `api/` (colección de ejemplos de request/response, códigos de error consolidados)
 - `diagrams/` adicionales más allá de los ya incluidos en ARCHITECTURE.md/SCHEMA.md
 - Documentación operativa de Railway (fuera del repositorio, pendiente de confirmación con el equipo)

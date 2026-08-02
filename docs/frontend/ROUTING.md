@@ -9,6 +9,7 @@ Protección de rutas 100% del lado cliente (sin `middleware.ts` de Next.js) — 
 | `/` | `src/app/page.tsx` | público (gate de redirección) | Pantalla de carga que redirige a `/login` (sin sesión) o `/portal`/`/dashboard` según `user.role` | — |
 | `/login` | `src/app/login/page.tsx` | público | Formulario de login (username/password) | — |
 | `/register` | `src/app/register/page.tsx` | público | Registro de ciudadano (`authService.register`) | — |
+| `/guia` | `src/app/guia/page.tsx` | público | Guía de usuario del portal ciudadano, accesible sin sesión. Versión web de [../MANUAL_USUARIO.md](../MANUAL_USUARIO.md) | — |
 | `/portal` | `src/app/portal/page.tsx` (+ `layout.tsx`) | ciudadano (`UserRole.CIUDADANO`; el layout redirige a no-ciudadanos a `/dashboard`) | Feed personal de reportes: tarjetas de estadísticas, reportes paginados, modal de detalle, mapa de reportes propios | — |
 | `/dashboard` | `src/app/dashboard/page.tsx` (+ `layout.tsx`) | supervisor/admin/staff (el layout llama `useAuth()`; ciudadanos son enviados a `/portal`) | Dashboard de KPIs: conteos de incidentes, cumplimiento de SLA, gráficos de estado/prioridad (Recharts) | — |
 | `/dashboard/incidents` | `src/app/dashboard/incidents/page.tsx` | supervisor/admin/staff | Lista/mapa/vista dividida de incidentes con filtros, tabla, exportación CSV/GeoJSON/KPI/PDF | — |

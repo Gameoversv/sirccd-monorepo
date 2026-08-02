@@ -38,6 +38,7 @@ Roles definidos en `backend/models/user.py` (`UserRole`) y aplicados vía RBAC e
 - Exportación de datos/reportes (`backend/api/routes/export.py`, dependencia `reportlab` para PDF).
 - Anonimización automática de rostros/placas en las imágenes subidas (`backend/services/anonymizer.py`).
 - App móvil para ciudadanos con captura de foto, GPS y modo con almacenamiento local (`mobile/`).
+- Guía de usuario pública en `/guia` (frontend), sin necesidad de sesión. Versión en documento: [MANUAL_USUARIO.md](MANUAL_USUARIO.md).
 
 ## Componentes del proyecto
 
@@ -80,12 +81,12 @@ Ver tabla completa en [REPOSITORY_AUDIT.md](REPOSITORY_AUDIT.md#2-tecnologías-e
 
 ## Estado actual del proyecto
 
-Desarrollo activo (último commit en `main`: 2026-07-17). El backend está desplegado en Railway; el frontend también se despliega vía Docker/Railway. El módulo `ml/` está en fase de entrenamiento/experimentación — el modelo de detección en producción actualmente corre en la API externa de Roboflow, no en un modelo propio servido desde este repositorio.
+Desarrollo activo (último commit en `main`: 2026-07-19). El backend está desplegado en Railway; el frontend también se despliega vía Docker/Railway. El módulo `ml/` está en fase de entrenamiento/experimentación — el modelo de detección en producción actualmente corre en la API externa de Roboflow, no en un modelo propio servido desde este repositorio.
 
 ## Limitaciones conocidas
 
 - No existe CI para frontend, mobile ni `ml/` (solo hay pipeline de pruebas para backend).
 - La protección de rutas del dashboard es únicamente del lado cliente (no hay `middleware.ts` de Next.js).
-- El `.env.example` de la raíz no cubre todas las variables que el backend realmente necesita (ver [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)).
+- El workflow de CI se dispara en `main`/`develop`, pero la rama de integración remota se llama `dev`: los PR contra `dev` no ejecutan pruebas (ver [infrastructure/CI_CD.md](infrastructure/CI_CD.md)).
 - El modelo propio de detección de daños (entrenado en `ml/`) todavía no reemplaza al servicio externo de Roboflow en producción.
 - Cobertura de pruebas end-to-end del frontend limitada a un solo spec de Playwright (portal ciudadano); el dashboard no tiene pruebas automatizadas.
