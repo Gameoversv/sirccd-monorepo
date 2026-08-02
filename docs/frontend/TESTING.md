@@ -52,7 +52,7 @@ npm run test:e2e:report     # ver el último reporte HTML
    ```bash
    cd backend
    ADMIN_USERNAME=test_admin ADMIN_EMAIL=test_admin@sirccd.test \
-     ADMIN_PASSWORD='Test1234!' python -m scripts.seed_admin
+     ADMIN_PASSWORD='E2eAdmin1234!' python -m scripts.seed_admin   # mínimo 12 caracteres
 
    curl -X POST http://localhost:8000/api/v1/auth/register \
      -H 'Content-Type: application/json' \

@@ -28,7 +28,8 @@ env:
   E2E_CIUDADANO_USER: test_ciudadano
   E2E_CIUDADANO_PASSWORD: Test1234!
   E2E_ADMIN_USER: test_admin
-  E2E_ADMIN_PASSWORD: Test1234!
+  # seed_admin exige 12 caracteres como mínimo.
+  E2E_ADMIN_PASSWORD: E2eAdmin1234!
 
 jobs:
   e2e:

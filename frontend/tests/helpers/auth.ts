@@ -13,7 +13,8 @@ export const CIUDADANO = {
 
 export const ADMIN = {
   username: process.env.E2E_ADMIN_USER ?? 'test_admin',
-  password: process.env.E2E_ADMIN_PASSWORD ?? 'Test1234!',
+  // seed_admin exige 12 caracteres como mínimo.
+  password: process.env.E2E_ADMIN_PASSWORD ?? 'E2eAdmin1234!',
 } as const;
 
 interface Credentials {
