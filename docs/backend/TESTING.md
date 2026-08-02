@@ -45,6 +45,24 @@ Al importar la app en una consola con codificación `cp1252`, `services/anonymiz
 
 21 scripts de verificación manual, **no descubiertos automáticamente por pytest** (`pytest.ini` apunta `testpaths=tests`, pero no se ejecutan por defecto salvo que se apunten explícitamente). Parecen ligados a tickets específicos (b04–b10) — útiles para verificación puntual durante desarrollo, no como parte de la suite regular.
 
+## Tests de servicios añadidos (2026-08-02)
+
+| Archivo | Cubre | Cobertura del módulo |
+|---|---|---|
+| `tests/test_sla_service.py` | Horas de SLA por prioridad y override por `SLAConfig`, cálculo de deadline, los cinco estados (`not_started`, `on_track`, `warning`, `overdue`, `completed`), umbral de aviso configurable y `get_sla_info` | `sla_service.py`: 0% → **91.78%** |
+| `tests/test_priority_service.py` | Tramos de score (POIs, duplicados, edad), límites de nivel de prioridad, normalización de pesos y la matriz completa de transiciones de estado | `priority_service.py`: 15.91% → **47.73%** |
+| `tests/test_pois.py` | RBAC del endpoint, validación de parámetros y coherencia del mapeo capa ↔ categorías de origen | `api/routes/pois.py`: 39.53% (sin cambio, ver abajo) |
+
+### Qué queda fuera y por qué
+
+`tests/conftest.py` solo crea la tabla `users` en SQLite: todo lo que use columnas PostGIS (`incidents`, `reports`, `pois`) no se puede materializar ahí. Por eso estos tests trabajan con objetos en memoria y con las tablas de configuración (`sla_configs`, `priority_settings`), que sí son columnas planas.
+
+Sin cubrir, a la espera de una suite de integración contra PostGIS real:
+
+- `sla_service.get_expiring_incidents` y `get_overdue_incidents` — construyen queries sobre `incidents`.
+- `priority_service._count_nearby_pois`, `_count_nearby_duplicates`, `recalculate_priority`, `update_incident_status`.
+- El cuerpo de `GET /pois` (líneas 70-115): por eso su porcentaje no sube pese a tener ya tests de RBAC y de mapeo.
+
 ## Cobertura
 
 `.coveragerc` excluye migraciones, `tests/`, `worker*.py` y `verify_*.py` del cálculo de cobertura.
