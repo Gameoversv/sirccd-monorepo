@@ -102,14 +102,17 @@ jobs:
         run: |
           nohup uvicorn main:app --host 0.0.0.0 --port "$BACKEND_PORT" > backend.log 2>&1 &
           echo "Esperando al backend..."
-          for i in $(seq 1 60); do
-            if curl -sf "http://localhost:$BACKEND_PORT/api/v1/health" > /dev/null; then
+          # Se usa el liveness probe, no /health: sin MinIO el health agregado
+          # responde 503 y el runner no tiene MinIO. Para estos flujos basta
+          # con que el proceso esté vivo y la base de datos responda.
+          for i in $(seq 1 90); do
+            if curl -sf "http://localhost:$BACKEND_PORT/api/v1/health/live" > /dev/null; then
               echo "Backend arriba tras ${i}s"
               exit 0
             fi
             sleep 1
           done
-          echo "El backend no respondió en 60s"
+          echo "El backend no respondió en 90s"
           cat backend.log
           exit 1
 
