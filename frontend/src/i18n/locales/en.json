@@ -171,7 +171,16 @@
       "ttr": "Avg. TTR",
       "ttrSubtitle": "time to assignment",
       "avgScore": "Avg. score",
-      "avgScoreSubtitle": "mean priority"
+      "avgScoreSubtitle": "mean priority",
+      "totalHint": "incidents recorded in the system"
+    },
+    "map": {
+      "title": "Incident map",
+      "viewAll": "View all"
+    },
+    "damageTypes": {
+      "bache": "Potholes",
+      "grieta": "Cracks"
     },
     "sla": {
       "title": "Service levels",
@@ -182,6 +191,7 @@
       "byStatus": "Incidents by status",
       "activeVsResolved": "Active vs Resolved",
       "byPriority": "Distribution by priority",
+      "byDamageType": "By damage type",
       "incidents": "Incidents"
     },
     "statuses": {

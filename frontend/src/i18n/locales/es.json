@@ -169,7 +169,16 @@
       "ttr": "TTR promedio",
       "ttrSubtitle": "tiempo hasta resolución",
       "avgScore": "Score promedio",
-      "avgScoreSubtitle": "prioridad media"
+      "avgScoreSubtitle": "prioridad media",
+      "totalHint": "incidentes registrados en el sistema"
+    },
+    "map": {
+      "title": "Mapa de incidentes",
+      "viewAll": "Ver todos"
+    },
+    "damageTypes": {
+      "bache": "Baches",
+      "grieta": "Grietas"
     },
     "sla": {
       "title": "Niveles de servicio",
@@ -180,6 +189,7 @@
       "byStatus": "Incidentes por estado",
       "activeVsResolved": "Activos vs Resueltos",
       "byPriority": "Distribución por prioridad",
+      "byDamageType": "Por tipo de daño",
       "incidents": "Incidentes"
     },
     "statuses": {
