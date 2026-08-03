@@ -1,3 +1,35 @@
+# Entorno compartido por el backend y el worker RQ: ambos necesitan la misma
+# base de datos, Redis, MinIO y credenciales de ML para procesar los reportes.
+x-backend-env: &backend-env
+  # Database
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: sirccd_user
+  POSTGRES_PASSWORD: sirccd_password
+  POSTGRES_DB: sirccd_db
+  # Redis
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  # MinIO
+  MINIO_ENDPOINT: "minio:9000"
+  MINIO_ACCESS_KEY: sirccd_admin
+  MINIO_SECRET_KEY: sirccd_password_2026
+  MINIO_SECURE: "False"
+  MINIO_BUCKET_IMAGES: sirccd-images
+  MINIO_BUCKET_MODELS: sirccd-models
+  # Roboflow
+  ROBOFLOW_API_KEY: ${ROBOFLOW_API_KEY:-}
+  ROBOFLOW_MODEL_ID: ${ROBOFLOW_MODEL_ID:-rd-roaddataset/5}
+  CONFIDENCE_THRESHOLD: "0.4"
+  IOU_THRESHOLD: "0.4"
+  # JWT
+  SECRET_KEY: "zK8vN3mQ1pR5tY9wX2cF6bH0jL4nM7sA1dE5gI9kO3pT6uW8zC2"
+  ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  # Logging
+  LOG_LEVEL: "INFO"
+
 services:
 
   # ── Infraestructura ──────────────────────────────────────────────
@@ -87,40 +119,44 @@ services:
     ports:
       - "8000:8000"
     environment:
+      <<: *backend-env
       # Server
       HOST: "0.0.0.0"
       PORT: "8000"
       DEBUG: "False"
-      # Database
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: "5432"
-      POSTGRES_USER: sirccd_user
-      POSTGRES_PASSWORD: sirccd_password
-      POSTGRES_DB: sirccd_db
-      # Redis
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_DB: "0"
-      # MinIO
-      MINIO_ENDPOINT: "minio:9000"
-      MINIO_ACCESS_KEY: sirccd_admin
-      MINIO_SECRET_KEY: sirccd_password_2026
-      MINIO_SECURE: "False"
-      MINIO_BUCKET_IMAGES: sirccd-images
-      MINIO_BUCKET_MODELS: sirccd-models
-      # Roboflow
-      ROBOFLOW_API_KEY: ${ROBOFLOW_API_KEY:-}
-      ROBOFLOW_MODEL_ID: ${ROBOFLOW_MODEL_ID:-rd-roaddataset/5}
-      CONFIDENCE_THRESHOLD: "0.4"
-      IOU_THRESHOLD: "0.4"
-      # JWT
-      SECRET_KEY: "zK8vN3mQ1pR5tY9wX2cF6bH0jL4nM7sA1dE5gI9kO3pT6uW8zC2"
-      ALGORITHM: "HS256"
-      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
       # CORS
       ALLOWED_ORIGINS: '["http://localhost:3000","http://localhost:3001","http://localhost:5173","http://localhost:8080"]'
-      # Logging
-      LOG_LEVEL: "INFO"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - backend_storage:/app/storage
+      - backend_logs:/app/logs
+      - torch_cache:/root/.cache/torch
+      - hf_cache:/root/.cache/huggingface
+    restart: unless-stopped
+    networks:
+      - sirccd-network
+
+  # ── Worker ───────────────────────────────────────────────────────
+  # Sin este servicio la cola `ml_inference` no tiene consumidor y los reportes
+  # se quedan en estado "processing" para siempre.
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sirccd-worker
+    init: true
+    command: python worker.py
+    environment: *backend-env
+    # El healthcheck del Dockerfile hace curl al puerto 8000; el worker no sirve
+    # HTTP, así que heredarlo lo marcaría unhealthy para siempre.
+    healthcheck:
+      disable: true
     depends_on:
       postgres:
         condition: service_healthy

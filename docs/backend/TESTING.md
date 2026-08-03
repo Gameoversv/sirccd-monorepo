@@ -45,6 +45,62 @@ Al importar la app en una consola con codificación `cp1252`, `services/anonymiz
 
 21 scripts de verificación manual, **no descubiertos automáticamente por pytest** (`pytest.ini` apunta `testpaths=tests`, pero no se ejecutan por defecto salvo que se apunten explícitamente). Parecen ligados a tickets específicos (b04–b10) — útiles para verificación puntual durante desarrollo, no como parte de la suite regular.
 
+## Tests de servicios añadidos (2026-08-02)
+
+| Archivo | Cubre | Cobertura del módulo |
+|---|---|---|
+| `tests/test_sla_service.py` | Horas de SLA por prioridad y override por `SLAConfig`, cálculo de deadline, los cinco estados (`not_started`, `on_track`, `warning`, `overdue`, `completed`), umbral de aviso configurable y `get_sla_info` | `sla_service.py`: 0% → **91.78%** |
+| `tests/test_priority_service.py` | Tramos de score (POIs, duplicados, edad), límites de nivel de prioridad, normalización de pesos y la matriz completa de transiciones de estado | `priority_service.py`: 15.91% → **47.73%** |
+| `tests/test_pois.py` | RBAC del endpoint, validación de parámetros y coherencia del mapeo capa ↔ categorías de origen | `api/routes/pois.py`: 39.53% (sin cambio, ver abajo) |
+
+Segunda tanda, cadena completa de alertas de SLA:
+
+| Archivo | Cubre | Cobertura del módulo |
+|---|---|---|
+| `tests/test_notification_service.py` | Construcción del email (cabeceras, HTML, acentos y emoji), `_send` con SMTP desactivado / activo / caído, y el contenido de los avisos de vencimiento próximo y consumado | `notification_service.py`: 0% → **100%** |
+| `tests/test_sla_tasks.py` | Orquestación de `check_sla_alerts`: destinatarios, producto incidentes × destinatarios, envíos fallidos que no se cuentan, sin destinatarios, y cierre de sesión incluso si el job revienta | `tasks/sla_tasks.py`: 0% → **98.08%** |
+| `tests/test_queue_service.py` | Degradación cuando Redis no responde, parámetros de encolado (timeout y TTLs), estado de jobs terminados/fallidos/inexistentes y estadísticas de cola | `queue_service.py`: 0% → **100%** |
+
+Tercera tanda, núcleo de deduplicación:
+
+| Archivo | Cubre | Cobertura del módulo |
+|---|---|---|
+| `tests/test_deduplication_service.py` | Helpers numéricos (coseno, normalización L2, división segura), similitud de texto, alias de modelos, distancia Haversine, `FAISSIndex` completo (alta, búsqueda, recorte de k, limpieza, persistencia), `VisualEmbedder` con backend de histograma, y el score fusionado con sus pesos | `deduplication_service.py`: 0% → **39.49%** |
+
+Corre entero offline: usa el backend de histograma (OpenCV + numpy), nunca ResNet ni CLIP, así que no descarga pesos ni necesita GPU.
+
+#### Comportamiento a vigilar: techo de 0.75 con un solo modelo visual
+
+`_fusion_score` divide entre la suma de los cuatro pesos (`0.45 + 0.25 + 0.20 + 0.10`), incluido el del modelo secundario, **exista o no dicho modelo**. Con un único modelo configurado, una coincidencia perfecta puntúa como mucho `0.75`, frente a un `DEDUPLICATION_SCORE_THRESHOLD` de `0.72`: quedan 3 centésimas de margen para declarar un duplicado.
+
+En producción no muerde, porque `DEDUPLICATION_SECONDARY_MODEL` viene con `clip-vit-base-patch32` por defecto. Pero dejar esa variable vacía degrada la deduplicación de forma silenciosa. Está capturado en `test_con_un_solo_modelo_el_score_maximo_es_075`.
+
+### Por qué cinco módulos estaban condenados al 0%
+
+`tests/conftest.py` (líneas 42-46) sustituye estos módulos por `MagicMock` en `sys.modules` **antes** de importar la app, para que importar los routers no intente conectarse a Redis, MinIO o cargar modelos:
+
+```python
+sys.modules['services.anonymizer'] = MagicMock()
+sys.modules['services.storage'] = MagicMock()
+sys.modules['services.ml_service'] = MagicMock()
+sys.modules['services.queue_service'] = MagicMock()
+sys.modules['services.deduplication_service'] = MagicMock()
+```
+
+Con eso, `from services.queue_service import QueueService` devuelve un mock dentro de la suite: el código real nunca se ejecuta, y por eso esos cinco módulos aparecían en 0% por más tests que se escribieran.
+
+`tests/test_queue_service.py` lo resuelve cargando el archivo real bajo otro nombre de módulo (`importlib.util.spec_from_file_location`), sin tocar la entrada de `sys.modules` de la que dependen los demás tests. Es el patrón a seguir para atacar `anonymizer`, `storage`, `ml_service` y `deduplication_service`.
+
+### Qué queda fuera y por qué
+
+`tests/conftest.py` solo crea la tabla `users` en SQLite: todo lo que use columnas PostGIS (`incidents`, `reports`, `pois`) no se puede materializar ahí. Por eso estos tests trabajan con objetos en memoria y con las tablas de configuración (`sla_configs`, `priority_settings`), que sí son columnas planas.
+
+Sin cubrir, a la espera de una suite de integración contra PostGIS real:
+
+- `sla_service.get_expiring_incidents` y `get_overdue_incidents` — construyen queries sobre `incidents`.
+- `priority_service._count_nearby_pois`, `_count_nearby_duplicates`, `recalculate_priority`, `update_incident_status`.
+- El cuerpo de `GET /pois` (líneas 70-115): por eso su porcentaje no sube pese a tener ya tests de RBAC y de mapeo.
+
 ## Cobertura
 
 `.coveragerc` excluye migraciones, `tests/`, `worker*.py` y `verify_*.py` del cálculo de cobertura.
@@ -57,14 +113,13 @@ Módulos con **0% de cobertura** — sin ningún test automático, solo scripts 
 |---|---|
 | `services/anonymizer.py` | 109 |
 | `services/deduplication_service.py` | 462 |
-| `services/notification_service.py` | 37 |
-| `services/queue_service.py` | 59 |
 | `tasks/ml_tasks.py` | 26 |
-| `tasks/sla_tasks.py` | 38 |
 
-Módulos con cobertura muy baja (<25%): `services/priority_service.py` (15.91%), `services/export_service.py` (18.66%), `services/sla_service.py` (23.29%), `services/spatial_clustering_service.py` (24.47%), `services/report_processing_service.py` (13.26%).
+Ya no están en 0% tras la sesión del 2026-08-02: `notification_service.py` (100%), `queue_service.py` (100%), `tasks/sla_tasks.py` (98.08%).
 
-`api/routes/pois.py` en 39.53% — sin ningún test dedicado, la cobertura parcial viene de imports/fixtures compartidos con otros tests, no de pruebas reales del endpoint.
+Módulos con cobertura muy baja (<25%) tras la sesión del 2026-08-02: `services/export_service.py` (18.66%), `services/spatial_clustering_service.py` (24.47%), `services/report_processing_service.py` (13.26%). `sla_service.py` y `priority_service.py` salieron de esta lista (ver la sección de tests añadidos).
+
+`api/routes/pois.py` sigue en 39.53%: ya tiene tests de RBAC, de validación de parámetros y del mapeo de capas (`tests/test_pois.py`), pero el cuerpo del endpoint necesita la tabla PostGIS, así que el porcentaje no se mueve.
 
 En contraste, `models/*` está en 100% (cubierto indirectamente por fixtures de `conftest.py`) y varios `schemas/*` también en 100%.
 
@@ -80,7 +135,7 @@ Las pruebas usan una base SQLite en memoria (no Postgres real) y mocks de Redis/
 
 - Sin pruebas de carga/performance documentadas.
 - `tests/manual/` no forma parte de la cobertura reportada — cualquier regresión que solo esas pruebas detectarían no se atrapa en CI. Esto incluye toda la lógica de deduplicación (`test_b07_*.py`), scoring de prioridad (`test_b08_*.py`), exportación (`test_b09_export.py`) y cola ML (`test_b06_queue_inference.py`).
-- **`GET /pois` no tiene ningún test dedicado** — ni RBAC ni funcional. Es el endpoint del incidente de producción del 2026-07-19 (capa de POIs vacía); su ausencia de cobertura no habría atrapado ese problema de todos modos (el bug era de datos, no de código), pero sí deja sin probar la lógica de agrupación por categorías de riesgo (`LAYER_TO_SOURCE_CATEGORIES` en `api/routes/pois.py`).
+- **`GET /pois` no tiene test funcional del cuerpo del endpoint** — desde el 2026-08-02 sí tiene RBAC y cobertura de `LAYER_TO_SOURCE_CATEGORIES`, pero consultar la tabla `pois` requiere PostGIS. Es el endpoint del incidente de producción del 2026-07-19 (capa de POIs vacía), que de todos modos era un problema de datos, no de código.
 - `pytest.ini` declara una sección `[env]` que requiere el plugin `pytest-env` — **no está en `requirements.txt`**, por lo que esa configuración es ignorada silenciosamente (sin error visible). `conftest.py` logra el mismo resultado seteando variables de entorno manualmente antes de importar la app, así que no rompe nada, pero la sección `[env]` de `pytest.ini` es configuración muerta.
 - ✅ **Resuelto**: `POST /auth/login` no incluía `refresh_token` en la respuesta pese a que `POST /auth/refresh` existía y lo requería. Confirmado que `api/openapi.yaml` (spec usado por los tests de contrato) **siempre documentó `refresh_token`** en la respuesta de login — el código había quedado atrás del contrato, no al revés. Arreglado: `LoginResponse` ahora incluye `refresh_token` (`schemas/auth.py`), y `login()` lo genera con `create_refresh_token()` (`api/routes/auth.py`). `test_refresh_token_success` ya no se autosalta — pasa de verdad. El frontend web no se tocó: nunca consume `/auth/refresh` (usa redirect a login en 401 en vez de refresh silencioso), así que no había nada que conectar ahí; el par login/refresh queda disponible para mobile u otros clientes.
 - Bajo SQLite local, 48 tests se saltan (`PostGIS tables not available in SQLite test env`) — sí corren completos en CI contra Postgres+PostGIS real.

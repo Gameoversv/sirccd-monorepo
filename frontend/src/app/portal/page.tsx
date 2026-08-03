@@ -355,7 +355,7 @@ export default function PortalPage() {
 
       {/* CTA */}
       <Link
-        href="/dashboard/reports/new"
+        href="/portal/nuevo"
         className="flex items-center gap-4 p-5 sm:p-6 bg-gradient-brand rounded-2xl text-white shadow-elevated hover:shadow-2xl hover:scale-[1.01] transition-all duration-200 group"
       >
         <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white/20 group-hover:bg-white/30 transition-colors">

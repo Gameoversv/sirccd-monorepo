@@ -32,10 +32,17 @@ test.describe('Portal ciudadano', () => {
     await expect(page.locator('text=Reportar un Daño Vial')).toBeVisible();
   });
 
-  test('CTA lleva al formulario de nuevo reporte', async ({ page }) => {
-    await page.click('a[href="/dashboard/reports/new"]');
-    await page.waitForURL('**/dashboard/reports/new');
-    expect(page.url()).toContain('/dashboard/reports/new');
+  test('CTA lleva al formulario de nuevo reporte del portal', async ({ page }) => {
+    // Hay varios accesos al formulario (CTA, nav lateral, tabs): basta uno.
+    await page.locator('a[href="/portal/nuevo"]').first().click();
+    await page.waitForURL('**/portal/nuevo');
+    expect(page.url()).toContain('/portal/nuevo');
+  });
+
+  test('ciudadano no puede entrar al panel administrativo', async ({ page }) => {
+    await page.goto('/dashboard');
+    await page.waitForURL('**/portal');
+    expect(page.url()).toContain('/portal');
   });
 
   test('portal muestra seccion Mis Reportes', async ({ page }) => {

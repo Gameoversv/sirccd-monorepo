@@ -227,7 +227,8 @@ def _auto_approve(db: Session, report: Report, dedup_image: Optional[Image.Image
         )
 
     try:
-        level, score = priority_service.calculate_priority(incident)
+        # calculate_priority_score devuelve (score, nivel), en ese orden.
+        score, level = priority_service.calculate_priority_score(incident)
         incident.priority = level
         incident.priority_score = score
     except Exception as prio_err:

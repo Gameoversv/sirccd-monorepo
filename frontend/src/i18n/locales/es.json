@@ -27,7 +27,9 @@
     "users": "Usuarios",
     "createReport": "Crear Reporte",
     "logout": "Salir",
-    "backToDashboard": "Volver al dashboard"
+    "home": "Inicio",
+    "backToDashboard": "Volver al dashboard",
+    "backToPortal": "Volver al inicio"
   },
   "filters": {
     "title": "Filtros",
