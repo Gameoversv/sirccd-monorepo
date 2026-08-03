@@ -155,6 +155,15 @@
   }
 }
 
+/* Leaflet asigna z-index 400 a sus panes y hasta 1000 a los controles. Sin un
+   stacking context propio esos valores compiten con el resto de la página y el
+   mapa se dibuja por encima de modales y overlays (z-50). Aislarlo mantiene su
+   apilado interno intacto y deja el mapa entero por debajo de cualquier capa. */
+.leaflet-container {
+  isolation: isolate;
+  z-index: 0;
+}
+
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
