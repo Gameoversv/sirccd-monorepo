@@ -48,7 +48,10 @@ def process_report_ml_detection(
         return process_report_detection(
             db,
             report_id=report_id,
-            focal_scale_factor=focal_scale_factor,
+            # El factor termina en `focal_scale_factor ** 2` al evaluar la
+            # severidad: un None (job encolado sin EXIF resuelto) reventaría la
+            # detección entera, así que se normaliza al valor neutro.
+            focal_scale_factor=focal_scale_factor if focal_scale_factor is not None else 1.0,
         )
     except Exception as e:
         logger.error(f"[Task] Error procesando reporte {report_id}: {e}", exc_info=True)
