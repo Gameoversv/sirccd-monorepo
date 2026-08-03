@@ -8,15 +8,18 @@ import { UserRole } from '@/types';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, hasHydrated } = useAuthStore();
 
   useEffect(() => {
+    // Esperar la rehidratación de persist: antes de eso isAuthenticated siempre
+    // es false y mandaría a /login a una sesión válida.
+    if (!hasHydrated) return;
     if (!isAuthenticated) {
-      router.push('/login');
+      router.replace('/login');
       return;
     }
-    router.push(user?.role === UserRole.CIUDADANO ? '/portal' : '/dashboard');
-  }, [isAuthenticated, user, router]);
+    router.replace(user?.role === UserRole.CIUDADANO ? '/portal' : '/dashboard');
+  }, [hasHydrated, isAuthenticated, user, router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background bg-gradient-mesh">

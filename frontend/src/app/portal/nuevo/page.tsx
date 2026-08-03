@@ -2,6 +2,6 @@
 
 import { NewReportForm } from '@/components/NewReportForm';
 
-export default function NewReportPage() {
+export default function PortalNewReportPage() {
   return <NewReportForm />;
 }

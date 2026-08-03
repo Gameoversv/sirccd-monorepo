@@ -1,6 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks';
+import { useAuthStore } from '@/store';
+import { UserRole } from '@/types';
 import { Sidebar } from '@/components/Sidebar';
 import { Topbar } from '@/components/Topbar';
 
@@ -10,6 +14,25 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   useAuth();
+  const router = useRouter();
+  const { user, hasHydrated } = useAuthStore();
+
+  const isCitizen = user?.role === UserRole.CIUDADANO;
+
+  useEffect(() => {
+    // El panel es solo para staff: un ciudadano nunca debe ver el menú admin.
+    if (hasHydrated && isCitizen) {
+      router.replace('/portal');
+    }
+  }, [hasHydrated, isCitizen, router]);
+
+  if (!hasHydrated || isCitizen) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <span className="h-2 w-2 rounded-full bg-primary-500 animate-pulse" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background bg-gradient-mesh">

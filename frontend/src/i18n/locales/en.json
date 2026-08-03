@@ -27,7 +27,9 @@
     "users": "Users",
     "createReport": "Create Report",
     "logout": "Sign out",
-    "backToDashboard": "Back to dashboard"
+    "home": "Home",
+    "backToDashboard": "Back to dashboard",
+    "backToPortal": "Back to home"
   },
   "filters": {
     "title": "Filters",
