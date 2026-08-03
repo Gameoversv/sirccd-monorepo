@@ -15,7 +15,11 @@ test.describe('Portal ciudadano', () => {
   });
 
   test('portal muestra toggle de idioma', async ({ page }) => {
-    await expect(page.locator('button:has-text("ES"), button:has-text("EN")')).toBeVisible();
+    // Por aria-label: "ES"/"EN" como substring matchea también las tarjetas de
+    // reporte ("Oeste", "Avenida").
+    await expect(
+      page.getByRole('button', { name: /^(Switch to English|Cambiar a espanol)$/ })
+    ).toBeVisible();
   });
 
   test('portal muestra toggle de tema', async ({ page }) => {
@@ -46,14 +50,18 @@ test.describe('Portal ciudadano', () => {
   });
 
   test('portal muestra seccion Mis Reportes', async ({ page }) => {
+    // Anclado: `has-text` es substring, y con reportes en pantalla también
+    // aparece el mapa "Ubicaciones de mis reportes".
     await expect(
-      page.locator('h2:has-text("Mis Reportes"), h2:has-text("My Reports")')
+      page.getByRole('heading', { name: /^(Mis Reportes|My Reports)$/ })
     ).toBeVisible();
   });
 
   test('toggle de idioma cambia ES → EN', async ({ page }) => {
-    await page.locator('button:has-text("ES")').click();
-    await expect(page.locator('button:has-text("EN")')).toBeVisible();
+    // Por aria-label y no por texto: `:has-text("EN")` es case-insensitive y
+    // matchea cualquier tarjeta de reporte que diga "Avenida".
+    await page.getByRole('button', { name: 'Switch to English' }).click();
+    await expect(page.getByRole('button', { name: 'Cambiar a espanol' })).toBeVisible();
   });
 
   test('toggle de tema activa modo oscuro', async ({ page }) => {
